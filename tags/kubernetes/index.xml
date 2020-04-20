@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>kubernetes on yulibaozi</title>
+    <link>https://yulibaozi.com/tags/kubernetes/</link>
+    <description>Recent content in kubernetes on yulibaozi</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-hans</language>
+    <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
+    <lastBuildDate>Tue, 11 Jun 2019 01:10:50 +0800</lastBuildDate>
+    
+	<atom:link href="https://yulibaozi.com/tags/kubernetes/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>[译]使用 Kubebuilder 开发 Operator</title>
+      <link>https://yulibaozi.com/posts/kubernetes/2019-06-11-use-kubebuilder-to-operator/</link>
+      <pubDate>Tue, 11 Jun 2019 01:10:50 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/2019-06-11-use-kubebuilder-to-operator/</guid>
+      <description>写给那些人 原文地址
+写给那些Kubernetes用户 Kubernetes用户将通过学习API的设计和实现背后的基本概念，更深入的理解Kubernetes。本书将教会读者怎样开发自己的Kubernetes APIs 和学习Kubernetes API核心的设计原则。
+包括:
+ Kubernetes API和resource的结构设计 API 版本语义 自托管/自愈 垃圾回收和终结器 声明式和命令式APIs 基于级别和基于边缘的APIs 资源和子资源  Kubernetes API 扩展开发 API 扩展开发者将学习到实现Kubernetes API背后的原理，概念和实现规范，以及用户快速开发的简单工具和库。 这本书涵盖了开发人员遇到的陷阱和思维上的误区。
+包括:
+ 如果将多个事件批处理为单次调用对比,(翻译疑问) 如何配置定期对比 即将有的 如何使用缓存和实时查找 垃圾收集和终结器 如何使用声明与Webhook验证 如何实现API版本控制  快速开始 安装 安装Kubebuilder:
+os=$(go env GOOS) arch=$(go env GOARCH) # download kubebuilder and extract it to tmp curl -sL https://go.kubebuilder.io/dl/2.0.0-alpha.2/${os}/${arch} | tar -xz -C /tmp/ # move to a long-term location and put it on your path # (you&#39;ll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else) sudo mv /tmp/kubebuilder_2.</description>
+    </item>
+    
+    <item>
+      <title>在 Kubernetes 使用 ceph 快速部署mysql主从复制集群</title>
+      <link>https://yulibaozi.com/posts/kubernetes/2018-09-06-k8s-ceph-mysql-master-slave/</link>
+      <pubDate>Sun, 16 Sep 2018 01:03:46 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/2018-09-06-k8s-ceph-mysql-master-slave/</guid>
+      <description>血与泪的感慨 我的天空星星都亮了，一扫之前的阴霾，喜上眉梢，多日的折磨成了幻影，程序员就是这样，痛并快乐着。接下来，开始我们伟大的分享之路，分享如何在kubernetes中搭建mysql主从集群,不踩坑的快速搭建master主从集群,让你们早点回家，多陪陪女友，愿码友们不终日与十姊妹为伍。
+千里之行始于足下  集群版本信息
+[root@kube03 ~]# kubectl version Client Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;9&amp;quot;, GitVersion:&amp;quot;v1.9.6&amp;quot;, BuildDate:&amp;quot;2018-03-21T15:21:50Z&amp;quot;, GoVersion:&amp;quot;go1.9.3&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;linux/amd64&amp;quot;} Server Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;9&amp;quot;, GitVersion:&amp;quot;v1.9.6&amp;quot;, BuildDate:&amp;quot;2018-03-21T15:13:31Z&amp;quot;, GoVersion:&amp;quot;go1.9.3&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;linux/amd64&amp;quot;}  需要ceph的相关配置:key,rbdImage名字(需要找ceph管理员)
+ 需要基础镜像
+镜像仓库: docker.io/yulibaozi master: yulibaozi/mysql-master:201807261706 sha256:65ec774cd3a5e71bae1864dffbb1b37b34a2832cce1b8eb6c87f5b1e24b54267 slave: yulibaozi/mysql-slave:201807261706 sha256:712359cbe130bf282876ea7df85fb7f67d8843ab64e54f96a73fee72cef67d87  需要定义k8s相关的资源(svc,sts,secret)
+  相关资源的解释  为什么需要secret？
+secret是来存储ceph的配置信息中的key的,一定要记得在存入secret之前进行base64编码。如果管理员提供给你了一个key，2个rbdImage，那么只需要一个secret，如果给了你两个key,那么需要两个secret
+ 为什么需要sts？
+sts和deployment类似，只不过deployment用于无状态的应用而sts应用于有状态的应用，master和slave各一个sts
+ 为什么需要svc？
+svc是为外部提供服务的，master一个svc，slave一个svc。
+  千里之行 创建secret  假设管理员给你的ceph信息如下:
+key = AQAqfzNaofxHLBAAS7qY64uE/ddqWLOMVDhkAA== rbdImagename = k8s_image01 user = admin（假设默认是admin,如果不是就问ceph管理员要）  执行命令把ceph的Key使用base64编码</description>
+    </item>
+    
+  </channel>
+</rss>
