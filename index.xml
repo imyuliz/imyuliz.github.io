@@ -74,10 +74,10 @@ $ go tool trace trace.out 2019/06/22 16:14:52 Parsing trace... 2019/06/22 16:14:
     
     <item>
       <title>[译]使用 Kubebuilder 开发 Operator</title>
-      <link>https://yulibaozi.com/posts/kubernetes/2019-06-11-use-kubebuilder-to-operator/</link>
+      <link>https://yulibaozi.com/posts/kubernetes/extend/2019-06-11-use-kubebuilder-to-operator/</link>
       <pubDate>Tue, 11 Jun 2019 01:10:50 +0800</pubDate>
       
-      <guid>https://yulibaozi.com/posts/kubernetes/2019-06-11-use-kubebuilder-to-operator/</guid>
+      <guid>https://yulibaozi.com/posts/kubernetes/extend/2019-06-11-use-kubebuilder-to-operator/</guid>
       <description>写给那些人 原文地址
 写给那些Kubernetes用户 Kubernetes用户将通过学习API的设计和实现背后的基本概念，更深入的理解Kubernetes。本书将教会读者怎样开发自己的Kubernetes APIs 和学习Kubernetes API核心的设计原则。
 包括:
@@ -89,10 +89,10 @@ os=$(go env GOOS) arch=$(go env GOARCH) # download kubebuilder and extract it to
     
     <item>
       <title>在 Kubernetes 使用 ceph 快速部署mysql主从复制集群</title>
-      <link>https://yulibaozi.com/posts/kubernetes/2018-09-06-k8s-ceph-mysql-master-slave/</link>
+      <link>https://yulibaozi.com/posts/kubernetes/deploy/2018-09-06-k8s-ceph-mysql-master-slave/</link>
       <pubDate>Sun, 16 Sep 2018 01:03:46 +0800</pubDate>
       
-      <guid>https://yulibaozi.com/posts/kubernetes/2018-09-06-k8s-ceph-mysql-master-slave/</guid>
+      <guid>https://yulibaozi.com/posts/kubernetes/deploy/2018-09-06-k8s-ceph-mysql-master-slave/</guid>
       <description>血与泪的感慨 我的天空星星都亮了，一扫之前的阴霾，喜上眉梢，多日的折磨成了幻影，程序员就是这样，痛并快乐着。接下来，开始我们伟大的分享之路，分享如何在kubernetes中搭建mysql主从集群,不踩坑的快速搭建master主从集群,让你们早点回家，多陪陪女友，愿码友们不终日与十姊妹为伍。
 千里之行始于足下  集群版本信息
 [root@kube03 ~]# kubectl version Client Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;9&amp;quot;, GitVersion:&amp;quot;v1.9.6&amp;quot;, BuildDate:&amp;quot;2018-03-21T15:21:50Z&amp;quot;, GoVersion:&amp;quot;go1.9.3&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;linux/amd64&amp;quot;} Server Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;9&amp;quot;, GitVersion:&amp;quot;v1.9.6&amp;quot;, BuildDate:&amp;quot;2018-03-21T15:13:31Z&amp;quot;, GoVersion:&amp;quot;go1.9.3&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;linux/amd64&amp;quot;}  需要ceph的相关配置:key,rbdImage名字(需要找ceph管理员)

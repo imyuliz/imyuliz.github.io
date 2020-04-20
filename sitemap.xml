@@ -52,7 +52,7 @@
   </url>
   
   <url>
-    <loc>https://yulibaozi.com/posts/kubernetes/2019-06-11-use-kubebuilder-to-operator/</loc>
+    <loc>https://yulibaozi.com/posts/kubernetes/extend/2019-06-11-use-kubebuilder-to-operator/</loc>
     <lastmod>2019-06-11T01:10:50+08:00</lastmod>
   </url>
   
@@ -63,7 +63,7 @@
   </url>
   
   <url>
-    <loc>https://yulibaozi.com/posts/kubernetes/2018-09-06-k8s-ceph-mysql-master-slave/</loc>
+    <loc>https://yulibaozi.com/posts/kubernetes/deploy/2018-09-06-k8s-ceph-mysql-master-slave/</loc>
     <lastmod>2018-09-16T01:03:46+08:00</lastmod>
   </url>
   
