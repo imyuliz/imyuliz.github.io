@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="Golang json 的进阶用法">
+<meta itemprop="description" content="Golang json 的进阶用法 痛点  你是否遇到过json中某个字段填入某种类型都适合而陷入两难境地? (例如：定义了一个port字段，你却不知道是填入8080,还是** &ldquo;8080&rdquo; **的尴尬局面) 你是否遇到过json反解析报错是因为填入字段的类型不匹配导致的？例如：
+json: cannot unmarshal number into Go struct field Host.port of type string  你是否有json某字段兼容2种或者多种的数据结构的需求?
+ 你是否想让程序更优雅，更具有适配性，而不在被这些小细节头痛？
+  如果你有或者你想，获取你可以看看这篇文章。
+重现问题 我们给了用户一个json如下：
+{ &quot;name&quot;:&quot;yulibaozi&quot;, &quot;port&quot;:8080 }  但是，业务方却误填了&rdquo;8080&rdquo;,结果我们程序反解析报错，导致业务失败。
+json: cannot unmarshal number into Go struct field Host2.port of type string  或许你认为这是业务方的问题，但我认为我们可以更优雅的解决这个问题。
+如何解决问题 我们先定义了一个结构体
+type Host struct { Name string `json:&quot;name&quot;` Port Port `json:&quot;port&quot;` }  心细的你会发现，Port既不是int也不是string类型，而是Port类型，而Port类型是：
+type Type int const ( Int Type = iota String ) type Port struct { Type Type IntVal int StrVal string }  在Port结构体中，我们发现了Type类型， 而Type类型包括了int,string两种类型。接下来就非常重要了，我们需要实现">
+
+
+<meta itemprop="datePublished" content="2018-09-24T22:19:50&#43;08:00" />
+<meta itemprop="dateModified" content="2018-09-24T22:19:50&#43;08:00" />
+<meta itemprop="wordCount" content="215">
+
+
+
+<meta itemprop="keywords" content="go," />
+<meta property="og:title" content="Golang json 的进阶用法" />
+<meta property="og:description" content="Golang json 的进阶用法 痛点  你是否遇到过json中某个字段填入某种类型都适合而陷入两难境地? (例如：定义了一个port字段，你却不知道是填入8080,还是** &ldquo;8080&rdquo; **的尴尬局面) 你是否遇到过json反解析报错是因为填入字段的类型不匹配导致的？例如：
+json: cannot unmarshal number into Go struct field Host.port of type string  你是否有json某字段兼容2种或者多种的数据结构的需求?
+ 你是否想让程序更优雅，更具有适配性，而不在被这些小细节头痛？
+  如果你有或者你想，获取你可以看看这篇文章。
+重现问题 我们给了用户一个json如下：
+{ &quot;name&quot;:&quot;yulibaozi&quot;, &quot;port&quot;:8080 }  但是，业务方却误填了&rdquo;8080&rdquo;,结果我们程序反解析报错，导致业务失败。
+json: cannot unmarshal number into Go struct field Host2.port of type string  或许你认为这是业务方的问题，但我认为我们可以更优雅的解决这个问题。
+如何解决问题 我们先定义了一个结构体
+type Host struct { Name string `json:&quot;name&quot;` Port Port `json:&quot;port&quot;` }  心细的你会发现，Port既不是int也不是string类型，而是Port类型，而Port类型是：
+type Type int const ( Int Type = iota String ) type Port struct { Type Type IntVal int StrVal string }  在Port结构体中，我们发现了Type类型， 而Type类型包括了int,string两种类型。接下来就非常重要了，我们需要实现" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/go/knowledge/2018-09-24-go-and-json/" />
+<meta property="article:published_time" content="2018-09-24T22:19:50&#43;08:00"/>
+<meta property="article:modified_time" content="2018-09-24T22:19:50&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Golang json 的进阶用法"/>
+<meta name="twitter:description" content="Golang json 的进阶用法 痛点  你是否遇到过json中某个字段填入某种类型都适合而陷入两难境地? (例如：定义了一个port字段，你却不知道是填入8080,还是** &ldquo;8080&rdquo; **的尴尬局面) 你是否遇到过json反解析报错是因为填入字段的类型不匹配导致的？例如：
+json: cannot unmarshal number into Go struct field Host.port of type string  你是否有json某字段兼容2种或者多种的数据结构的需求?
+ 你是否想让程序更优雅，更具有适配性，而不在被这些小细节头痛？
+  如果你有或者你想，获取你可以看看这篇文章。
+重现问题 我们给了用户一个json如下：
+{ &quot;name&quot;:&quot;yulibaozi&quot;, &quot;port&quot;:8080 }  但是，业务方却误填了&rdquo;8080&rdquo;,结果我们程序反解析报错，导致业务失败。
+json: cannot unmarshal number into Go struct field Host2.port of type string  或许你认为这是业务方的问题，但我认为我们可以更优雅的解决这个问题。
+如何解决问题 我们先定义了一个结构体
+type Host struct { Name string `json:&quot;name&quot;` Port Port `json:&quot;port&quot;` }  心细的你会发现，Port既不是int也不是string类型，而是Port类型，而Port类型是：
+type Type int const ( Int Type = iota String ) type Port struct { Type Type IntVal int StrVal string }  在Port结构体中，我们发现了Type类型， 而Type类型包括了int,string两种类型。接下来就非常重要了，我们需要实现"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Golang json 的进阶用法</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Sep 24, 2018</span></div>
+				<h1>Golang json 的进阶用法</h1>
+			</header>
+			<div class="content">
+				
+
+<h2 id="golang-json-的进阶用法">Golang json 的进阶用法<a href="#golang-json-的进阶用法" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<h4 id="痛点">痛点<a href="#痛点" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<ol>
+<li>你是否遇到过json中某个字段填入某种类型都适合而陷入两难境地? (例如：定义了一个port字段，你却不知道是填入<strong>8080</strong>,还是** &ldquo;8080&rdquo; **的尴尬局面)</li>
+
+<li><p>你是否遇到过json反解析报错是因为填入字段的类型不匹配导致的？例如：</p>
+
+<pre><code>json: cannot unmarshal number into Go struct field Host.port of type string
+</code></pre></li>
+
+<li><p>你是否有json某字段兼容2种或者多种的数据结构的需求?</p></li>
+
+<li><p>你是否想让程序更优雅，更具有适配性，而不在被这些小细节头痛？</p></li>
+</ol>
+
+<p>如果你有或者你想，获取你可以看看这篇文章。</p>
+
+<h4 id="重现问题">重现问题<a href="#重现问题" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>我们给了用户一个json如下：</p>
+
+<pre><code>{
+    &quot;name&quot;:&quot;yulibaozi&quot;,
+    &quot;port&quot;:8080
+}
+</code></pre>
+
+<p>但是，业务方却误填了&rdquo;8080&rdquo;,结果我们程序反解析报错，导致业务失败。</p>
+
+<pre><code>json: cannot unmarshal number into Go struct field Host2.port of type string
+</code></pre>
+
+<p>或许你认为这是业务方的问题，但我认为我们可以更优雅的解决这个问题。</p>
+
+<h4 id="如何解决问题">如何解决问题<a href="#如何解决问题" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>我们先定义了一个结构体</p>
+
+<pre><code>type Host struct {
+	Name string `json:&quot;name&quot;`
+	Port Port   `json:&quot;port&quot;`
+}
+</code></pre>
+
+<p>心细的你会发现，Port既不是int也不是string类型，而是Port类型，而Port类型是：</p>
+
+<pre><code>type Type int
+
+const (
+	Int Type = iota
+	String
+)
+
+type Port struct {
+	Type   Type
+	IntVal int
+	StrVal string
+}
+</code></pre>
+
+<p>在Port结构体中，我们发现了Type类型， 而Type类型包括了int,string两种类型。接下来就非常重要了，我们需要实现</p>
+
+<pre><code>json.Unmarshaller interface
+json.Marshaller interface
+</code></pre>
+
+<p>实现代码如下：</p>
+
+<pre><code>type Port struct {
+	Type   Type
+	IntVal int
+	StrVal string
+}
+
+// 实现 json.Unmarshaller 接口
+func (port *Port) UnmarshalJSON(value []byte) error {
+	if value[0] == '&quot;' {
+		port.Type = String
+		return json.Unmarshal(value, &amp;port.StrVal)
+	}
+	port.Type = Int
+	return json.Unmarshal(value, &amp;port.IntVal)
+}
+
+// 实现 json.Marshaller 接口
+func (port Port) MarshalJSON() ([]byte, error) {
+	switch port.Type {
+	case Int:
+		return json.Marshal(port.IntVal)
+	case String:
+		return json.Marshal(port.StrVal)
+	default:
+		return []byte{}, fmt.Errorf(&quot;impossible Port.Type&quot;)
+	}
+}
+</code></pre>
+
+<p>接下来测试：</p>
+
+<h4 id="测试反解析">测试反解析：<a href="#测试反解析" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<ol>
+<li><p>测试反解析int
+给出json数据：</p>
+
+<pre><code>{&quot;name&quot;:&quot;yulibaozi&quot;,&quot;port&quot;:8090}
+</code></pre>
+
+<p>反解析得到的结构体数据如下：</p>
+
+<pre><code>&amp;{Name:yulibaozi Port:{Type:0 IntVal:8090 StrVal:}}
+</code></pre></li>
+
+<li><p>测试反解析string:
+给出json数据：</p>
+
+<pre><code>{&quot;name&quot;:&quot;yulibaozi&quot;,&quot;port&quot;:&quot;8090&quot;}
+</code></pre>
+
+<p>反解析得到的结构体数据如下：</p>
+
+<pre><code>&amp;{Name:yulibaozi Port:{Type:1 IntVal:0 StrVal:8090}}
+</code></pre>
+
+<h4 id="测试编码的json">测试编码的json:<a href="#测试编码的json" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4></li>
+
+<li><p>测试编码int的结构体如下:</p>
+
+<pre><code>host := &amp;Host{
+    Name: &quot;yulibaozi&quot;,
+    Port: Port{
+        Type:   Int,
+        IntVal: 8080,
+    },
+}
+</code></pre>
+
+<p>编码后的json如下：</p>
+
+<pre><code>{&quot;name&quot;:&quot;yulibaozi&quot;,&quot;port&quot;:8080}
+</code></pre></li>
+
+<li><p>测试编码string的结构体如下：</p>
+
+<pre><code>host := &amp;Host{
+    Name: &quot;yulibaozi&quot;,
+    Port: Port{
+        Type:   String,
+        StrVal: &quot;8080&quot;,
+    },
+}
+</code></pre>
+
+<p>编码后的json数据如下：</p>
+
+<pre><code>{&quot;name&quot;:&quot;yulibaozi&quot;,&quot;port&quot;:&quot;8080&quot;}
+</code></pre></li>
+</ol>
+
+<p>在反编码测试中，你会发现当json填入的类型不同时，会编码到结构体中对应的字段中。</p>
+
+<p>在编码测试中, 具体编码那个数据是由Type来确定的。</p>
+
+<h4 id="总结">总结<a href="#总结" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>其实,这篇文章只是分享了下json中使用的小技巧，他打破了在使用json时，需要呆板的数据结构的印象，转而走向了多变，灵活跳脱的风格，其实，这这个小tips的核心在于实现Unmarshaller,Marshaller这两个结构体,他们的实现是这个分享的关键,当然，你可以实现如开篇所说的那样，json某字段兼容2种及以上结构，当然，你也可以对yaml,toml等进行折腾,都会得到你想要的答案。</p>
+
+<h4 id="最后">最后<a href="#最后" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>祝大家中秋快乐。哈哈，回忆起远赴他乡工作的时候，那时心中一股将要独闯天涯的英雄气，亦有此地一别孤蓬万里征的伤感，还有自己那种挥挥手不带走半片云彩的洒脱……</p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/go">go</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>215 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-09-24 22:19 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/kubernetes/extend/2019-04-23-cronjob/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>CronJob 原理和源码分析</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/kubernetes/deploy/2018-09-06-k8s-ceph-mysql-master-slave/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>在 Kubernetes 使用 ceph 快速部署mysql主从复制集群</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

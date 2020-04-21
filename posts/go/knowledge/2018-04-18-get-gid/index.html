@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="[黑魔法] Go 获取 gid 源码详解">
+<meta itemprop="description" content="1. 应不应该拿到goroutine 怎么获取goid？  原则下是不能获取的。
+ 原因一:官方担心滥用GID实现goroutine local storage(类似java的&rdquo;thread-local&rdquo; storage)， 因为goroutine local storage很难进行垃圾回收。
+Please don&rsquo;t use goroutine local storage. It&rsquo;s highly discouraged. In fact, IIRC, we used to expose Goid, but it is hidden since we don&rsquo;t want people to do this. Potential problems include:
+ when goroutine goes away, its goroutine local storage won&rsquo;t be GCed. (you can get goid for the current goroutine, but you can&rsquo;t get a list of all running goroutines)">
+
+
+<meta itemprop="datePublished" content="2018-04-18T22:11:01&#43;08:00" />
+<meta itemprop="dateModified" content="2018-04-18T22:11:01&#43;08:00" />
+<meta itemprop="wordCount" content="379">
+
+
+
+<meta itemprop="keywords" content="go," />
+<meta property="og:title" content="[黑魔法] Go 获取 gid 源码详解" />
+<meta property="og:description" content="1. 应不应该拿到goroutine 怎么获取goid？  原则下是不能获取的。
+ 原因一:官方担心滥用GID实现goroutine local storage(类似java的&rdquo;thread-local&rdquo; storage)， 因为goroutine local storage很难进行垃圾回收。
+Please don&rsquo;t use goroutine local storage. It&rsquo;s highly discouraged. In fact, IIRC, we used to expose Goid, but it is hidden since we don&rsquo;t want people to do this. Potential problems include:
+ when goroutine goes away, its goroutine local storage won&rsquo;t be GCed. (you can get goid for the current goroutine, but you can&rsquo;t get a list of all running goroutines)" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/go/knowledge/2018-04-18-get-gid/" />
+<meta property="article:published_time" content="2018-04-18T22:11:01&#43;08:00"/>
+<meta property="article:modified_time" content="2018-04-18T22:11:01&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="[黑魔法] Go 获取 gid 源码详解"/>
+<meta name="twitter:description" content="1. 应不应该拿到goroutine 怎么获取goid？  原则下是不能获取的。
+ 原因一:官方担心滥用GID实现goroutine local storage(类似java的&rdquo;thread-local&rdquo; storage)， 因为goroutine local storage很难进行垃圾回收。
+Please don&rsquo;t use goroutine local storage. It&rsquo;s highly discouraged. In fact, IIRC, we used to expose Goid, but it is hidden since we don&rsquo;t want people to do this. Potential problems include:
+ when goroutine goes away, its goroutine local storage won&rsquo;t be GCed. (you can get goid for the current goroutine, but you can&rsquo;t get a list of all running goroutines)"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>[黑魔法] Go 获取 gid 源码详解</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Apr 18, 2018</span></div>
+				<h1>[黑魔法] Go 获取 gid 源码详解</h1>
+			</header>
+			<div class="content">
+				
+
+<h4 id="1-应不应该拿到goroutine-怎么获取goid">1. 应不应该拿到goroutine 怎么获取goid？<a href="#1-应不应该拿到goroutine-怎么获取goid" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<blockquote>
+<p>原则下是不能获取的。</p>
+</blockquote>
+
+<p>原因一:官方担心滥用GID实现goroutine local storage(类似java的&rdquo;thread-local&rdquo; storage)， 因为goroutine local storage很难进行垃圾回收。</p>
+
+<p>Please don&rsquo;t use goroutine local storage. It&rsquo;s highly discouraged. In fact, IIRC, we used to
+expose Goid, but it is hidden since we don&rsquo;t want people to do this.
+Potential problems include:</p>
+
+<ol>
+<li><p>when goroutine goes away, its goroutine local storage won&rsquo;t be GCed. (you can get goid for
+the current goroutine, but you can&rsquo;t get a list of all running goroutines)</p></li>
+
+<li><p>what if handler spawns goroutine itself? the new goroutine suddenly loses access to your
+goroutine local storage. You can guarantee that your own code won&rsquo;t spawn other goroutines,
+but in general you can&rsquo;t make sure the standard library or any 3rd party code won&rsquo;t do that.
+thread local storage is invented to help reuse bad/legacy code that assumes global state, Go
+doesn&rsquo;t have legacy code like that, and you really should design your code so that state is passed
+explicitly and not as global (e.g. resort to goroutine local storage)</p></li>
+</ol>
+
+<p>原因二:拿GOID会使用runtime.Stack()来获取当前go程的调用栈踪迹。而这个又是消耗性能的,如果在debug下,我们可以用来追查异常是可以的。</p>
+
+<blockquote>
+<p>如何调用</p>
+</blockquote>
+
+<pre><code>主要代码:
+    var buf [64]byte
+	n := runtime.Stack(buf[:], false) //这个时候GID已经在buf里面了
+	idField := strings.Fields(strings.TrimPrefix(string(buf[:n]), &quot;goroutine &quot;))[0]
+	id, err := strconv.Atoi(idField) //此时的id就是GOID
+
+所有代码:
+
+func GoID() int {
+	var buf [64]byte
+	n := runtime.Stack(buf[:], false)
+	idField := strings.Fields(strings.TrimPrefix(string(buf[:n]), &quot;goroutine &quot;))[0]
+	id, err := strconv.Atoi(idField)
+	if err != nil {
+		panic(fmt.Sprintf(&quot;cannot get goroutine id: %v&quot;, err))
+	}
+	return id
+}
+func main() {
+	fmt.Println(&quot;main&quot;, GoID())
+	var wg sync.WaitGroup
+	for i := 0; i &lt; 5; i++ {
+		i := i
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			fmt.Println(i, GoID())
+		}()
+	}
+	wg.Wait()
+}
+</code></pre>
+
+<p>其中buf里面的数据是这个样子:</p>
+
+<pre><code>goroutine 1 [running]: 
+main.GoID(0xc420041f30)
+        /Users/yulibaozi
+main 1
+使用strings字符分离&lt;goroutine  &gt;就能获取到Goid
+</code></pre>
+
+<blockquote>
+<p>深度解析背后的原理</p>
+</blockquote>
+
+<pre><code>func Stack(buf []byte, all bool) int {
+	if all { //如果需要需要获取这一刻所有go程的信息,暂停所有操作,保留现场
+		stopTheWorld(&quot;stack trace&quot;)
+	}
+
+	n := 0
+	if len(buf) &gt; 0 {
+		gp := getg()                            //每个 goroutine 都有一个自己的结构体 g
+		sp := getcallersp(unsafe.Pointer(&amp;buf)) //当前的堆栈寄存器SP
+		pc := getcallerpc()                     //返回当前当前go层的程序计数器
+		systemstack(func() {                    //在系统堆栈中获得详细的堆栈信息
+			g0 := getg()
+			// Force traceback=1 to override GOTRACEBACK setting,
+			// so that Stack's results are consistent.
+			// GOTRACEBACK is only about crash dumps.
+			g0.m.traceback = 1
+			g0.writebuf = buf[0:0:len(buf)]
+			goroutineheader(gp)
+			traceback(pc, sp, 0, gp) //获取当前 goroutine 的堆栈信息
+			if all {
+				tracebackothers(gp) //获取其他 goroutine 的堆栈信息
+			}
+			g0.m.traceback = 0
+			n = len(g0.writebuf)
+			g0.writebuf = nil
+		})
+	}
+
+	if all { //恢复如初,正常执行
+		startTheWorld()
+	}
+	return n
+}
+</code></pre>
+
+<p>参数说明:
+1. buf 保存信息的结构体
+2. all是否获取这一刻所有go程的信息。
+3. 返回值int表示数据的大小</p>
+
+<blockquote>
+<p>参考资料</p>
+</blockquote>
+
+<p><a href="https://groups.google.com/forum/#!topic/golang-nuts/Nt0hVV_nqHE">Google论坛</a>
+<a href="http://colobu.com/2016/04/01/how-to-get-goroutine-id/">鸟窝博客</a></p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/go">go</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>379 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-04-18 22:11 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/system/2018-02-24-interprocess-communication/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>进程间通信的6种方式</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/go/knowledge/2018-04-12-go-pprof/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>Go性能测试手册</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

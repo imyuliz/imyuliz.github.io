@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="Redis开发与优化总结">
+<meta itemprop="description" content="Redis中常用类型的数据结构优化：  string string内部有三种数据结构： 1. raw 2. int 3. embstr
+ 当值大于39个字节时使用raw;当值小于等于39个字节时使用embstr;当是长整型时使用int,可以是整数,浮点数（实际是字符串）,简单或复杂的字符串,也可以是二进制。但是值的最大值不超过512MB。 4. 如何判断某值所占字节数和查看编码.
+redis&gt; set yulibaozi 一个阳光的男孩 OK redis&gt; strlen yulibaozi 21 （因为一个汉字占三个字节） redis&gt; object encoding yulibaozi embstr  字符串如何优化: 1. 如果是整数,直接存储数据。如果是个字符串且长度&gt;39个字节的数据,那么可以考虑其他的数据额结构或者将长度控制在39个字节以内。 原因:因为redisObject 对象的*ptr字段:与对象的数据内容有关,如果是整数它就直接存了数据,否则表示指向数据的指针。同样对值对象是字符串且长度&lt;=39个字节的数据,内部编码是embstr类型的,字符串sds和redisObject一起分配,从而值需要一次内存操作。 2.缩减键值长度:可以去掉一些业务对象中不必要的属性来缩小数据大小。比如User对象有个注册时间。但是在我们的业务中并没有用到这个属性。那我们可以在Redis中舍弃这个属性。 3. 选择一些压缩工具来降低内存占用。比如把使用GZIP压缩JSON后可以节约约60%的空间。当然,你也需要考虑压缩/解压的速度和计算效率,因为这个他注定是频繁的。
+ Hash hash内部有两种数据结构: 1. hashtable(散列表) 2. ziplist(压缩列表,双向列表)
+ 当值最大字节数&lt;=hash-max-ziplist-value（默认是64个）且field个数&lt;=hash-max-ziplist-entries(默认512个)时使用ziplist;否则使用hashtable
+ziplist相比于hashtable更节约内存,但是ziplist的读写效率相对于hashtable有所降低。同样hashtable会消耗更对的内存。 ziplist（压缩链表）,他是一个连续的内存空间的压缩链表,他比较节约内存,压缩双链表节省前驱和后驱指针的空间（8b）
+ziplist使用连续的内存;删除操作会导致内存重新分配和释放,加大了操作的复杂性;读写操作设计复杂的指针移动,最坏达到O(N2)的时间复杂度。所以ziplist适合存储小对象和长度有限的数据。
+优化建议: 在针对性能较高的场景下时,保持使用ziplist数据结构,建议长度不要超过1000,每个元素大小控制在512个字节以内。
+ list list内部有三种数据结构: 1. ziplist(压缩列表) 2. linkedlist(双向列表) 3. quicklist（快速列表）
+ 当值最大字节数&lt;=list-max-ziplist-value（默认是64个）且field个数&lt;=list-max-ziplist-entries(默认512个)时使用ziplist;不满足上述任意一个条件使用linkedlist;
+ set set内部有两种数据结构: 1. hashtable 2. intset">
+
+
+<meta itemprop="datePublished" content="2018-03-19T20:40:09&#43;08:00" />
+<meta itemprop="dateModified" content="2018-03-19T20:40:09&#43;08:00" />
+<meta itemprop="wordCount" content="101">
+
+
+
+<meta itemprop="keywords" content="redis," />
+<meta property="og:title" content="Redis开发与优化总结" />
+<meta property="og:description" content="Redis中常用类型的数据结构优化：  string string内部有三种数据结构： 1. raw 2. int 3. embstr
+ 当值大于39个字节时使用raw;当值小于等于39个字节时使用embstr;当是长整型时使用int,可以是整数,浮点数（实际是字符串）,简单或复杂的字符串,也可以是二进制。但是值的最大值不超过512MB。 4. 如何判断某值所占字节数和查看编码.
+redis&gt; set yulibaozi 一个阳光的男孩 OK redis&gt; strlen yulibaozi 21 （因为一个汉字占三个字节） redis&gt; object encoding yulibaozi embstr  字符串如何优化: 1. 如果是整数,直接存储数据。如果是个字符串且长度&gt;39个字节的数据,那么可以考虑其他的数据额结构或者将长度控制在39个字节以内。 原因:因为redisObject 对象的*ptr字段:与对象的数据内容有关,如果是整数它就直接存了数据,否则表示指向数据的指针。同样对值对象是字符串且长度&lt;=39个字节的数据,内部编码是embstr类型的,字符串sds和redisObject一起分配,从而值需要一次内存操作。 2.缩减键值长度:可以去掉一些业务对象中不必要的属性来缩小数据大小。比如User对象有个注册时间。但是在我们的业务中并没有用到这个属性。那我们可以在Redis中舍弃这个属性。 3. 选择一些压缩工具来降低内存占用。比如把使用GZIP压缩JSON后可以节约约60%的空间。当然,你也需要考虑压缩/解压的速度和计算效率,因为这个他注定是频繁的。
+ Hash hash内部有两种数据结构: 1. hashtable(散列表) 2. ziplist(压缩列表,双向列表)
+ 当值最大字节数&lt;=hash-max-ziplist-value（默认是64个）且field个数&lt;=hash-max-ziplist-entries(默认512个)时使用ziplist;否则使用hashtable
+ziplist相比于hashtable更节约内存,但是ziplist的读写效率相对于hashtable有所降低。同样hashtable会消耗更对的内存。 ziplist（压缩链表）,他是一个连续的内存空间的压缩链表,他比较节约内存,压缩双链表节省前驱和后驱指针的空间（8b）
+ziplist使用连续的内存;删除操作会导致内存重新分配和释放,加大了操作的复杂性;读写操作设计复杂的指针移动,最坏达到O(N2)的时间复杂度。所以ziplist适合存储小对象和长度有限的数据。
+优化建议: 在针对性能较高的场景下时,保持使用ziplist数据结构,建议长度不要超过1000,每个元素大小控制在512个字节以内。
+ list list内部有三种数据结构: 1. ziplist(压缩列表) 2. linkedlist(双向列表) 3. quicklist（快速列表）
+ 当值最大字节数&lt;=list-max-ziplist-value（默认是64个）且field个数&lt;=list-max-ziplist-entries(默认512个)时使用ziplist;不满足上述任意一个条件使用linkedlist;
+ set set内部有两种数据结构: 1. hashtable 2. intset" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/redis/know/2018-03-19-redis/" />
+<meta property="article:published_time" content="2018-03-19T20:40:09&#43;08:00"/>
+<meta property="article:modified_time" content="2018-03-19T20:40:09&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Redis开发与优化总结"/>
+<meta name="twitter:description" content="Redis中常用类型的数据结构优化：  string string内部有三种数据结构： 1. raw 2. int 3. embstr
+ 当值大于39个字节时使用raw;当值小于等于39个字节时使用embstr;当是长整型时使用int,可以是整数,浮点数（实际是字符串）,简单或复杂的字符串,也可以是二进制。但是值的最大值不超过512MB。 4. 如何判断某值所占字节数和查看编码.
+redis&gt; set yulibaozi 一个阳光的男孩 OK redis&gt; strlen yulibaozi 21 （因为一个汉字占三个字节） redis&gt; object encoding yulibaozi embstr  字符串如何优化: 1. 如果是整数,直接存储数据。如果是个字符串且长度&gt;39个字节的数据,那么可以考虑其他的数据额结构或者将长度控制在39个字节以内。 原因:因为redisObject 对象的*ptr字段:与对象的数据内容有关,如果是整数它就直接存了数据,否则表示指向数据的指针。同样对值对象是字符串且长度&lt;=39个字节的数据,内部编码是embstr类型的,字符串sds和redisObject一起分配,从而值需要一次内存操作。 2.缩减键值长度:可以去掉一些业务对象中不必要的属性来缩小数据大小。比如User对象有个注册时间。但是在我们的业务中并没有用到这个属性。那我们可以在Redis中舍弃这个属性。 3. 选择一些压缩工具来降低内存占用。比如把使用GZIP压缩JSON后可以节约约60%的空间。当然,你也需要考虑压缩/解压的速度和计算效率,因为这个他注定是频繁的。
+ Hash hash内部有两种数据结构: 1. hashtable(散列表) 2. ziplist(压缩列表,双向列表)
+ 当值最大字节数&lt;=hash-max-ziplist-value（默认是64个）且field个数&lt;=hash-max-ziplist-entries(默认512个)时使用ziplist;否则使用hashtable
+ziplist相比于hashtable更节约内存,但是ziplist的读写效率相对于hashtable有所降低。同样hashtable会消耗更对的内存。 ziplist（压缩链表）,他是一个连续的内存空间的压缩链表,他比较节约内存,压缩双链表节省前驱和后驱指针的空间（8b）
+ziplist使用连续的内存;删除操作会导致内存重新分配和释放,加大了操作的复杂性;读写操作设计复杂的指针移动,最坏达到O(N2)的时间复杂度。所以ziplist适合存储小对象和长度有限的数据。
+优化建议: 在针对性能较高的场景下时,保持使用ziplist数据结构,建议长度不要超过1000,每个元素大小控制在512个字节以内。
+ list list内部有三种数据结构: 1. ziplist(压缩列表) 2. linkedlist(双向列表) 3. quicklist（快速列表）
+ 当值最大字节数&lt;=list-max-ziplist-value（默认是64个）且field个数&lt;=list-max-ziplist-entries(默认512个)时使用ziplist;不满足上述任意一个条件使用linkedlist;
+ set set内部有两种数据结构: 1. hashtable 2. intset"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Redis开发与优化总结</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Mar 19, 2018</span></div>
+				<h1>Redis开发与优化总结</h1>
+			</header>
+			<div class="content">
+				
+
+<h3 id="redis中常用类型的数据结构优化">Redis中常用类型的数据结构优化：<a href="#redis中常用类型的数据结构优化" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<blockquote>
+<h4 id="string">string<a href="#string" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>string内部有三种数据结构：
+1. raw
+2. int
+3. embstr</p>
+</blockquote>
+
+<p>当值大于39个字节时使用raw;当值小于等于39个字节时使用embstr;当是长整型时使用int,可以是整数,浮点数（实际是字符串）,简单或复杂的字符串,也可以是二进制。但是值的最大值不超过512MB。
+4. 如何判断某值所占字节数和查看编码.</p>
+
+<pre><code>redis&gt; set yulibaozi 一个阳光的男孩
+OK
+redis&gt; strlen yulibaozi
+21 （因为一个汉字占三个字节）
+redis&gt; object encoding yulibaozi
+embstr
+</code></pre>
+
+<p>字符串如何优化:
+1. 如果是整数,直接存储数据。如果是个字符串且长度&gt;39个字节的数据,那么可以考虑其他的数据额结构或者将长度控制在39个字节以内。
+原因:因为redisObject 对象的*ptr字段:与对象的数据内容有关,如果是整数它就直接存了数据,否则表示指向数据的指针。同样对值对象是字符串且长度&lt;=39个字节的数据,内部编码是embstr类型的,字符串sds和redisObject一起分配,从而值需要一次内存操作。
+2.缩减键值长度:可以去掉一些业务对象中不必要的属性来缩小数据大小。比如User对象有个注册时间。但是在我们的业务中并没有用到这个属性。那我们可以在Redis中舍弃这个属性。
+3. 选择一些压缩工具来降低内存占用。比如把使用GZIP压缩JSON后可以节约约60%的空间。当然,你也需要考虑压缩/解压的速度和计算效率,因为这个他注定是频繁的。</p>
+
+<blockquote>
+<h4 id="hash">Hash<a href="#hash" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>hash内部有两种数据结构:
+1. hashtable(散列表)
+2. ziplist(压缩列表,双向列表)</p>
+</blockquote>
+
+<p>当值最大字节数&lt;=hash-max-ziplist-value（默认是64个）且field个数&lt;=hash-max-ziplist-entries(默认512个)时使用ziplist;否则使用hashtable</p>
+
+<p>ziplist相比于hashtable更节约内存,但是ziplist的读写效率相对于hashtable有所降低。同样hashtable会消耗更对的内存。
+ziplist（压缩链表）,他是一个连续的内存空间的压缩链表,他比较节约内存,压缩双链表节省前驱和后驱指针的空间（8b）</p>
+
+<p>ziplist使用连续的内存;删除操作会导致内存重新分配和释放,加大了操作的复杂性;读写操作设计复杂的指针移动,最坏达到O(N2)的时间复杂度。所以ziplist适合存储小对象和长度有限的数据。</p>
+
+<p>优化建议:
+在针对性能较高的场景下时,保持使用ziplist数据结构,建议长度不要超过1000,每个元素大小控制在512个字节以内。</p>
+
+<blockquote>
+<h4 id="list">list<a href="#list" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>list内部有三种数据结构:
+1. ziplist(压缩列表)
+2. linkedlist(双向列表)
+3. quicklist（快速列表）</p>
+</blockquote>
+
+<p>当值最大字节数&lt;=list-max-ziplist-value（默认是64个）且field个数&lt;=list-max-ziplist-entries(默认512个)时使用ziplist;不满足上述任意一个条件使用linkedlist;</p>
+
+<blockquote>
+<h4 id="set">set<a href="#set" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>set内部有两种数据结构:
+1. hashtable
+2. intset</p>
+</blockquote>
+
+<p>当元素全部是整数且集合长度小于等于&lt;=set-max-intset-entries（默认是:512个）时使用intset否则使用hashtable</p>
+
+<blockquote>
+<h4 id="zset">zset<a href="#zset" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>zset内部有两种数据结构:
+1. skiplist(跳表)
+2. ziplist</p>
+</blockquote>
+
+<p>当值最大字节数小于&lt;=zset-max-ziplist-value（默认64个字节）且有序集合长度小于等于&lt;=zset-max-ziplist-entries(默认128个)时使用ziplist,否则使用skiplist</p>
+
+<h3 id="redis键解析与关系设计">Redis键解析与关系设计<a href="#redis键解析与关系设计" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li>在明确键意不和其他模型冲突有歧义的情况的下,键的长度尽量简短,清晰。比如user:1,如果整个项目只有它是以u打头的,我们可以使用u:1。</li>
+<li>在用键来表达关系时,我们可以使用<strong>模型:ID:关系</strong>来设计。比如:某用户下的粉丝列表可以用:<strong>u:1:fans</strong>。</li>
+<li>因为redis是个key/value数据库,在处理模型关系上没有关系数据库那么方便,所以设计之初就需要理清模型之间的关系和需要使用的redis数据结构。且在设计的时候尽可能的回避对redis阻塞命令的使用。比如keys等。</li>
+</ol>
+
+<h3 id="redis不推荐命令与替换">Redis不推荐命令与替换<a href="#redis不推荐命令与替换" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li>append 命令</li>
+</ol>
+
+<p>在值后追加数据。因为redis的字符串结构是自定义的。简单动态字符串(sds).
+在新插入一个值时,预备的字节数为0,总占用=时间占用+1个字节。1字节是&rsquo;\0&rsquo;结尾符。如果使用append最佳字符串数据,会导致这个对象预分配一倍的容量作为预备空间,同时会导致内存重分配。造成内存碎片率。预留空间分配规律如下:第一次创建不分配。追加后,如果实际数据小于1M且之间的预留空间不够，预分配一倍容量。比如原来有60byte,free=0，追加了60bytes,那么预分配120bytes,总空间就是(60+60+120+1)byte;如果数据大于1MB且预留空间不够,那么每次预分配1MB。综上述:append可能会导致白白浪费内存.</p>
+
+<p>所以我们可以直接使用set命令来代替append和setrange修改字符串,来降低内存碎片化和浪费内存。</p>
+
+<ol>
+<li>keys,hgetall之类命令就不说了。其中hgetall的复杂度是o(n),n是filed的个数。在个数较少的情况下,还可用。</li>
+</ol>
+
+<h3 id="redis结构体选择判断">Redis结构体选择判断<a href="#redis结构体选择判断" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li>如果hash使用ziplist编码的话。同样的数据,值越小,越应该选择hash而不是字符串.因为从内存的角度来说。此时的hash比string更节约内存。且值越小,内存的节约量更加明显。从写入的角度来说,hash的写入要比字符串慢,值越小,这个差距会越来越小,但是不可能持平。</li>
+<li>从业务的角度来说:如果属性经常更改。那么存hash要方便得多且更改容易,反之,字符串就没有那么容易了。</li>
+<li>如果hash使用的hashtable编码的话，那么可能不会节约内存反而可能会增加内存的消耗。</li>
+<li>ziplist编码的hash更适合存储小对象，对于大对象不但内存优化效果不明显反而会增加命令操作的耗时。</li>
+<li>ziplist在hash,list,zset下的耗时排序:list&lt;hash&lt;zset。</li>
+</ol>
+
+<p><strong>最后:推荐一本书《Redis开发与运维》</strong></p>
+
+<h3 id="tinks">Tinks<a href="#tinks" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>1、主动缓存（适用于更新可能小的情况，如一些设置或者配置）</p>
+
+<pre><code>写场景：先将数据写入到数据库，写入成功后立即把数据同步到缓存。
+
+或者写入到数据库后，把之前的缓存失效，下次请求的时候，加入到缓存中
+</code></pre>
+
+<p>2、直写(异步的方式)</p>
+
+<pre><code>直接把Cache假装当成数据库，读写都针对Cache，然后Cache负责后面的数据同步问题,
+以同步的方式 先写入数据库，写入成功后写入redis。
+如果写入数据库一直没成功，采用日志记录的方式，单开个任务队列，读取日志，主动写入数据库并写入redis缓存
+</code></pre>
+
+<p>4、其他想法：(异步的方式)</p>
+
+<pre><code>写入的时候，写入到redis,然后使用任务分发的方式，更新数据库，但是也需要和2一样，做数据库一致保证
+</code></pre>
+
+<p>5、京东做秒杀系统的做法：(异步的方式)</p>
+
+<pre><code>直接对redis做操作，同时会记录redis的操作日志，然后另外的work服务主动读取日志，同步到数据库
+</code></pre>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/redis">redis</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>101 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-03-19 20:40 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/go/algorithm/2018-02-23-binary-tree/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>Golang实现二叉查找树</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/design/knowledge/2018-03-09-microservices/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>微服务设计与实践的经验总结</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

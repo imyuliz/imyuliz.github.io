@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="Deployment和StatefulSet的使用理念和区别">
+<meta itemprop="description" content="### 理论上的区别  StatefulSet作为Kubernetes中部署应用的控制器之一,它被专门用于部署那些有状态和有持久化需求的应用,同时,它也遵循一些指定的规则。另一方面,我们熟知的Deployment也是做相似的事情。除了Kubernetes 文档中非常明确的指出:&ldquo;如果应用不需要稳定的标识或者有序的部署,删除和缩放,你应该使用无状态的副本控制器部署你的应用,这些无状态的副本控制器(例如:Deployment,ReplicaSet)或许更适合你应用的无状态需求&rdquo;。
+If an application doesn’t require any stable identifiers or ordered deployment, deletion, or scaling, you should deploy your application with a controller that provides a set of stateless replicas. Controllers such as Deployment or Replica Set may be better suited to your stateless needs.
+上面已经说明了StatefulSet和stateless replicas之间的区别,接下来,我们仔细看看:
+   Deployment StatefulSet     可以扩展更多的副本集(ReplicaSet/RS)以支持更大的负载 有序,优雅的部署和扩展(缩放)   滚动更新是根据Deployment中的PodTemplateSpec配置完成的;当一个新的ReplicaSet(RS)被新建时，Deployment会以指定的速率将Pod从旧的RS升级到新的RS,直到更新完成 有序,自动滚动更新   回滚:可以回滚到上一个/更早的版本 没有回滚,只有删除和缩小副本数   有独立的网络服务 StatefulSets目前要求Headless Service负责Pod在网络中的唯一身份    从上面的表格可以非常有底气的假设两者之间最大的区别在于网络服务的要求和StatefulSet的持久化存的储示例文档。但是,眼睛看到的不一定就是全部。">
+
+
+<meta itemprop="datePublished" content="2019-07-23T20:36:50&#43;08:00" />
+<meta itemprop="dateModified" content="2019-07-23T20:36:50&#43;08:00" />
+<meta itemprop="wordCount" content="358">
+
+
+
+<meta itemprop="keywords" content="kubernetes," />
+<meta property="og:title" content="Deployment和StatefulSet的使用理念和区别" />
+<meta property="og:description" content="### 理论上的区别  StatefulSet作为Kubernetes中部署应用的控制器之一,它被专门用于部署那些有状态和有持久化需求的应用,同时,它也遵循一些指定的规则。另一方面,我们熟知的Deployment也是做相似的事情。除了Kubernetes 文档中非常明确的指出:&ldquo;如果应用不需要稳定的标识或者有序的部署,删除和缩放,你应该使用无状态的副本控制器部署你的应用,这些无状态的副本控制器(例如:Deployment,ReplicaSet)或许更适合你应用的无状态需求&rdquo;。
+If an application doesn’t require any stable identifiers or ordered deployment, deletion, or scaling, you should deploy your application with a controller that provides a set of stateless replicas. Controllers such as Deployment or Replica Set may be better suited to your stateless needs.
+上面已经说明了StatefulSet和stateless replicas之间的区别,接下来,我们仔细看看:
+   Deployment StatefulSet     可以扩展更多的副本集(ReplicaSet/RS)以支持更大的负载 有序,优雅的部署和扩展(缩放)   滚动更新是根据Deployment中的PodTemplateSpec配置完成的;当一个新的ReplicaSet(RS)被新建时，Deployment会以指定的速率将Pod从旧的RS升级到新的RS,直到更新完成 有序,自动滚动更新   回滚:可以回滚到上一个/更早的版本 没有回滚,只有删除和缩小副本数   有独立的网络服务 StatefulSets目前要求Headless Service负责Pod在网络中的唯一身份    从上面的表格可以非常有底气的假设两者之间最大的区别在于网络服务的要求和StatefulSet的持久化存的储示例文档。但是,眼睛看到的不一定就是全部。" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/kubernetes/extend/2019-07-23-deployment-vs-statefulset/" />
+<meta property="article:published_time" content="2019-07-23T20:36:50&#43;08:00"/>
+<meta property="article:modified_time" content="2019-07-23T20:36:50&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Deployment和StatefulSet的使用理念和区别"/>
+<meta name="twitter:description" content="### 理论上的区别  StatefulSet作为Kubernetes中部署应用的控制器之一,它被专门用于部署那些有状态和有持久化需求的应用,同时,它也遵循一些指定的规则。另一方面,我们熟知的Deployment也是做相似的事情。除了Kubernetes 文档中非常明确的指出:&ldquo;如果应用不需要稳定的标识或者有序的部署,删除和缩放,你应该使用无状态的副本控制器部署你的应用,这些无状态的副本控制器(例如:Deployment,ReplicaSet)或许更适合你应用的无状态需求&rdquo;。
+If an application doesn’t require any stable identifiers or ordered deployment, deletion, or scaling, you should deploy your application with a controller that provides a set of stateless replicas. Controllers such as Deployment or Replica Set may be better suited to your stateless needs.
+上面已经说明了StatefulSet和stateless replicas之间的区别,接下来,我们仔细看看:
+   Deployment StatefulSet     可以扩展更多的副本集(ReplicaSet/RS)以支持更大的负载 有序,优雅的部署和扩展(缩放)   滚动更新是根据Deployment中的PodTemplateSpec配置完成的;当一个新的ReplicaSet(RS)被新建时，Deployment会以指定的速率将Pod从旧的RS升级到新的RS,直到更新完成 有序,自动滚动更新   回滚:可以回滚到上一个/更早的版本 没有回滚,只有删除和缩小副本数   有独立的网络服务 StatefulSets目前要求Headless Service负责Pod在网络中的唯一身份    从上面的表格可以非常有底气的假设两者之间最大的区别在于网络服务的要求和StatefulSet的持久化存的储示例文档。但是,眼睛看到的不一定就是全部。"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Deployment和StatefulSet的使用理念和区别</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Jul 23, 2019</span></div>
+				<h1>Deployment和StatefulSet的使用理念和区别</h1>
+			</header>
+			<div class="content">
+				
+
+<pre><code>### 理论上的区别
+</code></pre>
+
+<p>StatefulSet作为Kubernetes中部署应用的控制器之一,它被专门用于部署那些有状态和有持久化需求的应用,同时,它也遵循一些指定的规则。另一方面,我们熟知的Deployment也是做相似的事情。除了Kubernetes 文档中非常明确的指出:&ldquo;如果应用不需要稳定的标识或者有序的部署,删除和缩放,你应该使用无状态的副本控制器部署你的应用,这些无状态的副本控制器(例如:Deployment,ReplicaSet)或许更适合你应用的无状态需求&rdquo;。</p>
+
+<p>If an application doesn’t require any stable identifiers or ordered deployment, deletion, or scaling, you should deploy your application with a controller that provides a set of stateless replicas. Controllers such as Deployment or Replica Set may be better suited to your stateless needs.</p>
+
+<p>上面已经说明了StatefulSet和stateless replicas之间的区别,接下来,我们仔细看看:</p>
+
+<table>
+<thead>
+<tr>
+<th>Deployment</th>
+<th>StatefulSet</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>可以扩展更多的副本集(ReplicaSet/RS)以支持更大的负载</td>
+<td>有序,优雅的部署和扩展(缩放)</td>
+</tr>
+
+<tr>
+<td>滚动更新是根据Deployment中的PodTemplateSpec配置完成的;当一个新的ReplicaSet(RS)被新建时，Deployment会以指定的速率将Pod从旧的RS升级到新的RS,直到更新完成</td>
+<td>有序,自动滚动更新</td>
+</tr>
+
+<tr>
+<td>回滚:可以回滚到上一个/更早的版本</td>
+<td>没有回滚,只有删除和缩小副本数</td>
+</tr>
+
+<tr>
+<td>有独立的网络服务</td>
+<td>StatefulSets目前要求Headless Service负责Pod在网络中的唯一身份</td>
+</tr>
+</tbody>
+</table>
+
+<p>从上面的表格可以非常有底气的假设两者之间最大的区别在于网络服务的要求和StatefulSet的持久化存的储示例文档。但是,眼睛看到的不一定就是全部。</p>
+
+<h3 id="statefulsets-在实践中的总结">StatefulSets 在实践中的总结<a href="#statefulsets-在实践中的总结" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>StatefulSets的要求是满足Pod所需要的网络身份,为达到这个要求,一个标准的Kubernetes svc 需要根据<strong>selector</strong>和<strong>app</strong>(用户在标签中定义的Key)来部署，以此来满足StatefulSet的逻辑映射(逻辑映射指的是svc通过selector来选择对应Label的Pod),接下来,我使用Postgres应用来作为示例。</p>
+
+<p>以下Yaml文件定义了<strong>pgnet</strong>的Kubernetes svc,暴露的端口是:5432,定义的端口名字是:pgport,在这种情况下发布的类型是<strong>clusterIP</strong>,这意味着这个Postgres服务只能在Kubernetes集群内部访问。但是这个ClusterIP的值是:None,这意味着不会预定义IP,如果需要让外部也能访问到Postgres服务,我们可以<a href="https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services---service-types">查看文档</a>了解如何在Kubernetes之外和外部网络上公开访问它。这其中非常重要的部分是<strong>selector</strong>,它需要匹配被部署为StatefulSet的app的标签。</p>
+
+<pre><code>apiVersion: v1
+kind: Service
+metadata:
+name: pgnet
+labels:
+app: pgnet
+spec:
+ports:
+- port: 5432
+name: pgport
+clusterIP: None
+selector:
+app: postgres
+</code></pre>
+
+<p>StatefulSet的配置与Deployment非常相似,配置中的serviceName必须与上面创建的svc相匹配,容器也需要一致的端口,环境变量,volumeMounts等。</p>
+
+<p>StatefulSet的配置与Deployment的配置相比,也有几处独特之处。
+1. 从使用kubectl命令看到StatefulSet所管控的Pod的名字似乎遵从特有的规则,这点我们放在后面讨论.
+2. 挂载卷部分和Deployment中的容器相似,容器上定义的volumeMounts的名字和volumeClaimTemplates存在逻辑映射(之间的映射是根据name,在下面的配置中,我们可以着重看volumeMounts和volumeClaimTemplates部分).
+3. 鉴于Deployment可以使用StorageClass或者预定义好PersistentVolume,StatefulSet也可以预定义StorageClass实现动态挂载Volume,。我们可以在<a href="https://github.com/thecodeteam/vg-kubernetes/blob/master/scripts/examples/scaleio/storageclass.yaml">sc.yaml</a>看到相关示例。</p>
+
+<pre><code>apiVersion: apps/v1beta1
+kind: StatefulSet
+metadata:
+name: pgdatabase
+spec:
+serviceName: &quot;postgres&quot;
+replicas: 1
+template:
+metadata:
+labels:
+app: postgres
+spec:
+containers:
+- name: postgres01
+image: postgres
+ports:
+- containerPort: 5432
+name: pgport
+env:
+- name: POSTGRES_PASSWORD
+value: &quot;Password123!&quot;
+volumeMounts:
+- name: pgvolume
+mountPath: /var/lib/postgresql/data
+volumeClaimTemplates:
+- metadata:
+name: pgvolume
+spec:
+accessModes: [ &quot;ReadWriteOnce&quot; ]
+storageClassName: sio-small
+resources:
+requests:
+storage: 16Gi
+</code></pre>
+
+<p>一旦部署了StatefulSet,它会依照名称规则来显示名字,在这个Pod示例中,名称为pgdatabase的Pod会基于副本的数量有序排列(从小到大),而Deployment会以多个随机字符来保证Pod名称的唯一性,也就说Deployment控制的Pod名称是随机无序的,在名称上另一个区别是:当删除一个Pod后,Deployment会创建一个新Pod,且这个Pod的名字和之前的Pod名字是不一样的,是一个随机生成的新名字,相反,StatefulSet仍然沿用上一个Pod的名字和属性创建新的Pod,它以这种方式来保证所管控Pod的名字具有唯一性、有序性和一致性。</p>
+
+<p><img src="http://links.yulibaozi.com/a9ae1f65-48db-41a2-8ea7-d4a884d8b02416-Aug-Blog-image-1.png" alt="image" /></p>
+
+<p>另一个有趣的事情是删除Pod的时候,在Deployment中,Pod可能会重新调度在集群中的其他节点,至于会调度到那个节点,这个由调度器说了算;而在StatefulSet中,他会在之前运行的、相同的节点上重新创建(有点像落地生根),这个是有StatefulSet的默认属性决定的,这是因为StatefulSet认为没有任何理由需要从Node上强行删除Pod,Kubernetes假设以StatefulSet运行的应用程序需要稳定的网络标识和稳定的存储,并且同一Pod有多个实例可能会导致数据损坏;如果某个节点/主机需要维护而关闭或者网络不可达,那么Pod会进入 “Unknown” 或者 “Terminating” 状态,但即使在这种情况下,Pod也不会重新调度到其他节点上(是不是很头铁),除非以手动的方式删除Node对象或手动删除Pod对象且此时原本的Node不可调度或不可用,与此同时,不响应节点上的kubelet进程开始杀死Pod并在apiServer中删除对应的Pod条目,或者强行删除Pod,当然,强行删除会导致volume(挂载卷)未被正确卸载且重新调度Pod失败。</p>
+
+<h3 id="他们之间的异同">他们之间的异同<a href="#他们之间的异同" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>当阅读了StatefulSet的高可用性实践后,Deployment似乎能更好的完成工作,那为什么还推荐使用StatefulSet作为持久化应用的部署方法呢?是因为Kubernetes不希望Pod能够在另外一个节点上立即重启来增加<a href="https://en.wikipedia.org/wiki/Split-brain_(computing)">脑裂(split-brain)</a>情况的出现,如果存储提供者有能力的话,pod.Spec.TerminationGracePeriodSeconds这个配置项可以配置在StatefulSet中,同时,Controller能够在当前主机变为“Unknown”之前,在新的主机上自动重启一个Pod，持久卷的volumeClaimTemplates用来确保跨组件重新启动后仍然能够保证正确的状态,我们假设现在集群中正发生这样的灾难,因为Kubernetes支持本地存储(host),如果存储的数据未在节点间相互复制/同步或者集中于某一处,除非这个节点再次上线,否则你没有其他方法安全的还原数据。</p>
+
+<h3 id="实验论证结论">实验论证结论<a href="#实验论证结论" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<h4 id="statefulset所管控的pod的名字遵循何种规则">StatefulSet所管控的Pod的名字遵循何种规则?<a href="#statefulset所管控的pod的名字遵循何种规则" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>StatefulSet所管控的Pod的名字遵循stsname-&lt;编号&gt;，同时保证唯一性,绝不重复,有序性,中间以-分割;名字中编号遵从如下规则:</p>
+
+<pre><code>1. 是数字而不是字母,
+2. 连续的(上一个Pod的编号是0,那么下一个Pod的编号一定是1,而不是2,3或者其他),
+3. 递增的
+</code></pre>
+
+<p>另一方面,当你使用<strong>kubectl exec -it podname</strong> 进入容器后,再执行<strong>echo $HOSTNAME</strong>命令 你会发现hostname的值与pod name是完全一致的。</p>
+
+<h4 id="为什么说statefulset是有序-优雅的部署和扩展-缩放">为什么说StatefulSet是有序,优雅的部署和扩展(缩放)?<a href="#为什么说statefulset是有序-优雅的部署和扩展-缩放" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>StatefulSet在做任何操作的时候,都会遵循有序这个前提。</p>
+
+<ol>
+<li><p>在部署的时候,他会遵从顺序一个接一个的部署,如果中途有一个Pod没有达到Running状态,他也会hang在哪儿,直到当前Pod达到Running状态,才会创建下一个Pod。</p></li>
+
+<li><p>在扩容的时候,编号小的Pod没有达到Running的状态,它不会增加下一个Pod,也就说它会死等。</p>
+
+<pre><code>我们把elasticsearch-logging的副本数从1修改为4(replicas:1-&gt; replicas:4)
+    
+elasticsearch-logging-1   0/1       Pending   0         0s      &lt;none&gt;
+elasticsearch-logging-1   0/1       Pending   0         0s      kube02
+elasticsearch-logging-1   0/1       Init:0/1  0         0s      kube02
+elasticsearch-logging-1   0/1       PodInitializing   0 6s      kube02
+elasticsearch-logging-1   1/1       Running   0         7s      kube02
+elasticsearch-logging-2   0/1       Pending   0         0s      &lt;none&gt;
+elasticsearch-logging-2   0/1       Pending   0         0s      kube01
+elasticsearch-logging-2   0/1       Init:0/1   0        1s      kube01
+elasticsearch-logging-2   0/1       PodInitializing   0 3s      kube01
+elasticsearch-logging-2   0/1       ErrImagePull   0    4s      kube01
+elasticsearch-logging-2   0/1       ImagePullBackOff  0 19s     kube01
+    
+我们看到elasticsearch-logging-1状态变为Running后,才会创建elasticsearch-logging-2。
+我们的elasticsearch-logging-2遭遇了ImagePullBackOff错误,所以它会死等elasticsearch-logging-2状态变为Running后才会创建elasticsearch-logging-3。
+</code></pre></li>
+
+<li><p>在缩容的时候,是编号值大的Pod会先被删除,接下来才会删除编号小的Pod,直到达到期望值才停止。</p>
+
+<pre><code>我们把elasticsearch-logging的副本数从4修改为1(replicas:4-&gt; replicas:1),由于asticsearch-logging-2没有拉取到镜像,所以没有创建asticsearch-logging-3,它就从编号最大的Pod杀死Pod.
+    
+elasticsearch-logging-2   0/1       Terminating   0         6m   kube01
+elasticsearch-logging-2   0/1       Terminating   0         6m   kube01
+elasticsearch-logging-2   0/1       Terminating   0         6m   kube01
+elasticsearch-logging-2   0/1       Terminating   0         6m   kube01
+elasticsearch-logging-1   1/1       Terminating   0         7m   kube02
+elasticsearch-logging-1   0/1       Terminating   0         7m   kube02
+    
+在实验中,我们会看到会从编号最大的Pod开始执行杀死策略,且它是从大到小,依次执行杀死策略的。
+    
+</code></pre></li>
+
+<li><p>再次扩容到3个Pod会发现,相同Pod的名字仍然会绑定到相同的Node节点</p>
+
+<pre><code>[root@kube03 ~]# kubectl get pod -n logging -o wide
+    
+elasticsearch-logging-0           1/1       Running        1       17d   kube04
+elasticsearch-logging-1           1/1       Running        0       39s   kube02
+elasticsearch-logging-2           0/1       ErrImagePull   0       14s   kube01
+    
+从扩容到缩容的一系列操作中,我们会发现elasticsearch-logging-0始终在名为kube04的节点上。elasticsearch-logging-1一直在名为kube02的Node上,elasticsearch-logging-2也一直在名为kube01的节点上。
+</code></pre></li>
+</ol>
+
+<p>通过以上实验证明了StatefulSet是如何有序,优雅的进行部署和扩展。</p>
+
+<h4 id="headless-service是如何工作的">Headless Service是如何工作的？<a href="#headless-service是如何工作的" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>如我们所知道的那样,Headless并不会分配虚拟IP(VIP),而是以DNS的方式直接解析到对应的Pod IP,这是Headless Service相对于其他svc的主要区别。 DNS的结构遵循<strong>my-svc.my-namespace.svc.cluste.local</strong>,同时,StatefulSet的配置中有个serviceName字段,这个字段是用来维持Headless service和StatefulSet的映射关系的,通常这个字段不用手动填写,你只需要做好service和statefulSet之间的label映射关系,Kubernetes会自动将service的名称填充到StatefulSet的serviceName字段。</p>
+
+<h4 id="statefulset是如何处理持久化存储的">StatefulSet是如何处理持久化存储的?<a href="#statefulset是如何处理持久化存储的" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>在StatefulSet中我们有多种挂载数据卷来达到持久化存储的目地,例如:</p>
+
+<pre><code>1. 舍弃PV或PVC资源对象直接&quot;硬挂&quot;,你需要填入后端RBD或者NFS相关的配置信息。而这部信息往往是集群管理人员掌握的,你需要和他们沟通才能索要到这些信息,这也导致了信息的过度暴露。
+2. 使用PVC,他的优点在于你不需要配置后端存储的任何信息,你只是把你存储需求配置好就可以直接用了,比如你需要多大的容量,你想要以什么方式访问(accessMode)。至于后面挂载到PV事情你就可以不用关心了,把这些事情交给集群管理员处理或者自动实现。
+</code></pre>
+
+<p>接下来,我们主要是对第二种方式进行探讨:</p>
+
+<p>在StatefulSet的配置模板中,有项关于<strong>volumeClaimTemplates</strong>的配置,这个配置是后续创建pvc的模板,在模板中,我们通常会声明模板名字(例如:mysql),但是在PVC真正被创建时,被创建的pvc的名称和pvc模板名字有所区别,真正创建pvc的名字遵循如下规则:</p>
+
+<pre><code>    被创建的pvc名字=pvc模板名字-StatefulSet名字-编号 
+    或
+    被创建的pvc名字=pvc模板名字-StatefulSet所管控的Pod名字
+    
+    上面所表达的两种规则，其实是同一规则,生成的结果是一样的,只是表述不一样。
+</code></pre>
+
+<p>例如pvc模板名字是mysql,statefulset的名称是master,那么Statefulset所管控的pod名字是master-0,而生成的pvc名字是mysql-master-0。
+另一方面值得注意的是:如果pod和pvc绑定在了一起,那么他们编号往往是相同的(例如名为<strong>master-0</strong>的Pod绑定的pvc名字一定是<strong>mysql-master-0</strong>),且即使pod被删除重建后,他们俩仍然会绑定在一起(颇有不离不弃,生死相依的感觉),出现这一情况的原因是:被创建的pod名字仍然是上一个被删除Pod的名字,Pod的名字保持了不变,那么该Pod选择的pvc名字也就不会改变,也就是说名字,是<strong>名字</strong>的选择让他们在一起了,另外,他们看似生死相依,但是有一点例外,当Statefulset所管控的Pod被删除后且还没来及重建,在这段时间差里,刚好,有另外一个Pod绑定了这个名为:mysql-master-0的pvc,且这个pvc不支持多个Pod/host绑定,这会发生什么呢？想想都刺激。对于pvc有哪几种方式绑定pv的呢,我们可以留在后面再说。</p>
+
+<p>参考文档:</p>
+
+<p>[1] Technical Dive into StatefulSets and Deployments in Kubernetes <a href="https://blog.thecodeteam.com/2017/08/16/technical-dive-statefulsets-deployments-kubernetes/">https://blog.thecodeteam.com/2017/08/16/technical-dive-statefulsets-deployments-kubernetes/</a></p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/kubernetes">kubernetes</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>358 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2019-07-23 20:36 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/go/tools/2019-08-19-godebug-sched/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>用 GODEBUG 看调度跟踪</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/go/tools/2019-07-12-go-tool-trace/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>Go 大杀器之跟踪剖析 trace</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

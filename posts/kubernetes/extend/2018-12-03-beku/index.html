@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="[Beku] 如何使用三行代码发布你的应用到Kubernetes">
+<meta itemprop="description" content="beku的概要 众所周知，Kubernetes主要分为两大部分:部署时和运行时,Beku的定位在部署时,无需任何额外的心智负担,快速编写Kubernetes资源对象然后发布到到Kubernetes集群，这对那些开发PaaS平台的公司来说显得尤其重要,尤其是在前后端人员接口对接时和资安全保障。beku就是这样, 一个Golang人性化Kubernetes资源对象创建库,极简，无额外心智负担。
+beku的初衷  部署应用时：
+ beku期望同僚们在发布应用的时候,
+ 不用担心某个字段应该放在yaml或者json的那个层级(比如:imagePullSecrets这个字段我应该填在Pod里面还是Containers里,还是Deployment里,可能你一会记得,过一段时间你又不记得了); 也不用顾虑这个字段名是否填写正确,字段所对应的值是否符合Kubernetes要求（比如:imagepullsecrets应该是imagePullSecrets还是imagePullSecret呢; 更不用忧虑重复填写某字段不一致导致发布失败(比如:我们在使用Deployment的时候，通常会填写Pod的Labels,然后填写Deployment的Selectors,如果你需要Service时，还需要填写Service的Selectors,这可能会因为某个很小的错误填写导致发布不符合预期,引发这样的错误其实是很没必要的)等一些这些没必要担心的问题。   Paas平台研发时:
+ beku期望同僚们在开发PaaS平台前后端对接时，后端开发者不用把Kubernetes资源对象的json和交给前端填写，由于在于Kubernetes资源对象的层级比较偏复杂，这需要时间成本沟通；在沟通层级的时候，还需要沟通相关的字段，这会分散前端开发者的精力和增加开发耗时；另一方面可能也会带来安全上面的问题，比如:某些存在不怀好意的人会尝试填写其他字段来试图攻击你的应用。如果使用beku，你可以很好的解决上面的问题，在解决和前端沟通成本和减少开发的时间成本时，安全也得到了保障，后端也增加了掌控能力,同时也达到了快速开发的目地,岂不美哉, 我们仍然举个示例来说明,假设我们在开发Deployment和Service的联合发布,前端可能只需要传入:
+ { &quot;name&quot;:&quot;httpd&quot;, &quot;namespace&quot;:&quot;yulibaozi&quot;, &quot;serviceType&quot;:&quot;NodePort&quot;, &quot;port&quot;:&quot;8080&quot;, &quot;replics&quot;:2 }  前端只需要传入这些必要的字段,然后调用beku就可以发布Deployment和Service两个Kubernetes资源对象到Kubernetes了,是不是很惊叹太过简单了，你可能还会忧虑高阶需求能否得到满足,beku当然能满足,比如环境变量，挂载ceph和NFS等，不过这些都是选填,你可以很轻松的找到对他们的支持。
+beku的特性  自动发布资源对象到Kubernetes 灵活的自定义开发 极简的JSON和YAML输入/输出 自动判断资源对象的必要字段 人性化的资源对象关联发布 严谨的QOS等级设置 准确的字段自动填充 写意的链式调用  使用示例 接下来,我们以一个示例来说明如何使用beku? 这次示例的的目标是Deployment和Service的关联发布?
+使用beku创建deployment资源:
+dp, err := beku.NewDeployment().SetNamespaceAndName(&quot;yulibaozi&quot;, &quot;http&quot;). SetPodLabels(map[string]string{&quot;app&quot;: &quot;http&quot;}).SetContainer(&quot;http&quot;, &quot;wucong60/kube-node-demo1:v1&quot;, 8081).Finish() if err != nil { panic(err) }  接下来使用已有的Deployment的创建Service:
+svc, err := beku.DeploymentToSvc(dp, beku.ServiceTypeNodePort, false) if err !">
+
+
+<meta itemprop="datePublished" content="2020-03-21T20:15:22&#43;08:00" />
+<meta itemprop="dateModified" content="2020-03-21T20:15:22&#43;08:00" />
+<meta itemprop="wordCount" content="231">
+
+
+
+<meta itemprop="keywords" content="kubernetes," />
+<meta property="og:title" content="[Beku] 如何使用三行代码发布你的应用到Kubernetes" />
+<meta property="og:description" content="beku的概要 众所周知，Kubernetes主要分为两大部分:部署时和运行时,Beku的定位在部署时,无需任何额外的心智负担,快速编写Kubernetes资源对象然后发布到到Kubernetes集群，这对那些开发PaaS平台的公司来说显得尤其重要,尤其是在前后端人员接口对接时和资安全保障。beku就是这样, 一个Golang人性化Kubernetes资源对象创建库,极简，无额外心智负担。
+beku的初衷  部署应用时：
+ beku期望同僚们在发布应用的时候,
+ 不用担心某个字段应该放在yaml或者json的那个层级(比如:imagePullSecrets这个字段我应该填在Pod里面还是Containers里,还是Deployment里,可能你一会记得,过一段时间你又不记得了); 也不用顾虑这个字段名是否填写正确,字段所对应的值是否符合Kubernetes要求（比如:imagepullsecrets应该是imagePullSecrets还是imagePullSecret呢; 更不用忧虑重复填写某字段不一致导致发布失败(比如:我们在使用Deployment的时候，通常会填写Pod的Labels,然后填写Deployment的Selectors,如果你需要Service时，还需要填写Service的Selectors,这可能会因为某个很小的错误填写导致发布不符合预期,引发这样的错误其实是很没必要的)等一些这些没必要担心的问题。   Paas平台研发时:
+ beku期望同僚们在开发PaaS平台前后端对接时，后端开发者不用把Kubernetes资源对象的json和交给前端填写，由于在于Kubernetes资源对象的层级比较偏复杂，这需要时间成本沟通；在沟通层级的时候，还需要沟通相关的字段，这会分散前端开发者的精力和增加开发耗时；另一方面可能也会带来安全上面的问题，比如:某些存在不怀好意的人会尝试填写其他字段来试图攻击你的应用。如果使用beku，你可以很好的解决上面的问题，在解决和前端沟通成本和减少开发的时间成本时，安全也得到了保障，后端也增加了掌控能力,同时也达到了快速开发的目地,岂不美哉, 我们仍然举个示例来说明,假设我们在开发Deployment和Service的联合发布,前端可能只需要传入:
+ { &quot;name&quot;:&quot;httpd&quot;, &quot;namespace&quot;:&quot;yulibaozi&quot;, &quot;serviceType&quot;:&quot;NodePort&quot;, &quot;port&quot;:&quot;8080&quot;, &quot;replics&quot;:2 }  前端只需要传入这些必要的字段,然后调用beku就可以发布Deployment和Service两个Kubernetes资源对象到Kubernetes了,是不是很惊叹太过简单了，你可能还会忧虑高阶需求能否得到满足,beku当然能满足,比如环境变量，挂载ceph和NFS等，不过这些都是选填,你可以很轻松的找到对他们的支持。
+beku的特性  自动发布资源对象到Kubernetes 灵活的自定义开发 极简的JSON和YAML输入/输出 自动判断资源对象的必要字段 人性化的资源对象关联发布 严谨的QOS等级设置 准确的字段自动填充 写意的链式调用  使用示例 接下来,我们以一个示例来说明如何使用beku? 这次示例的的目标是Deployment和Service的关联发布?
+使用beku创建deployment资源:
+dp, err := beku.NewDeployment().SetNamespaceAndName(&quot;yulibaozi&quot;, &quot;http&quot;). SetPodLabels(map[string]string{&quot;app&quot;: &quot;http&quot;}).SetContainer(&quot;http&quot;, &quot;wucong60/kube-node-demo1:v1&quot;, 8081).Finish() if err != nil { panic(err) }  接下来使用已有的Deployment的创建Service:
+svc, err := beku.DeploymentToSvc(dp, beku.ServiceTypeNodePort, false) if err !" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/kubernetes/extend/2018-12-03-beku/" />
+<meta property="article:published_time" content="2020-03-21T20:15:22&#43;08:00"/>
+<meta property="article:modified_time" content="2020-03-21T20:15:22&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="[Beku] 如何使用三行代码发布你的应用到Kubernetes"/>
+<meta name="twitter:description" content="beku的概要 众所周知，Kubernetes主要分为两大部分:部署时和运行时,Beku的定位在部署时,无需任何额外的心智负担,快速编写Kubernetes资源对象然后发布到到Kubernetes集群，这对那些开发PaaS平台的公司来说显得尤其重要,尤其是在前后端人员接口对接时和资安全保障。beku就是这样, 一个Golang人性化Kubernetes资源对象创建库,极简，无额外心智负担。
+beku的初衷  部署应用时：
+ beku期望同僚们在发布应用的时候,
+ 不用担心某个字段应该放在yaml或者json的那个层级(比如:imagePullSecrets这个字段我应该填在Pod里面还是Containers里,还是Deployment里,可能你一会记得,过一段时间你又不记得了); 也不用顾虑这个字段名是否填写正确,字段所对应的值是否符合Kubernetes要求（比如:imagepullsecrets应该是imagePullSecrets还是imagePullSecret呢; 更不用忧虑重复填写某字段不一致导致发布失败(比如:我们在使用Deployment的时候，通常会填写Pod的Labels,然后填写Deployment的Selectors,如果你需要Service时，还需要填写Service的Selectors,这可能会因为某个很小的错误填写导致发布不符合预期,引发这样的错误其实是很没必要的)等一些这些没必要担心的问题。   Paas平台研发时:
+ beku期望同僚们在开发PaaS平台前后端对接时，后端开发者不用把Kubernetes资源对象的json和交给前端填写，由于在于Kubernetes资源对象的层级比较偏复杂，这需要时间成本沟通；在沟通层级的时候，还需要沟通相关的字段，这会分散前端开发者的精力和增加开发耗时；另一方面可能也会带来安全上面的问题，比如:某些存在不怀好意的人会尝试填写其他字段来试图攻击你的应用。如果使用beku，你可以很好的解决上面的问题，在解决和前端沟通成本和减少开发的时间成本时，安全也得到了保障，后端也增加了掌控能力,同时也达到了快速开发的目地,岂不美哉, 我们仍然举个示例来说明,假设我们在开发Deployment和Service的联合发布,前端可能只需要传入:
+ { &quot;name&quot;:&quot;httpd&quot;, &quot;namespace&quot;:&quot;yulibaozi&quot;, &quot;serviceType&quot;:&quot;NodePort&quot;, &quot;port&quot;:&quot;8080&quot;, &quot;replics&quot;:2 }  前端只需要传入这些必要的字段,然后调用beku就可以发布Deployment和Service两个Kubernetes资源对象到Kubernetes了,是不是很惊叹太过简单了，你可能还会忧虑高阶需求能否得到满足,beku当然能满足,比如环境变量，挂载ceph和NFS等，不过这些都是选填,你可以很轻松的找到对他们的支持。
+beku的特性  自动发布资源对象到Kubernetes 灵活的自定义开发 极简的JSON和YAML输入/输出 自动判断资源对象的必要字段 人性化的资源对象关联发布 严谨的QOS等级设置 准确的字段自动填充 写意的链式调用  使用示例 接下来,我们以一个示例来说明如何使用beku? 这次示例的的目标是Deployment和Service的关联发布?
+使用beku创建deployment资源:
+dp, err := beku.NewDeployment().SetNamespaceAndName(&quot;yulibaozi&quot;, &quot;http&quot;). SetPodLabels(map[string]string{&quot;app&quot;: &quot;http&quot;}).SetContainer(&quot;http&quot;, &quot;wucong60/kube-node-demo1:v1&quot;, 8081).Finish() if err != nil { panic(err) }  接下来使用已有的Deployment的创建Service:
+svc, err := beku.DeploymentToSvc(dp, beku.ServiceTypeNodePort, false) if err !"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>[Beku] 如何使用三行代码发布你的应用到Kubernetes</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Mar 21, 2020</span></div>
+				<h1>[Beku] 如何使用三行代码发布你的应用到Kubernetes</h1>
+			</header>
+			<div class="content">
+				
+
+<h3 id="beku的概要">beku的概要<a href="#beku的概要" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>众所周知，Kubernetes主要分为两大部分:部署时和运行时,Beku的定位在部署时,无需任何额外的心智负担,快速编写Kubernetes资源对象然后发布到到Kubernetes集群，这对那些开发PaaS平台的公司来说显得尤其重要,尤其是在前后端人员接口对接时和资安全保障。beku就是这样, 一个Golang人性化Kubernetes资源对象创建库,极简，无额外心智负担。</p>
+
+<h3 id="beku的初衷">beku的初衷<a href="#beku的初衷" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<blockquote>
+<p>部署应用时：</p>
+</blockquote>
+
+<p>beku期望同僚们在发布应用的时候,</p>
+
+<ol>
+<li>不用担心某个字段应该放在yaml或者json的那个层级(比如:imagePullSecrets这个字段我应该填在Pod里面还是Containers里,还是Deployment里,可能你一会记得,过一段时间你又不记得了);</li>
+<li>也不用顾虑这个字段名是否填写正确,字段所对应的值是否符合Kubernetes要求（比如:imagepullsecrets应该是imagePullSecrets还是imagePullSecret呢;</li>
+<li>更不用忧虑重复填写某字段不一致导致发布失败(比如:我们在使用Deployment的时候，通常会填写Pod的Labels,然后填写Deployment的Selectors,如果你需要Service时，还需要填写Service的Selectors,这可能会因为某个很小的错误填写导致发布不符合预期,引发这样的错误其实是很没必要的)等一些这些没必要担心的问题。</li>
+</ol>
+
+<blockquote>
+<p>Paas平台研发时:</p>
+</blockquote>
+
+<p>beku期望同僚们在开发PaaS平台前后端对接时，后端开发者不用把Kubernetes资源对象的json和交给前端填写，由于在于Kubernetes资源对象的层级比较偏复杂，这需要时间成本沟通；在沟通层级的时候，还需要沟通相关的字段，这会分散前端开发者的精力和增加开发耗时；另一方面可能也会带来安全上面的问题，比如:某些存在不怀好意的人会尝试填写其他字段来试图攻击你的应用。如果使用beku，你可以很好的解决上面的问题，在解决和前端沟通成本和减少开发的时间成本时，安全也得到了保障，后端也增加了掌控能力,同时也达到了快速开发的目地,岂不美哉,
+我们仍然举个示例来说明,假设我们在开发Deployment和Service的联合发布,前端可能只需要传入:</p>
+
+<pre><code>    {
+        
+        &quot;name&quot;:&quot;httpd&quot;,
+        &quot;namespace&quot;:&quot;yulibaozi&quot;,
+        &quot;serviceType&quot;:&quot;NodePort&quot;,
+        &quot;port&quot;:&quot;8080&quot;,
+        &quot;replics&quot;:2
+    }
+</code></pre>
+
+<p>前端只需要传入这些必要的字段,然后调用beku就可以发布Deployment和Service两个Kubernetes资源对象到Kubernetes了,是不是很惊叹太过简单了，你可能还会忧虑高阶需求能否得到满足,beku当然能满足,比如环境变量，挂载ceph和NFS等，不过这些都是选填,你可以很轻松的找到对他们的支持。</p>
+
+<h3 id="beku的特性">beku的特性<a href="#beku的特性" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ul>
+<li>自动发布资源对象到Kubernetes</li>
+<li>灵活的自定义开发</li>
+<li>极简的JSON和YAML输入/输出</li>
+<li>自动判断资源对象的必要字段</li>
+<li>人性化的资源对象关联发布</li>
+<li>严谨的QOS等级设置</li>
+<li>准确的字段自动填充</li>
+<li>写意的链式调用</li>
+</ul>
+
+<h3 id="使用示例">使用示例<a href="#使用示例" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>接下来,我们以一个示例来说明如何使用beku? 这次示例的的目标是Deployment和Service的关联发布?</p>
+
+<p>使用beku创建deployment资源:</p>
+
+<pre><code>dp, err := beku.NewDeployment().SetNamespaceAndName(&quot;yulibaozi&quot;, &quot;http&quot;).
+		SetPodLabels(map[string]string{&quot;app&quot;: &quot;http&quot;}).SetContainer(&quot;http&quot;, &quot;wucong60/kube-node-demo1:v1&quot;, 8081).Finish()
+	if err != nil {
+		panic(err)
+	}
+</code></pre>
+
+<p>接下来使用已有的Deployment的创建Service:</p>
+
+<pre><code>svc, err := beku.DeploymentToSvc(dp, beku.ServiceTypeNodePort, false)
+	if err != nil {
+		panic(err)
+	}
+</code></pre>
+
+<p>上面两个代码就已经创建好了两个Kubernetes资源对象，只待发布，如果你需要自动发布,你需要向beku注册ApiServer,代码如下:</p>
+
+<pre><code>err := beku.RegisterK8sClient(&quot;http://192.168.0.183&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;)
+	if err != nil {
+		panic(err)
+	}
+同时,把Finish()改成Release(),DeploymentToSvc(dp, beku.ServiceTypeNodePort, true)
+</code></pre>
+
+<p>修改好了这两个地方,就可自动发布了，是不是很简单,这只是beku一个最基本的示例，他还有更优秀和更高级的用法，只待你去探索。</p>
+
+<h3 id="beku的使用习惯">beku的使用习惯<a href="#beku的使用习惯" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li>beku的使用习惯是以NewXXX()开始链式调用, 最终以调用Finish()表示调用结束, 从而得到完整的kubernetes资源对象配置信息。</li>
+<li>所有的填写都以SetXXX()开头, 所有的获取都以GetXXX()开头。</li>
+<li>在使用beku时, 尽量不使用强转的方式来满足函数所需要的变量类型, 这会引发未知错误。</li>
+<li>在使用beku时, 如果有函数的参数不知道填什么, 实现函数的注释中有相关阐述。</li>
+<li>在beku的应用场景中, Pod中的第一个container往往有至高地位, 拥有优先设置的权利, 随着序列的变大越显得平凡, 比如:第一次设置环境的时候, 只会为第一个container设置, 而不会为第二个设置, 当你第二次调用设置环境变量方法时, 才会设置第二container的环境变量, 以此类推。</li>
+<li>如果某结构体存在<strong>union</strong>字符时, 那么说明会同时创建两个Kubernetes资源对象, 例如:Deployment和Service的联合,PersistentVolume和PersistentVolumeClaim的联合</li>
+</ol>
+
+<h3 id="文以终结-但艺不止步">文以终结,但艺不止步<a href="#文以终结-但艺不止步" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>项目及更多示例查看:<a href="https://github.com/yulibaozi/beku">https://github.com/yulibaozi/beku</a>
+ 欢迎您的各种建议、吐槽,issue,pr!</p>
+
+<h3 id="上文的示例-完整代码如下">上文的示例,完整代码如下:<a href="#上文的示例-完整代码如下" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<pre><code>
+import (
+	&quot;fmt&quot;
+
+	&quot;github.com/yulibaozi/beku&quot;
+	&quot;k8s.io/api/apps/v1&quot;
+	corev1 &quot;k8s.io/api/core/v1&quot;
+)
+
+type DepAndSvc struct {
+	Namespace   string
+	Name        string
+	Labels      map[string]string
+	Port        int32
+	Image       string
+	ImageName   string
+	ServiceType beku.ServiceType
+}
+
+func main() {
+	depAndSvcInfo := &amp;DepAndSvc{
+		Namespace:   &quot;yulibaozi&quot;,
+		Name:        &quot;http&quot;,
+		Labels:      map[string]string{&quot;app&quot;: &quot;http&quot;},
+		Port:        8081,
+		Image:       &quot;wucong60/kube-node-demo1:v1&quot;,
+		ImageName:   &quot;http&quot;,
+		ServiceType: &quot;NodePort&quot;,
+	}
+	//注册Kubernetes的ApiServer
+	err := beku.RegisterK8sClient(&quot;http://192.168.0.183&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;)
+	if err != nil {
+		panic(err)
+	}
+	//发布应用
+	dp, svc, err := UnionDepAndSvc(depAndSvcInfo)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf(&quot;%+v&quot;, svc)
+	fmt.Printf(&quot;%+v&quot;, dp)
+}
+
+func UnionDepAndSvc(info *DepAndSvc) (dp *v1.Deployment, svc *corev1.Service, err error) {
+	dp, err = beku.NewDeployment().SetNamespaceAndName(info.Namespace, info.Name).
+		SetPodLabels(info.Labels).SetContainer(info.ImageName, info.Image, info.Port).Release()
+	if err != nil {
+		return
+	}
+	svc, err = beku.DeploymentToSvc(dp, info.ServiceType, true)
+	if err != nil {
+		return
+	}
+	return
+}
+
+
+</code></pre>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/kubernetes">kubernetes</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>231 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-03-21 20:15 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/kubernetes/extend/2020-04-22-use-kubebuilder-to-operator/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>[译]使用 Kubebuilder 开发 Operator</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/kubernetes/deploy/2019-12-21-fluent-bit&#43;elasticsearch&#43;kibana/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>收集kubernetes控制台日志及元数据(fluent-bit&#43;elasticsearch&#43;kibana搭建)</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

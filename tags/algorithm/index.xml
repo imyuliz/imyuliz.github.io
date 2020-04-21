@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>algorithm on yulibaozi</title>
+    <link>https://yulibaozi.com/tags/algorithm/</link>
+    <description>Recent content in algorithm on yulibaozi</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-hans</language>
+    <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
+    <lastBuildDate>Fri, 23 Mar 2018 21:00:47 +0800</lastBuildDate>
+    
+	<atom:link href="https://yulibaozi.com/tags/algorithm/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Golang实现二叉查找树</title>
+      <link>https://yulibaozi.com/posts/go/algorithm/2018-02-23-binary-tree/</link>
+      <pubDate>Fri, 23 Mar 2018 21:00:47 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/go/algorithm/2018-02-23-binary-tree/</guid>
+      <description>为简单起见，键值均为整型。  定义接口(tree.go)：
+type Tree interface { Put(k, v int) //新增或修改 	Get(k int) int //查询 	Delete(k int) //删除 	Size() int //树的大小 	Min() int //最小键 	DeleteMin() //删除最小键 } 二叉查找树(binary_tree.go)：
+//二叉查找树 type BinaryTree struct { root *node n int } //创建节点 func newNode(k, v int) *node { return &amp;amp;node{k: k, v: v, sz: 1} } //创建二叉查找树 func NewBinaryTree() *BinaryTree { return &amp;amp;BinaryTree{} } //增加或修改 func (bt *BinaryTree) Put(k, v int) { bt.</description>
+    </item>
+    
+    <item>
+      <title>Golang两种方式反转二叉树（镜像二叉树）</title>
+      <link>https://yulibaozi.com/posts/go/algorithm/2018-02-24-mirror-binary-tree/</link>
+      <pubDate>Sat, 24 Feb 2018 22:08:27 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/go/algorithm/2018-02-24-mirror-binary-tree/</guid>
+      <description>递归的方式 // Mirror 反转(镜像)二叉树--递归的方式 func (t *TNode) Mirror(root *TNode) { if root == nil { return } if root.left == nil &amp;amp;&amp;amp; root.right == nil { return } tem := root.left root.left = root.right root.right = tem t.Mirror(root.left) t.Mirror(root.right) }  队列的方式 func (t *TNode) MirrorByQue(root *TNode) { if root == nil { return } list := list.New() list.PushBack(root) for list.Len() != 0 { // 删除队列中的第一个变量 // delnode:= list.Remove(list.Front()) delnode := (list.</description>
+    </item>
+    
+    <item>
+      <title>三向切分快速排序</title>
+      <link>https://yulibaozi.com/posts/go/algorithm/2018-02-23-three-way-split-quick-sort/</link>
+      <pubDate>Fri, 23 Feb 2018 20:19:49 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/go/algorithm/2018-02-23-three-way-split-quick-sort/</guid>
+      <description>封装成函数：
+//三向切分快速排序 func ThreeWayQuickSort(s []int) { sort3way(s, 0, len(s)-1) } //在lt之前的(lo~lt-1)都小于中间值 //在gt之前的(gt+1~hi)都大于中间值 //在lt~i-1的都等于中间值 //在i~gt的都还不确定（最终i会大于gt，即不确定的将不复存在） func sort3way(s []int, lo, hi int) { if lo &amp;gt;= hi { return } v, lt, i, gt := s[lo], lo, lo+1, hi for i &amp;lt;= gt { if s[i] &amp;lt; v { swap(s, i, lt) lt++ i++ } else if s[i] &amp;gt; v { swap(s, i, gt) gt-- } else { i++ } } sort3way(s, lo, lt-1) sort3way(s, gt+1, hi) } func swap(s []int, i int, j int) { s[i], s[j] = s[j], s[i] } 测试：</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="Mysql不同数据类型的差异对比与取舍">
+<meta itemprop="description" content="数据库设计  前要：字符串长度不是定义字节数，而是字符数，多字节字符集需要更多的空间存储单个字符。
+ 字段设计维度的思考 可以按照以下三个维度考虑设计： - 按照字段的使用频率设计，预判性的分为冷、温、热字段设计表 - 根据展示数据展示位置来设计，比如有些数据只在个人中心显示而不会在其他地方显示 - 根据字段的大小设计表，比如，有些大文本 text，blob的类型的可以考虑拆分。 - 按照读／写（更新）的比例来设计表
+数据类型的选择  更小的通常更快，性能更佳原因在于占用更少的磁盘，内存，cpu缓存并且需要处理的cpu周期也更小。但是要确认你没有低估存储值的范围 尽量避免NULL，相对于mysql来说，他更难优化，因为NULL的列使得索引、索引统计和值比较都更为复杂。 在mysql中，整型的计算一般使用bigint（64位）来计算，即使是32位的环境也是如此。但是一些聚合函数例外，他们使用decimal和double来计算 decimal类型通常用来存储精确小数，因为他支持高精确计算（5.0及其以后）   索引的建立  尽量避免在可为NULL的列上创建索引  应该使用整型来存储IP地址？ 通常情况下，人们使用varchar（15）来存储IPv4的地址，事实上，他们是32位的无符号整型，而不是字符串，用小数点分割成四部分只是为了让人们简单易懂，所以应该用无符号整型来存储ip地址，mysql同时也提供了INET_ATON（）和INET_NTOA()函数在这两者之间转换。
+如何在数据库中存储钱？ 将需要存储的货币单位更加小数的位数乘以相应的倍数即可，假设，我们要存储到万分之一分，那么我们就把所有的金额乘以一百万，将结果存储在bigint中，这样就可以避免浮点存储计算不精确和decimal精确计算代价高的问题。
+数据库中DATETIME和TIMESAMP的区别？ 他们都可以存储相同的数据类型：时间和日期，精确到秒。 但是区别： - TIMESAMP只使用DATETIME一半的存储空间，并且会根据时区变化，具有特殊的自动更新能力。 - TIMESAMP允许的时间范围要小很多，所以有时候他上面的特殊能力可能为成为他的障碍。 - TIMESAMP能表示从1970年1月1日午夜以来的秒数到2038年,而DATETIME能保存1001年到9999年，精度为秒。
+在数据库中如何保存到微秒级别的时间戳？ 答案是：使用bigint类型存储微秒级别的时间戳也可以切换到mariadb来代替mysql
+varchar和char的区别？ varchar：
+varchar类型存储的是可变长的字符串，他比定长类型的更节省空间，因为他只用必要的空间，字符越短使用越少的空间，但是有一种情况例外，就是使用ROW_FORMAT=FIXED创建的话，每一行都使用的定长存储，这很浪费空间，另外varchar需要一到两个字节额外记录字符串的长度，如果列小于255个字节，那么使用一个字节，否则使用两个。假设使用latin1字符集，则一个varchar（10）的列需要11个字节的存储空间，而varchar（20000）需要20002个字节，因为需要存储长度信息。
+varchar虽然节省了空间，对性能有帮助，但由于是变长的，在update时可能会让行比原来更长，那么这就有额外的工作，这个行占用的空间增长，并且在此页内没有更多的空间存储，这种情况下，不同的存储引擎的处理方式不一样，比如：myisam将拆成不同的片段存储，innodb则需要分裂页使得行可以放在列内，总之，就是加重了碎片化。
+char： char是定长的，mysql会根据定义的字符串长度来分配足够的空间，当存储char的时候，mysql会删除末尾的空格，且char值会根据采用空格进行填充
+总结： varchar适合 - 字符串列的最大长度比平均长度大很多，列更新很少的情况，这样碎片化不是问题，就像使用utf-8这样复杂的字符集，每个字符度使用不同的字节数进行存储。 - 注意：innodb会把过长的varchar处理成blob
+char适合 - 存储很短的字符串或者所有的值接近同一个长度，例如char比较适合存储密码md5值，因为这是一个定长的值。 - 对于经常变更的数据，char也比varchar更好，因为定长的不容易产生碎片。 - 对于非常短的列，char比varchar在存储空间上更有效率，因为varchar会需要额外字节来记录长度。
+数据库索引 一、索引的特点  1.索引可以加快数据库的检索速度 2.索引降低了数据库插入、修改、删除等维护任务的速度 3.索引创建在表上，不能创建在视图上 4.索引既可以直接创建，也可以间接创建 5.可以在优化隐藏中，使用索引 6.">
+
+
+<meta itemprop="datePublished" content="2018-01-24T20:45:09&#43;08:00" />
+<meta itemprop="dateModified" content="2018-01-24T20:45:09&#43;08:00" />
+<meta itemprop="wordCount" content="81">
+
+
+
+<meta itemprop="keywords" content="mysql," />
+<meta property="og:title" content="Mysql不同数据类型的差异对比与取舍" />
+<meta property="og:description" content="数据库设计  前要：字符串长度不是定义字节数，而是字符数，多字节字符集需要更多的空间存储单个字符。
+ 字段设计维度的思考 可以按照以下三个维度考虑设计： - 按照字段的使用频率设计，预判性的分为冷、温、热字段设计表 - 根据展示数据展示位置来设计，比如有些数据只在个人中心显示而不会在其他地方显示 - 根据字段的大小设计表，比如，有些大文本 text，blob的类型的可以考虑拆分。 - 按照读／写（更新）的比例来设计表
+数据类型的选择  更小的通常更快，性能更佳原因在于占用更少的磁盘，内存，cpu缓存并且需要处理的cpu周期也更小。但是要确认你没有低估存储值的范围 尽量避免NULL，相对于mysql来说，他更难优化，因为NULL的列使得索引、索引统计和值比较都更为复杂。 在mysql中，整型的计算一般使用bigint（64位）来计算，即使是32位的环境也是如此。但是一些聚合函数例外，他们使用decimal和double来计算 decimal类型通常用来存储精确小数，因为他支持高精确计算（5.0及其以后）   索引的建立  尽量避免在可为NULL的列上创建索引  应该使用整型来存储IP地址？ 通常情况下，人们使用varchar（15）来存储IPv4的地址，事实上，他们是32位的无符号整型，而不是字符串，用小数点分割成四部分只是为了让人们简单易懂，所以应该用无符号整型来存储ip地址，mysql同时也提供了INET_ATON（）和INET_NTOA()函数在这两者之间转换。
+如何在数据库中存储钱？ 将需要存储的货币单位更加小数的位数乘以相应的倍数即可，假设，我们要存储到万分之一分，那么我们就把所有的金额乘以一百万，将结果存储在bigint中，这样就可以避免浮点存储计算不精确和decimal精确计算代价高的问题。
+数据库中DATETIME和TIMESAMP的区别？ 他们都可以存储相同的数据类型：时间和日期，精确到秒。 但是区别： - TIMESAMP只使用DATETIME一半的存储空间，并且会根据时区变化，具有特殊的自动更新能力。 - TIMESAMP允许的时间范围要小很多，所以有时候他上面的特殊能力可能为成为他的障碍。 - TIMESAMP能表示从1970年1月1日午夜以来的秒数到2038年,而DATETIME能保存1001年到9999年，精度为秒。
+在数据库中如何保存到微秒级别的时间戳？ 答案是：使用bigint类型存储微秒级别的时间戳也可以切换到mariadb来代替mysql
+varchar和char的区别？ varchar：
+varchar类型存储的是可变长的字符串，他比定长类型的更节省空间，因为他只用必要的空间，字符越短使用越少的空间，但是有一种情况例外，就是使用ROW_FORMAT=FIXED创建的话，每一行都使用的定长存储，这很浪费空间，另外varchar需要一到两个字节额外记录字符串的长度，如果列小于255个字节，那么使用一个字节，否则使用两个。假设使用latin1字符集，则一个varchar（10）的列需要11个字节的存储空间，而varchar（20000）需要20002个字节，因为需要存储长度信息。
+varchar虽然节省了空间，对性能有帮助，但由于是变长的，在update时可能会让行比原来更长，那么这就有额外的工作，这个行占用的空间增长，并且在此页内没有更多的空间存储，这种情况下，不同的存储引擎的处理方式不一样，比如：myisam将拆成不同的片段存储，innodb则需要分裂页使得行可以放在列内，总之，就是加重了碎片化。
+char： char是定长的，mysql会根据定义的字符串长度来分配足够的空间，当存储char的时候，mysql会删除末尾的空格，且char值会根据采用空格进行填充
+总结： varchar适合 - 字符串列的最大长度比平均长度大很多，列更新很少的情况，这样碎片化不是问题，就像使用utf-8这样复杂的字符集，每个字符度使用不同的字节数进行存储。 - 注意：innodb会把过长的varchar处理成blob
+char适合 - 存储很短的字符串或者所有的值接近同一个长度，例如char比较适合存储密码md5值，因为这是一个定长的值。 - 对于经常变更的数据，char也比varchar更好，因为定长的不容易产生碎片。 - 对于非常短的列，char比varchar在存储空间上更有效率，因为varchar会需要额外字节来记录长度。
+数据库索引 一、索引的特点  1.索引可以加快数据库的检索速度 2.索引降低了数据库插入、修改、删除等维护任务的速度 3.索引创建在表上，不能创建在视图上 4.索引既可以直接创建，也可以间接创建 5.可以在优化隐藏中，使用索引 6." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/mysql/knowledge/2018-01-24-mysql/" />
+<meta property="article:published_time" content="2018-01-24T20:45:09&#43;08:00"/>
+<meta property="article:modified_time" content="2018-01-24T20:45:09&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Mysql不同数据类型的差异对比与取舍"/>
+<meta name="twitter:description" content="数据库设计  前要：字符串长度不是定义字节数，而是字符数，多字节字符集需要更多的空间存储单个字符。
+ 字段设计维度的思考 可以按照以下三个维度考虑设计： - 按照字段的使用频率设计，预判性的分为冷、温、热字段设计表 - 根据展示数据展示位置来设计，比如有些数据只在个人中心显示而不会在其他地方显示 - 根据字段的大小设计表，比如，有些大文本 text，blob的类型的可以考虑拆分。 - 按照读／写（更新）的比例来设计表
+数据类型的选择  更小的通常更快，性能更佳原因在于占用更少的磁盘，内存，cpu缓存并且需要处理的cpu周期也更小。但是要确认你没有低估存储值的范围 尽量避免NULL，相对于mysql来说，他更难优化，因为NULL的列使得索引、索引统计和值比较都更为复杂。 在mysql中，整型的计算一般使用bigint（64位）来计算，即使是32位的环境也是如此。但是一些聚合函数例外，他们使用decimal和double来计算 decimal类型通常用来存储精确小数，因为他支持高精确计算（5.0及其以后）   索引的建立  尽量避免在可为NULL的列上创建索引  应该使用整型来存储IP地址？ 通常情况下，人们使用varchar（15）来存储IPv4的地址，事实上，他们是32位的无符号整型，而不是字符串，用小数点分割成四部分只是为了让人们简单易懂，所以应该用无符号整型来存储ip地址，mysql同时也提供了INET_ATON（）和INET_NTOA()函数在这两者之间转换。
+如何在数据库中存储钱？ 将需要存储的货币单位更加小数的位数乘以相应的倍数即可，假设，我们要存储到万分之一分，那么我们就把所有的金额乘以一百万，将结果存储在bigint中，这样就可以避免浮点存储计算不精确和decimal精确计算代价高的问题。
+数据库中DATETIME和TIMESAMP的区别？ 他们都可以存储相同的数据类型：时间和日期，精确到秒。 但是区别： - TIMESAMP只使用DATETIME一半的存储空间，并且会根据时区变化，具有特殊的自动更新能力。 - TIMESAMP允许的时间范围要小很多，所以有时候他上面的特殊能力可能为成为他的障碍。 - TIMESAMP能表示从1970年1月1日午夜以来的秒数到2038年,而DATETIME能保存1001年到9999年，精度为秒。
+在数据库中如何保存到微秒级别的时间戳？ 答案是：使用bigint类型存储微秒级别的时间戳也可以切换到mariadb来代替mysql
+varchar和char的区别？ varchar：
+varchar类型存储的是可变长的字符串，他比定长类型的更节省空间，因为他只用必要的空间，字符越短使用越少的空间，但是有一种情况例外，就是使用ROW_FORMAT=FIXED创建的话，每一行都使用的定长存储，这很浪费空间，另外varchar需要一到两个字节额外记录字符串的长度，如果列小于255个字节，那么使用一个字节，否则使用两个。假设使用latin1字符集，则一个varchar（10）的列需要11个字节的存储空间，而varchar（20000）需要20002个字节，因为需要存储长度信息。
+varchar虽然节省了空间，对性能有帮助，但由于是变长的，在update时可能会让行比原来更长，那么这就有额外的工作，这个行占用的空间增长，并且在此页内没有更多的空间存储，这种情况下，不同的存储引擎的处理方式不一样，比如：myisam将拆成不同的片段存储，innodb则需要分裂页使得行可以放在列内，总之，就是加重了碎片化。
+char： char是定长的，mysql会根据定义的字符串长度来分配足够的空间，当存储char的时候，mysql会删除末尾的空格，且char值会根据采用空格进行填充
+总结： varchar适合 - 字符串列的最大长度比平均长度大很多，列更新很少的情况，这样碎片化不是问题，就像使用utf-8这样复杂的字符集，每个字符度使用不同的字节数进行存储。 - 注意：innodb会把过长的varchar处理成blob
+char适合 - 存储很短的字符串或者所有的值接近同一个长度，例如char比较适合存储密码md5值，因为这是一个定长的值。 - 对于经常变更的数据，char也比varchar更好，因为定长的不容易产生碎片。 - 对于非常短的列，char比varchar在存储空间上更有效率，因为varchar会需要额外字节来记录长度。
+数据库索引 一、索引的特点  1.索引可以加快数据库的检索速度 2.索引降低了数据库插入、修改、删除等维护任务的速度 3.索引创建在表上，不能创建在视图上 4.索引既可以直接创建，也可以间接创建 5.可以在优化隐藏中，使用索引 6."/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Mysql不同数据类型的差异对比与取舍</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Jan 24, 2018</span></div>
+				<h1>Mysql不同数据类型的差异对比与取舍</h1>
+			</header>
+			<div class="content">
+				
+
+<h2 id="数据库设计">数据库设计<a href="#数据库设计" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<blockquote>
+<p>前要：字符串长度不是定义字节数，而是字符数，多字节字符集需要更多的空间存储单个字符。</p>
+</blockquote>
+
+<h4 id="字段设计维度的思考">字段设计维度的思考<a href="#字段设计维度的思考" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>可以按照以下三个维度考虑设计：
+- 按照字段的使用频率设计，预判性的分为冷、温、热字段设计表
+- 根据展示数据展示位置来设计，比如有些数据只在个人中心显示而不会在其他地方显示
+- 根据字段的大小设计表，比如，有些大文本 text，blob的类型的可以考虑拆分。
+- 按照读／写（更新）的比例来设计表</p>
+
+<h4 id="数据类型的选择">数据类型的选择<a href="#数据类型的选择" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<ul>
+<li>更小的通常更快，性能更佳原因在于占用更少的磁盘，内存，cpu缓存并且需要处理的cpu周期也更小。但是要确认你没有低估存储值的范围</li>
+<li>尽量避免NULL，相对于mysql来说，他更难优化，因为NULL的列使得索引、索引统计和值比较都更为复杂。</li>
+<li>在mysql中，整型的计算一般使用bigint（64位）来计算，即使是32位的环境也是如此。但是一些聚合函数例外，他们使用decimal和double来计算</li>
+<li>decimal类型通常用来存储精确小数，因为他支持高精确计算（5.0及其以后）</li>
+<li></li>
+</ul>
+
+<h4 id="索引的建立">索引的建立<a href="#索引的建立" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<ul>
+<li>尽量避免在可为NULL的列上创建索引</li>
+</ul>
+
+<h4 id="应该使用整型来存储ip地址">应该使用整型来存储IP地址？<a href="#应该使用整型来存储ip地址" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>通常情况下，人们使用varchar（15）来存储IPv4的地址，事实上，他们是32位的无符号整型，而不是字符串，用小数点分割成四部分只是为了让人们简单易懂，所以应该用无符号整型来存储ip地址，mysql同时也提供了INET_ATON（）和INET_NTOA()函数在这两者之间转换。</p>
+
+<h4 id="如何在数据库中存储钱">如何在数据库中存储钱？<a href="#如何在数据库中存储钱" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>将需要存储的货币单位更加小数的位数乘以相应的倍数即可，假设，我们要存储到万分之一分，那么我们就把所有的金额乘以一百万，将结果存储在bigint中，这样就可以避免浮点存储计算不精确和decimal精确计算代价高的问题。</p>
+
+<h4 id="数据库中datetime和timesamp的区别">数据库中DATETIME和TIMESAMP的区别？<a href="#数据库中datetime和timesamp的区别" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>他们都可以存储相同的数据类型：时间和日期，精确到秒。
+但是区别：
+- TIMESAMP只使用DATETIME一半的存储空间，并且会根据时区变化，具有特殊的自动更新能力。
+-  TIMESAMP允许的时间范围要小很多，所以有时候他上面的特殊能力可能为成为他的障碍。
+-  TIMESAMP能表示从1970年1月1日午夜以来的秒数到2038年,而DATETIME能保存1001年到9999年，精度为秒。</p>
+
+<h4 id="在数据库中如何保存到微秒级别的时间戳">在数据库中如何保存到微秒级别的时间戳？<a href="#在数据库中如何保存到微秒级别的时间戳" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>答案是：使用bigint类型存储微秒级别的时间戳也可以切换到mariadb来代替mysql</p>
+
+<h3 id="varchar和char的区别">varchar和char的区别？<a href="#varchar和char的区别" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>varchar：</p>
+
+<p>varchar类型存储的是可变长的字符串，他比定长类型的更节省空间，因为他只用必要的空间，字符越短使用越少的空间，但是有一种情况例外，就是使用ROW_FORMAT=FIXED创建的话，每一行都使用的定长存储，这很浪费空间，另外varchar需要一到两个字节额外记录字符串的长度，如果列小于255个字节，那么使用一个字节，否则使用两个。假设使用latin1字符集，则一个varchar（10）的列需要11个字节的存储空间，而varchar（20000）需要20002个字节，因为需要存储长度信息。</p>
+
+<p>varchar虽然节省了空间，对性能有帮助，但由于是变长的，在update时可能会让行比原来更长，那么这就有额外的工作，这个行占用的空间增长，并且在此页内没有更多的空间存储，这种情况下，不同的存储引擎的处理方式不一样，比如：myisam将拆成不同的片段存储，innodb则需要分裂页使得行可以放在列内，总之，就是加重了碎片化。</p>
+
+<p>char：
+char是定长的，mysql会根据定义的字符串长度来分配足够的空间，当存储char的时候，mysql会删除末尾的空格，且char值会根据采用空格进行填充</p>
+
+<p>总结：
+varchar适合
+- 字符串列的最大长度比平均长度大很多，列更新很少的情况，这样碎片化不是问题，就像使用utf-8这样复杂的字符集，每个字符度使用不同的字节数进行存储。
+- 注意：innodb会把过长的varchar处理成blob</p>
+
+<p>char适合
+- 存储很短的字符串或者所有的值接近同一个长度，例如char比较适合存储密码md5值，因为这是一个定长的值。
+- 对于经常变更的数据，char也比varchar更好，因为定长的不容易产生碎片。
+- 对于非常短的列，char比varchar在存储空间上更有效率，因为varchar会需要额外字节来记录长度。</p>
+
+<h2 id="数据库索引">数据库索引<a href="#数据库索引" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<h3 id="一-索引的特点">一、索引的特点<a href="#一-索引的特点" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ul>
+<li>1.索引可以加快数据库的检索速度</li>
+<li>2.索引降低了数据库插入、修改、删除等维护任务的速度</li>
+<li>3.索引创建在表上，不能创建在视图上</li>
+<li>4.索引既可以直接创建，也可以间接创建</li>
+<li>5.可以在优化隐藏中，使用索引</li>
+
+<li><p>6.使用查询处理器执行SQL语句，在一个表上，一次只能使用一个索引</p>
+
+<h3 id="二-使用策略">二、使用策略<a href="#二-使用策略" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3></li>
+
+<li><p>如果经常需要同时对两个字段进行AND查询,那么使用两个单独索引不如建立一个复合索引，因为两个单独索引通常数据库只能使用其中一个，而使用复合索引因为索引本身就对应到两个字段上的，效率会有很大提高。</p></li>
+
+<li><p>聚集索引通常速度优于非聚集索引</p></li>
+
+<li><p>建索引时应考虑是否有足够的空间。索引占据空间,平均约1.2倍数据库本身大小。</p></li>
+
+<li><p>在经常用于查询或聚合条件的字段上建立聚集索引。这类查询条件包括 between, &gt;, &lt;,group by, max,min, count等。</p></li>
+
+<li><p>在值高度的具有唯一性字段上建立索引。不能在诸如性别的字段上建立索引。</p></li>
+
+<li><p>只有作为索引的第一个列包含在查询条件中，该索引才的作用。</p></li>
+
+<li><p>每个表只能有一个聚集索引，因为目录只能按照一种方法进行排序。</p></li>
+
+<li><p>删除一直不用的索引。特别是对于删除和修改比较频繁的数据表，必须考虑如何精华索引。</p></li>
+</ul>
+
+<h3 id="最后">最后：<a href="#最后" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<pre><code>B+树最常用，性能也不差，用于范围查询和单值查询都可以。特别是范围查询，非得用B+树这种顺序的才可以了。
+HASH的如果只是对单值查询的话速度会比B+树快一点，但是ORACLE好像不支持HASH索引，只支持HASH表空间。
+位图的使用情况很局限，只有很少的情况才能用，一定要确定真正适合使用这种索引才用（值的类型很少并且需要复合查询），否则建立一大堆位图就一点意义都没有了。
+</code></pre>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/mysql">mysql</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>81 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-01-24 20:45 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/docker/knowledge/2018-01-24-docker-use/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>Docker 使用手册</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/nginx/2018-01-24-nginx/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>Nginx日常配置</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="Golang实现二叉查找树">
+<meta itemprop="description" content="为简单起见，键值均为整型。  定义接口(tree.go)：
+type Tree interface { Put(k, v int) //新增或修改 	Get(k int) int //查询 	Delete(k int) //删除 	Size() int //树的大小 	Min() int //最小键 	DeleteMin() //删除最小键 } 二叉查找树(binary_tree.go)：
+//二叉查找树 type BinaryTree struct { root *node n int } //创建节点 func newNode(k, v int) *node { return &amp;node{k: k, v: v, sz: 1} } //创建二叉查找树 func NewBinaryTree() *BinaryTree { return &amp;BinaryTree{} } //增加或修改 func (bt *BinaryTree) Put(k, v int) { bt.">
+
+
+<meta itemprop="datePublished" content="2018-03-23T21:00:47&#43;08:00" />
+<meta itemprop="dateModified" content="2018-03-23T21:00:47&#43;08:00" />
+<meta itemprop="wordCount" content="429">
+
+
+
+<meta itemprop="keywords" content="algorithm," />
+<meta property="og:title" content="Golang实现二叉查找树" />
+<meta property="og:description" content="为简单起见，键值均为整型。  定义接口(tree.go)：
+type Tree interface { Put(k, v int) //新增或修改 	Get(k int) int //查询 	Delete(k int) //删除 	Size() int //树的大小 	Min() int //最小键 	DeleteMin() //删除最小键 } 二叉查找树(binary_tree.go)：
+//二叉查找树 type BinaryTree struct { root *node n int } //创建节点 func newNode(k, v int) *node { return &amp;node{k: k, v: v, sz: 1} } //创建二叉查找树 func NewBinaryTree() *BinaryTree { return &amp;BinaryTree{} } //增加或修改 func (bt *BinaryTree) Put(k, v int) { bt." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/go/algorithm/2018-02-23-binary-tree/" />
+<meta property="article:published_time" content="2018-03-23T21:00:47&#43;08:00"/>
+<meta property="article:modified_time" content="2018-03-23T21:00:47&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Golang实现二叉查找树"/>
+<meta name="twitter:description" content="为简单起见，键值均为整型。  定义接口(tree.go)：
+type Tree interface { Put(k, v int) //新增或修改 	Get(k int) int //查询 	Delete(k int) //删除 	Size() int //树的大小 	Min() int //最小键 	DeleteMin() //删除最小键 } 二叉查找树(binary_tree.go)：
+//二叉查找树 type BinaryTree struct { root *node n int } //创建节点 func newNode(k, v int) *node { return &amp;node{k: k, v: v, sz: 1} } //创建二叉查找树 func NewBinaryTree() *BinaryTree { return &amp;BinaryTree{} } //增加或修改 func (bt *BinaryTree) Put(k, v int) { bt."/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Golang实现二叉查找树</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Mar 23, 2018</span></div>
+				<h1>Golang实现二叉查找树</h1>
+			</header>
+			<div class="content">
+				<pre><code>为简单起见，键值均为整型。
+</code></pre>
+
+<p>定义接口(tree.go)：</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">Tree</span> <span class="kd">interface</span> <span class="p">{</span>
+	<span class="nf">Put</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="kt">int</span><span class="p">)</span>  <span class="c1">//新增或修改
+</span><span class="c1"></span>	<span class="nf">Get</span><span class="p">(</span><span class="nx">k</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">int</span> <span class="c1">//查询
+</span><span class="c1"></span>	<span class="nf">Delete</span><span class="p">(</span><span class="nx">k</span> <span class="kt">int</span><span class="p">)</span>  <span class="c1">//删除
+</span><span class="c1"></span>	<span class="nf">Size</span><span class="p">()</span> <span class="kt">int</span>     <span class="c1">//树的大小
+</span><span class="c1"></span>	<span class="nf">Min</span><span class="p">()</span> <span class="kt">int</span>      <span class="c1">//最小键
+</span><span class="c1"></span>	<span class="nf">DeleteMin</span><span class="p">()</span>    <span class="c1">//删除最小键
+</span><span class="c1"></span><span class="p">}</span></code></pre></div>
+<p>二叉查找树(binary_tree.go)：</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">//二叉查找树
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">BinaryTree</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">root</span> <span class="o">*</span><span class="nx">node</span>
+	<span class="nx">n</span>    <span class="kt">int</span>
+<span class="p">}</span>
+ 
+<span class="c1">//创建节点
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">newNode</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="kt">int</span><span class="p">)</span> <span class="o">*</span><span class="nx">node</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">node</span><span class="p">{</span><span class="nx">k</span><span class="p">:</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">:</span> <span class="nx">v</span><span class="p">,</span> <span class="nx">sz</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+<span class="p">}</span>
+ 
+<span class="c1">//创建二叉查找树
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">NewBinaryTree</span><span class="p">()</span> <span class="o">*</span><span class="nx">BinaryTree</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">BinaryTree</span><span class="p">{}</span>
+<span class="p">}</span>
+ 
+<span class="c1">//增加或修改
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">bt</span> <span class="o">*</span><span class="nx">BinaryTree</span><span class="p">)</span> <span class="nf">Put</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">bt</span><span class="p">.</span><span class="nx">root</span><span class="p">,</span> <span class="nx">_</span> <span class="p">=</span> <span class="nf">put</span><span class="p">(</span><span class="nx">bt</span><span class="p">.</span><span class="nx">root</span><span class="p">,</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">)</span>
+<span class="p">}</span>
+ 
+<span class="c1">//查找
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">bt</span> <span class="o">*</span><span class="nx">BinaryTree</span><span class="p">)</span> <span class="nf">Get</span><span class="p">(</span><span class="nx">k</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">int</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nf">get</span><span class="p">(</span><span class="nx">bt</span><span class="p">.</span><span class="nx">root</span><span class="p">,</span> <span class="nx">k</span><span class="p">)</span>
+<span class="p">}</span>
+ 
+<span class="c1">//树的大小
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">bt</span> <span class="o">*</span><span class="nx">BinaryTree</span><span class="p">)</span> <span class="nf">Size</span><span class="p">()</span> <span class="kt">int</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nf">size</span><span class="p">(</span><span class="nx">bt</span><span class="p">.</span><span class="nx">root</span><span class="p">)</span>
+<span class="p">}</span>
+ 
+<span class="c1">//选出最小键
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">bt</span> <span class="o">*</span><span class="nx">BinaryTree</span><span class="p">)</span> <span class="nf">Min</span><span class="p">()</span> <span class="kt">int</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nf">min</span><span class="p">(</span><span class="nx">bt</span><span class="p">.</span><span class="nx">root</span><span class="p">).</span><span class="nx">k</span>
+<span class="p">}</span>
+ 
+<span class="c1">//删除最小键
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">bt</span> <span class="o">*</span><span class="nx">BinaryTree</span><span class="p">)</span> <span class="nf">DeleteMin</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">bt</span><span class="p">.</span><span class="nx">root</span> <span class="p">=</span> <span class="nf">deleteMin</span><span class="p">(</span><span class="nx">bt</span><span class="p">.</span><span class="nx">root</span><span class="p">)</span>
+<span class="p">}</span>
+ 
+<span class="c1">//删除
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">bt</span> <span class="o">*</span><span class="nx">BinaryTree</span><span class="p">)</span> <span class="nf">Delete</span><span class="p">(</span><span class="nx">k</span> <span class="kt">int</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">bt</span><span class="p">.</span><span class="nx">root</span> <span class="p">=</span> <span class="nb">delete</span><span class="p">(</span><span class="nx">bt</span><span class="p">.</span><span class="nx">root</span><span class="p">,</span> <span class="nx">k</span><span class="p">)</span>
+<span class="p">}</span></code></pre></div>
+<p>节点(node.go)：</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">//节点
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">node</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">,</span> <span class="nx">sz</span>    <span class="kt">int</span>   <span class="c1">//键，值，大小
+</span><span class="c1"></span>	<span class="nx">left</span><span class="p">,</span> <span class="nx">right</span> <span class="o">*</span><span class="nx">node</span> <span class="c1">//左右子节点
+</span><span class="c1"></span><span class="p">}</span>
+
+<span class="c1">//在以nd为根节点的树下增加或修改一个节点
+</span><span class="c1">//如果创建了新节点，第二个参数返回true，
+</span><span class="c1">//如果只是修改，第二个参数返回false
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">put</span><span class="p">(</span><span class="nx">nd</span> <span class="o">*</span><span class="nx">node</span><span class="p">,</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">node</span><span class="p">,</span> <span class="kt">bool</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">nd</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nf">newNode</span><span class="p">(</span><span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">),</span> <span class="kc">true</span>
+	<span class="p">}</span>
+	<span class="nx">hasNew</span> <span class="o">:=</span> <span class="kc">false</span> <span class="c1">//检测是否创建了新节点
+</span><span class="c1"></span>	<span class="k">if</span> <span class="nx">k</span> <span class="p">&lt;</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">k</span> <span class="p">{</span>
+		<span class="nx">nd</span><span class="p">.</span><span class="nx">left</span><span class="p">,</span> <span class="nx">hasNew</span> <span class="p">=</span> <span class="nf">put</span><span class="p">(</span><span class="nx">nd</span><span class="p">.</span><span class="nx">left</span><span class="p">,</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">k</span> <span class="p">&gt;</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">k</span> <span class="p">{</span>
+		<span class="nx">nd</span><span class="p">.</span><span class="nx">right</span><span class="p">,</span> <span class="nx">hasNew</span> <span class="p">=</span> <span class="nf">put</span><span class="p">(</span><span class="nx">nd</span><span class="p">.</span><span class="nx">right</span><span class="p">,</span> <span class="nx">k</span><span class="p">,</span> <span class="nx">v</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">nd</span><span class="p">.</span><span class="nx">v</span> <span class="p">=</span> <span class="nx">v</span> <span class="c1">//仅修改，不会增加增加节点，就不更新节点大小
+</span><span class="c1"></span>	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">hasNew</span> <span class="p">{</span> <span class="c1">//如果创建了新节点就更新树的大小
+</span><span class="c1"></span>		<span class="nf">updateSize</span><span class="p">(</span><span class="nx">nd</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">nd</span><span class="p">,</span> <span class="nx">hasNew</span>
+<span class="p">}</span>
+ 
+<span class="c1">//在以nd为根节点的树中获取键为k的值
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">get</span><span class="p">(</span><span class="nx">nd</span> <span class="o">*</span><span class="nx">node</span><span class="p">,</span> <span class="nx">k</span> <span class="kt">int</span><span class="p">)</span> <span class="kt">int</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">nd</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">k</span> <span class="p">&lt;</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">k</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nf">get</span><span class="p">(</span><span class="nx">nd</span><span class="p">.</span><span class="nx">left</span><span class="p">,</span> <span class="nx">k</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">k</span> <span class="p">&gt;</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">k</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nf">get</span><span class="p">(</span><span class="nx">nd</span><span class="p">.</span><span class="nx">right</span><span class="p">,</span> <span class="nx">k</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">v</span>
+	<span class="p">}</span>
+<span class="p">}</span>
+ 
+<span class="c1">//获取以nd为根节点的树的大小
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">size</span><span class="p">(</span><span class="nx">nd</span> <span class="o">*</span><span class="nx">node</span><span class="p">)</span> <span class="kt">int</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">nd</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="mi">0</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">sz</span>
+<span class="p">}</span>
+ 
+<span class="c1">//更新以nd为根节点的树的大小
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">updateSize</span><span class="p">(</span><span class="nx">nd</span> <span class="o">*</span><span class="nx">node</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">nd</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span>
+	<span class="p">}</span>
+	<span class="nx">nd</span><span class="p">.</span><span class="nx">sz</span> <span class="p">=</span> <span class="nf">size</span><span class="p">(</span><span class="nx">nd</span><span class="p">.</span><span class="nx">left</span><span class="p">)</span> <span class="o">+</span> <span class="nf">size</span><span class="p">(</span><span class="nx">nd</span><span class="p">.</span><span class="nx">right</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+<span class="p">}</span>
+ 
+<span class="c1">//选出以nd为根节点的树的最小键节点
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">min</span><span class="p">(</span><span class="nx">nd</span> <span class="o">*</span><span class="nx">node</span><span class="p">)</span> <span class="o">*</span><span class="nx">node</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">nd</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">left</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nf">min</span><span class="p">(</span><span class="nx">nd</span><span class="p">.</span><span class="nx">left</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nx">nd</span>
+<span class="p">}</span>
+ 
+<span class="c1">//删除以nd为根节点的树的最小键节点
+</span><span class="c1">//返回被删除的节点
+</span><span class="c1"></span><span class="kd">func</span> <span class="nf">deleteMin</span><span class="p">(</span><span class="nx">nd</span> <span class="o">*</span><span class="nx">node</span><span class="p">)</span> <span class="o">*</span><span class="nx">node</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">nd</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">left</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span> <span class="c1">//找到最小节点
+</span><span class="c1"></span>		<span class="nx">nd</span> <span class="p">=</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">right</span> <span class="c1">//用右子节点代替自己
+</span><span class="c1"></span>	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">//还有更小的
+</span><span class="c1"></span>		<span class="nx">nd</span><span class="p">.</span><span class="nx">left</span> <span class="p">=</span> <span class="nf">deleteMin</span><span class="p">(</span><span class="nx">nd</span><span class="p">.</span><span class="nx">left</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="nf">updateSize</span><span class="p">(</span><span class="nx">nd</span><span class="p">)</span>
+	<span class="k">return</span> <span class="nx">nd</span>
+<span class="p">}</span>
+ 
+<span class="c1">//删除以nd为根节点的树并且键为k的节点
+</span><span class="c1"></span><span class="kd">func</span> <span class="nb">delete</span><span class="p">(</span><span class="nx">nd</span> <span class="o">*</span><span class="nx">node</span><span class="p">,</span> <span class="nx">k</span> <span class="kt">int</span><span class="p">)</span> <span class="o">*</span><span class="nx">node</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">nd</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+	<span class="k">if</span> <span class="nx">k</span> <span class="p">&lt;</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">k</span> <span class="p">{</span>
+		<span class="nx">nd</span><span class="p">.</span><span class="nx">left</span> <span class="p">=</span> <span class="nb">delete</span><span class="p">(</span><span class="nx">nd</span><span class="p">.</span><span class="nx">left</span><span class="p">,</span> <span class="nx">k</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="nx">k</span> <span class="p">&gt;</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">k</span> <span class="p">{</span>
+		<span class="nx">nd</span><span class="p">.</span><span class="nx">right</span> <span class="p">=</span> <span class="nb">delete</span><span class="p">(</span><span class="nx">nd</span><span class="p">.</span><span class="nx">right</span><span class="p">,</span> <span class="nx">k</span><span class="p">)</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span> <span class="c1">//命中要删除的节点
+</span><span class="c1"></span>		<span class="c1">//只有一个或零个子节点
+</span><span class="c1"></span>		<span class="k">if</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">right</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">left</span>
+		<span class="p">}</span>
+		<span class="k">if</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">left</span> <span class="o">==</span> <span class="kc">nil</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nx">nd</span><span class="p">.</span><span class="nx">right</span>
+		<span class="p">}</span>
+		<span class="c1">//同时具有两个子节点
+</span><span class="c1"></span>		<span class="c1">//先找出大于本节点的最小节点作为后继节点
+</span><span class="c1"></span>		<span class="nx">t</span> <span class="o">:=</span> <span class="nx">nd</span>
+		<span class="nx">nd</span><span class="p">.</span><span class="nx">k</span> <span class="p">=</span> <span class="nf">min</span><span class="p">(</span><span class="nx">t</span><span class="p">.</span><span class="nx">right</span><span class="p">).</span><span class="nx">k</span>
+		<span class="c1">//删除
+</span><span class="c1"></span>		<span class="nf">deleteMin</span><span class="p">(</span><span class="nx">t</span><span class="p">.</span><span class="nx">right</span><span class="p">)</span>
+		<span class="c1">//用后继节点代替本节点
+</span><span class="c1"></span>		<span class="nx">nd</span><span class="p">.</span><span class="nx">left</span> <span class="p">=</span> <span class="nx">t</span><span class="p">.</span><span class="nx">left</span>
+	<span class="p">}</span>
+	<span class="nf">updateSize</span><span class="p">(</span><span class="nx">nd</span><span class="p">)</span>
+	<span class="k">return</span> <span class="nx">nd</span>
+<span class="p">}</span></code></pre></div>
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/algorithm">algorithm</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>429 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-03-23 21:00 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/go/knowledge/2018-03-26-go-and-websocket/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>Golang的websocket开发与实践</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/redis/know/2018-03-19-redis/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>Redis开发与优化总结</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

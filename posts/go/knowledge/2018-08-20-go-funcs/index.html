@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="Go func作为类型妙用提高代码的抽象粒度">
+<meta itemprop="description" content="#### 前提  这种实现方式的前提是: 把对象的行为作为了字段传输，如果一个对象有一个操作那么就需要一个字段，有N个操作则有N个字段,例如下方的Div操作,通常是用于同方法需要不同的实现方式。
+优点: 1. 在设计上并不关心具体的实现方式，只是指明了具体的入参和出参。 2. 在具体实现上，我们把具体实现归还给了编码者,他做他需要做的操作以及错误处理，这样我们把实现的权利交还给了编码者，提高了系统的灵活性和扩展度。  和结构体方法实现的对比: 1. 更轻松实现统一的日志处理，校验参数，转换操作。  假定使用场景: 1. 需要自实现同一类操作类型(例如:节点优选策略）但有不同的侧重实现方式(例如有些要求cpu的权重高些，有些要求memory多些，有些要求GPU要求多些)  实现思路:  明确是做同一类操作,即是实现节点的优选策略,但是不同的场景有不同的侧重点或者他不满足当前的实现方式，他可以自实现 虽然他可以有不同的实现方式，但是我们需要规范的他的入参和出参。所以我们需要定义函数类型，即：
+// arithmetic 定义一个通用的计算模型 type arithmetic func(a, b int64) (int64, error)  定义统一的函数名字，并实现:
+// arithmetic 定义一个通用的计算模型 type arithmetic func(a, b int64) (int64, error) func (ar arithmetic) Div(a, b int64) (int64, error) { fmt.Println(&quot;print div log&quot;) return ar(a, b) } // Diver 集合 type Diver interface { Div(a, b int64) (int64, error) } var _ Diver = arithmetic(nil  定义不同的角色（当然也可以使用同一角色）">
+
+
+<meta itemprop="datePublished" content="2018-08-20T22:25:59&#43;08:00" />
+<meta itemprop="dateModified" content="2018-08-20T22:25:59&#43;08:00" />
+<meta itemprop="wordCount" content="322">
+
+
+
+<meta itemprop="keywords" content="go," />
+<meta property="og:title" content="Go func作为类型妙用提高代码的抽象粒度" />
+<meta property="og:description" content="#### 前提  这种实现方式的前提是: 把对象的行为作为了字段传输，如果一个对象有一个操作那么就需要一个字段，有N个操作则有N个字段,例如下方的Div操作,通常是用于同方法需要不同的实现方式。
+优点: 1. 在设计上并不关心具体的实现方式，只是指明了具体的入参和出参。 2. 在具体实现上，我们把具体实现归还给了编码者,他做他需要做的操作以及错误处理，这样我们把实现的权利交还给了编码者，提高了系统的灵活性和扩展度。  和结构体方法实现的对比: 1. 更轻松实现统一的日志处理，校验参数，转换操作。  假定使用场景: 1. 需要自实现同一类操作类型(例如:节点优选策略）但有不同的侧重实现方式(例如有些要求cpu的权重高些，有些要求memory多些，有些要求GPU要求多些)  实现思路:  明确是做同一类操作,即是实现节点的优选策略,但是不同的场景有不同的侧重点或者他不满足当前的实现方式，他可以自实现 虽然他可以有不同的实现方式，但是我们需要规范的他的入参和出参。所以我们需要定义函数类型，即：
+// arithmetic 定义一个通用的计算模型 type arithmetic func(a, b int64) (int64, error)  定义统一的函数名字，并实现:
+// arithmetic 定义一个通用的计算模型 type arithmetic func(a, b int64) (int64, error) func (ar arithmetic) Div(a, b int64) (int64, error) { fmt.Println(&quot;print div log&quot;) return ar(a, b) } // Diver 集合 type Diver interface { Div(a, b int64) (int64, error) } var _ Diver = arithmetic(nil  定义不同的角色（当然也可以使用同一角色）" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/go/knowledge/2018-08-20-go-funcs/" />
+<meta property="article:published_time" content="2018-08-20T22:25:59&#43;08:00"/>
+<meta property="article:modified_time" content="2018-08-20T22:25:59&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Go func作为类型妙用提高代码的抽象粒度"/>
+<meta name="twitter:description" content="#### 前提  这种实现方式的前提是: 把对象的行为作为了字段传输，如果一个对象有一个操作那么就需要一个字段，有N个操作则有N个字段,例如下方的Div操作,通常是用于同方法需要不同的实现方式。
+优点: 1. 在设计上并不关心具体的实现方式，只是指明了具体的入参和出参。 2. 在具体实现上，我们把具体实现归还给了编码者,他做他需要做的操作以及错误处理，这样我们把实现的权利交还给了编码者，提高了系统的灵活性和扩展度。  和结构体方法实现的对比: 1. 更轻松实现统一的日志处理，校验参数，转换操作。  假定使用场景: 1. 需要自实现同一类操作类型(例如:节点优选策略）但有不同的侧重实现方式(例如有些要求cpu的权重高些，有些要求memory多些，有些要求GPU要求多些)  实现思路:  明确是做同一类操作,即是实现节点的优选策略,但是不同的场景有不同的侧重点或者他不满足当前的实现方式，他可以自实现 虽然他可以有不同的实现方式，但是我们需要规范的他的入参和出参。所以我们需要定义函数类型，即：
+// arithmetic 定义一个通用的计算模型 type arithmetic func(a, b int64) (int64, error)  定义统一的函数名字，并实现:
+// arithmetic 定义一个通用的计算模型 type arithmetic func(a, b int64) (int64, error) func (ar arithmetic) Div(a, b int64) (int64, error) { fmt.Println(&quot;print div log&quot;) return ar(a, b) } // Diver 集合 type Diver interface { Div(a, b int64) (int64, error) } var _ Diver = arithmetic(nil  定义不同的角色（当然也可以使用同一角色）"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Go func作为类型妙用提高代码的抽象粒度</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Aug 20, 2018</span></div>
+				<h1>Go func作为类型妙用提高代码的抽象粒度</h1>
+			</header>
+			<div class="content">
+				
+
+<pre><code>#### 前提
+</code></pre>
+
+<p>这种实现方式的前提是:
+    把对象的行为作为了字段传输，如果一个对象有一个操作那么就需要一个字段，有N个操作则有N个字段,例如下方的Div操作,通常是用于同方法需要不同的实现方式。</p>
+
+<h4 id="优点">优点:<a href="#优点" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<pre><code>1. 在设计上并不关心具体的实现方式，只是指明了具体的入参和出参。
+2. 在具体实现上，我们把具体实现归还给了编码者,他做他需要做的操作以及错误处理，这样我们把实现的权利交还给了编码者，提高了系统的灵活性和扩展度。
+</code></pre>
+
+<h4 id="和结构体方法实现的对比">和结构体方法实现的对比:<a href="#和结构体方法实现的对比" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<pre><code>1. 更轻松实现统一的日志处理，校验参数，转换操作。
+</code></pre>
+
+<h4 id="假定使用场景">假定使用场景:<a href="#假定使用场景" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<pre><code>1. 需要自实现同一类操作类型(例如:节点优选策略）但有不同的侧重实现方式(例如有些要求cpu的权重高些，有些要求memory多些，有些要求GPU要求多些)
+</code></pre>
+
+<h4 id="实现思路">实现思路:<a href="#实现思路" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<ol>
+<li>明确是做同一类操作,即是实现节点的优选策略,但是不同的场景有不同的侧重点或者他不满足当前的实现方式，他可以自实现</li>
+
+<li><p>虽然他可以有不同的实现方式，但是我们需要规范的他的入参和出参。所以我们需要定义函数类型，即：</p>
+
+<pre><code>// arithmetic 定义一个通用的计算模型
+type arithmetic func(a, b int64) (int64, error)
+</code></pre></li>
+
+<li><p>定义统一的函数名字，并实现:</p>
+
+<pre><code>// arithmetic 定义一个通用的计算模型
+type arithmetic func(a, b int64) (int64, error)
+
+func (ar arithmetic) Div(a, b int64) (int64, error) {
+    fmt.Println(&quot;print div log&quot;)
+    return ar(a, b)
+}
+
+// Diver 集合
+type Diver interface {
+    Div(a, b int64) (int64, error)
+}
+
+var _ Diver = arithmetic(nil
+</code></pre></li>
+
+<li><p>定义不同的角色（当然也可以使用同一角色）</p>
+
+<pre><code>type Roc struct {
+    d Diver
+}
+    
+type Yulibaozi struct {
+    d Diver
+}
+    
+</code></pre></li>
+
+<li><p>在声明和创建角色时，指定其实现策略：</p>
+
+<pre><code>yulibaozi := &amp;Yulibaozi{
+        d: arithmetic(func(a, b int64) (divr int64, err error) {
+            defer func() {
+                if err1 := recover(); err1 != nil {
+                    err = fmt.Errorf(&quot;%v&quot;, err1)
+                }
+            }()
+            divr = a / b
+            return
+        }),
+    }
+    fmt.Println(yulibaozi.d.Div(2, 0))
+</code></pre>
+
+<p>5.1 当然,你也可以使用另外一种方式(注册的方式)：</p>
+
+<pre><code>var (
+    roc *Roc
+)
+    
+func register(fun arithmetic) {
+    roc = &amp;Roc{
+        d: arithmetic(fun),
+    }
+}
+    
+</code></pre></li>
+</ol>
+
+<h4 id="完整代码">完整代码<a href="#完整代码" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<pre><code>
+var (
+	roc *Roc
+)
+
+func register(fun arithmetic) {
+	roc = &amp;Roc{
+		d: arithmetic(fun),
+	}
+}
+
+func main() {
+	fmt.Println(&quot;====第一次执行====&quot;)
+	roc = &amp;Roc{d: arithmetic(
+		func(a, b int64) (int64, error) {
+			if b == 0 {
+				b = 1
+			}
+			return a / b, nil
+		},
+	)}
+	fmt.Println(roc.d.Div(2, 4))
+	fmt.Println(&quot;====第二次执行,覆盖了第一次的实现方式====&quot;)
+	fun := func(a, b int64) (int64, error) {
+		if b == 0 {
+			b = 1
+		}
+		return a * 100 / b, nil
+	}
+	register(fun)
+	fmt.Println(roc.d.Div(2, 4))
+	yulibaozi := &amp;Yulibaozi{
+		d: arithmetic(func(a, b int64) (divr int64, err error) {
+			defer func() {
+				if err1 := recover(); err1 != nil {
+					err = fmt.Errorf(&quot;%v&quot;, err1)
+				}
+			}()
+			divr = a / b
+			return
+		}),
+	}
+	fmt.Println(yulibaozi.d.Div(2, 0))
+}
+
+type Roc struct {
+	d Diver
+}
+
+type Yulibaozi struct {
+	d Diver
+}
+
+// arithmetic 定义一个通用的计算模型
+type arithmetic func(a, b int64) (int64, error)
+
+func (ar arithmetic) Div(a, b int64) (int64, error) {
+	fmt.Println(&quot;print div log&quot;)
+	return ar(a, b)
+}
+
+// Diver 集合
+type Diver interface {
+	Div(a, b int64) (int64, error)
+}
+
+var _ Diver = arithmetic(nil)
+</code></pre>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/go">go</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>322 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-08-20 22:25 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/go/tools/2018-09-15-go-tool-pprof/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>Go 大杀器之性能剖析 PProf</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/kubernetes/knowledge/2018-07-22-proxy-network/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>kubernetes中请求网络链路的分析与总结</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

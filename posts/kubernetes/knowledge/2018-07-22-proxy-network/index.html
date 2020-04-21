@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="kubernetes中请求网络链路的分析与总结">
+<meta itemprop="description" content="k8s中请求网络链路的分析与总结  前要 这篇文章，你能明白那些问题？  从集群外部请求的时候，整个请求的走向是怎么样的？ 在service中port,targetPort和nodePort的区别是什么？ iptables是怎样工作的？ 谁来维护了数据的正确性，及时性和稳定性？  基础知识: port指当使用ClusterIP访问这个服务所使用的port targetPort 指当使用PodIP访问后端Pod使用的port nodePort 指当在外部(nodeport)访问这个服务使用的Port  正文 前段时间,请求发生了time out或者connection refused这类问题,从k8s的角度来说,我并不能提出有效的猜想更不能解决这个问题是催生这篇文章的关键所在。于是,我对自己提出了上面的那些问题，能够让我清楚的记住一个请求的走向。
+请求的走向是：
+外部(nodeport)/clusterIP &ndash;&gt; iptables &ndash;&gt; 到endpoints(pod的Ip地址)
+当一个请求到来时,首先会进入iptables,iptables来做转发,那么iptables怎么转发的呢？当一个service被创建的时候,会在iptables上创建一个转发规则(实际是kube-proxy来创建和维护这个规则的)
+下面以集群中某个服务为例：
+基本信息: PODIP 172.22.50.18 172.22.36.51 PORT: port: 8080, targetPort: 8080, nodePort&quot;: 32080 CLUSTERIP: 172.50.71.49  iptables中的规则:
+root@node-2:~# iptables-save | grep yce/yce-svc:http -A KUBE-NODEPORTS -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp --dport 32080 -j KUBE-MARK-MASQ -A KUBE-NODEPORTS -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp --dport 32080 -j KUBE-SVC-33TZ5W3QVRYDY6UM -A KUBE-SEP-JIUUF7F4K5DSHT3L -s 172.">
+
+
+<meta itemprop="datePublished" content="2018-07-22T20:54:11&#43;08:00" />
+<meta itemprop="dateModified" content="2018-07-22T20:54:11&#43;08:00" />
+<meta itemprop="wordCount" content="605">
+
+
+
+<meta itemprop="keywords" content="kubernetes," />
+<meta property="og:title" content="kubernetes中请求网络链路的分析与总结" />
+<meta property="og:description" content="k8s中请求网络链路的分析与总结  前要 这篇文章，你能明白那些问题？  从集群外部请求的时候，整个请求的走向是怎么样的？ 在service中port,targetPort和nodePort的区别是什么？ iptables是怎样工作的？ 谁来维护了数据的正确性，及时性和稳定性？  基础知识: port指当使用ClusterIP访问这个服务所使用的port targetPort 指当使用PodIP访问后端Pod使用的port nodePort 指当在外部(nodeport)访问这个服务使用的Port  正文 前段时间,请求发生了time out或者connection refused这类问题,从k8s的角度来说,我并不能提出有效的猜想更不能解决这个问题是催生这篇文章的关键所在。于是,我对自己提出了上面的那些问题，能够让我清楚的记住一个请求的走向。
+请求的走向是：
+外部(nodeport)/clusterIP &ndash;&gt; iptables &ndash;&gt; 到endpoints(pod的Ip地址)
+当一个请求到来时,首先会进入iptables,iptables来做转发,那么iptables怎么转发的呢？当一个service被创建的时候,会在iptables上创建一个转发规则(实际是kube-proxy来创建和维护这个规则的)
+下面以集群中某个服务为例：
+基本信息: PODIP 172.22.50.18 172.22.36.51 PORT: port: 8080, targetPort: 8080, nodePort&quot;: 32080 CLUSTERIP: 172.50.71.49  iptables中的规则:
+root@node-2:~# iptables-save | grep yce/yce-svc:http -A KUBE-NODEPORTS -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp --dport 32080 -j KUBE-MARK-MASQ -A KUBE-NODEPORTS -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp --dport 32080 -j KUBE-SVC-33TZ5W3QVRYDY6UM -A KUBE-SEP-JIUUF7F4K5DSHT3L -s 172." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/kubernetes/knowledge/2018-07-22-proxy-network/" />
+<meta property="article:published_time" content="2018-07-22T20:54:11&#43;08:00"/>
+<meta property="article:modified_time" content="2018-07-22T20:54:11&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="kubernetes中请求网络链路的分析与总结"/>
+<meta name="twitter:description" content="k8s中请求网络链路的分析与总结  前要 这篇文章，你能明白那些问题？  从集群外部请求的时候，整个请求的走向是怎么样的？ 在service中port,targetPort和nodePort的区别是什么？ iptables是怎样工作的？ 谁来维护了数据的正确性，及时性和稳定性？  基础知识: port指当使用ClusterIP访问这个服务所使用的port targetPort 指当使用PodIP访问后端Pod使用的port nodePort 指当在外部(nodeport)访问这个服务使用的Port  正文 前段时间,请求发生了time out或者connection refused这类问题,从k8s的角度来说,我并不能提出有效的猜想更不能解决这个问题是催生这篇文章的关键所在。于是,我对自己提出了上面的那些问题，能够让我清楚的记住一个请求的走向。
+请求的走向是：
+外部(nodeport)/clusterIP &ndash;&gt; iptables &ndash;&gt; 到endpoints(pod的Ip地址)
+当一个请求到来时,首先会进入iptables,iptables来做转发,那么iptables怎么转发的呢？当一个service被创建的时候,会在iptables上创建一个转发规则(实际是kube-proxy来创建和维护这个规则的)
+下面以集群中某个服务为例：
+基本信息: PODIP 172.22.50.18 172.22.36.51 PORT: port: 8080, targetPort: 8080, nodePort&quot;: 32080 CLUSTERIP: 172.50.71.49  iptables中的规则:
+root@node-2:~# iptables-save | grep yce/yce-svc:http -A KUBE-NODEPORTS -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp --dport 32080 -j KUBE-MARK-MASQ -A KUBE-NODEPORTS -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp --dport 32080 -j KUBE-SVC-33TZ5W3QVRYDY6UM -A KUBE-SEP-JIUUF7F4K5DSHT3L -s 172."/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>kubernetes中请求网络链路的分析与总结</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Jul 22, 2018</span></div>
+				<h1>kubernetes中请求网络链路的分析与总结</h1>
+			</header>
+			<div class="content">
+				
+
+<pre><code>k8s中请求网络链路的分析与总结
+</code></pre>
+
+<hr />
+
+<h4 id="前要">前要<a href="#前要" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<h4 id="这篇文章-你能明白那些问题">这篇文章，你能明白那些问题？<a href="#这篇文章-你能明白那些问题" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<ol>
+<li>从集群外部请求的时候，整个请求的走向是怎么样的？</li>
+<li>在service中port,targetPort和nodePort的区别是什么？</li>
+<li>iptables是怎样工作的？</li>
+<li>谁来维护了数据的正确性，及时性和稳定性？</li>
+</ol>
+
+<h4 id="基础知识">基础知识:<a href="#基础知识" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<pre><code>port指当使用ClusterIP访问这个服务所使用的port
+targetPort 指当使用PodIP访问后端Pod使用的port
+nodePort 指当在外部(nodeport)访问这个服务使用的Port
+</code></pre>
+
+<h4 id="正文">正文<a href="#正文" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>前段时间,请求发生了time out或者connection refused这类问题,从k8s的角度来说,我并不能提出有效的猜想更不能解决这个问题是催生这篇文章的关键所在。于是,我对自己提出了上面的那些问题，能够让我清楚的记住一个请求的走向。</p>
+
+<p>请求的走向是：</p>
+
+<p>外部(nodeport)/clusterIP &ndash;&gt; iptables &ndash;&gt; 到endpoints(pod的Ip地址)</p>
+
+<p>当一个请求到来时,首先会进入iptables,iptables来做转发,那么iptables怎么转发的呢？当一个service被创建的时候,会在iptables上创建一个转发规则(实际是kube-proxy来创建和维护这个规则的)</p>
+
+<p>下面以集群中某个服务为例：</p>
+
+<pre><code>基本信息:
+PODIP 
+    172.22.50.18
+    172.22.36.51
+PORT:
+    port: 8080,
+    targetPort: 8080,
+    nodePort&quot;: 32080
+CLUSTERIP:
+    172.50.71.49
+
+</code></pre>
+
+<p>iptables中的规则:</p>
+
+<pre><code>root@node-2:~# iptables-save | grep yce/yce-svc:http
+-A KUBE-NODEPORTS -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp --dport 32080 -j KUBE-MARK-MASQ
+-A KUBE-NODEPORTS -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp --dport 32080 -j KUBE-SVC-33TZ5W3QVRYDY6UM
+-A KUBE-SEP-JIUUF7F4K5DSHT3L -s 172.22.36.51/32 -m comment --comment &quot;yce/yce-svc:http&quot; -j KUBE-MARK-MASQ
+-A KUBE-SEP-JIUUF7F4K5DSHT3L -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp -j DNAT --to-destination 172.22.36.51:8080
+-A KUBE-SEP-WAKCSVYOKXRU3L56 -s 172.22.50.18/32 -m comment --comment &quot;yce/yce-svc:http&quot; -j KUBE-MARK-MASQ
+-A KUBE-SEP-WAKCSVYOKXRU3L56 -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp -j DNAT --to-destination 172.22.50.18:8080
+-A KUBE-SERVICES -d 172.50.71.49/32 -p tcp -m comment --comment &quot;yce/yce-svc:http cluster IP&quot; -m tcp --dport 8080 -j KUBE-SVC-33TZ5W3QVRYDY6UM
+-A KUBE-SVC-33TZ5W3QVRYDY6UM -m comment --comment &quot;yce/yce-svc:http&quot; -m statistic --mode random --probability 0.50000000000 -j KUBE-SEP-JIUUF7F4K5DSHT3L
+-A KUBE-SVC-33TZ5W3QVRYDY6UM -m comment --comment &quot;yce/yce-svc:http&quot; -j KUBE-SEP-WAKCSVYOKXRU3L56
+</code></pre>
+
+<p>当以nodeport访问时,会进入:</p>
+
+<pre><code>-A KUBE-NODEPORTS -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp --dport 32080 -j KUBE-MARK-MASQ
+-A KUBE-NODEPORTS -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp --dport 32080 -j KUBE-SVC-33TZ5W3QVRYDY6UM
+</code></pre>
+
+<p>然后会跳转到KUBE-SVC-33TZ5W3QVRYDY6UM:</p>
+
+<pre><code>-A KUBE-SVC-33TZ5W3QVRYDY6UM -m comment --comment &quot;yce/yce-svc:http&quot; -m statistic --mode random --probability 0.50000000000 -j KUBE-SEP-JIUUF7F4K5DSHT3L
+-A KUBE-SVC-33TZ5W3QVRYDY6UM -m comment --comment &quot;yce/yce-svc:http&quot; -j KUBE-SEP-WAKCSVYOKXRU3L56
+</code></pre>
+
+<p>在33TZ5W3QVRYDY6UM中,我们看到了0.5的概率跳转到KUBE-SEP-JIUUF7F4K5DSHT3L链,还有0.5的概率跳转到WAKCSVYOKXRU3L56链</p>
+
+<p>在JIUUF7F4K5DSHT3L中，通过修改目的地址(DNAT)指向到172.22.36.51:8080，这个地址是我们后端podIP之一。</p>
+
+<pre><code>-A KUBE-SEP-JIUUF7F4K5DSHT3L -s 172.22.36.51/32 -m comment --comment &quot;yce/yce-svc:http&quot; -j KUBE-MARK-MASQ
+-A KUBE-SEP-JIUUF7F4K5DSHT3L -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp -j DNAT --to-destination 172.22.36.51:8080
+</code></pre>
+
+<p>在WAKCSVYOKXRU3L56中也是通过DNAT指向到172.22.50.18:8080,这个地址也是我们后端的podIP之一。</p>
+
+<pre><code>-A KUBE-SEP-WAKCSVYOKXRU3L56 -s 172.22.50.18/32 -m comment --comment &quot;yce/yce-svc:http&quot; -j KUBE-MARK-MASQ
+-A KUBE-SEP-WAKCSVYOKXRU3L56 -p tcp -m comment --comment &quot;yce/yce-svc:http&quot; -m tcp -j DNAT --to-destination 172.22.50.18:8080
+</code></pre>
+
+<p>在通过使用clusterIP访问时,即目标IP:172.50.71.49和目标PORT是8080,协议是tcp时,会跳转到KUBE-SVC-33TZ5W3QVRYDY6UM,后续跳转链和上面分析一致。</p>
+
+<pre><code>-A KUBE-SERVICES -d 172.50.71.49/32 -p tcp -m comment --comment &quot;yce/yce-svc:http cluster IP&quot; -m tcp --dport 8080 -j KUBE-SVC-33TZ5W3QVRYDY6UM
+</code></pre>
+
+<p>上面的分析中,我们知道了通过clusterIP和NodePort请求时,整个请求的跳转走向，那么维护iptables的数据正确性呢？当svc被删除,被修改,当pod被重新调度,被杀掉,不可用的时候，谁来保证iptables的正确性呢？</p>
+
+<p>答案是kube-proxy,kube-proxy在幕后默默的维护了这一切。感谢这哥们吧。
+源码地址: <a href="https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/iptables/proxier.go">https://github.com/kubernetes/kubernetes/blob/master/pkg/proxy/iptables/proxier.go</a></p>
+
+<p>定义的链:</p>
+
+<pre><code>	// the services chain
+	kubeServicesChain utiliptables.Chain = &quot;KUBE-SERVICES&quot;
+	// the external services chain
+	kubeExternalServicesChain utiliptables.Chain = &quot;KUBE-EXTERNAL-SERVICES&quot;
+	// the nodeports chain
+	kubeNodePortsChain utiliptables.Chain = &quot;KUBE-NODEPORTS&quot;
+	// the kubernetes postrouting chain
+	kubePostroutingChain utiliptables.Chain = &quot;KUBE-POSTROUTING&quot;
+	// the mark-for-masquerade chain
+	KubeMarkMasqChain utiliptables.Chain = &quot;KUBE-MARK-MASQ&quot;
+	// the mark-for-drop chain
+	KubeMarkDropChain utiliptables.Chain = &quot;KUBE-MARK-DROP&quot;
+	// the kubernetes forward chain
+	kubeForwardChain utiliptables.Chain = &quot;KUBE-FORWARD&quot;
+</code></pre>
+
+<p>计算概率:</p>
+
+<pre><code>func computeProbability(n int) string {
+	return fmt.Sprintf(&quot;%0.5f&quot;, 1.0/float64(n))
+}
+</code></pre>
+
+<p>在代码的144-156行:</p>
+
+<pre><code>func (ep *endpointsInfo) Cleanup() {
+	Log(ep, &quot;Endpoint Cleanup&quot;, 3)
+	ep.refCount--
+	// Remove the remote hns endpoint, if no service is referring it
+	// Never delete a Local Endpoint. Local Endpoints are already created by other entities.
+	// Remove only remote endpoints created by this service
+	if ep.refCount &lt;= 0 &amp;&amp; !ep.isLocal {
+		glog.V(4).Infof(&quot;Removing endpoints for %v, since no one is referencing it&quot;, ep)
+		deleteHnsEndpoint(ep.hnsID)
+		ep.hnsID = &quot;&quot;
+	}
+
+}
+</code></pre>
+
+<p>在这里真正删除不可用的endpoint。</p>
+
+<p>在代码的1207-1221行:</p>
+
+<pre><code>	// Delete chains no longer in use.
+	for chain := range existingNATChains {
+		if !activeNATChains[chain] {
+			chainString := string(chain)
+			if !strings.HasPrefix(chainString, &quot;KUBE-SVC-&quot;) &amp;&amp; !strings.HasPrefix(chainString, &quot;KUBE-SEP-&quot;) &amp;&amp; !strings.HasPrefix(chainString, &quot;KUBE-FW-&quot;) &amp;&amp; !strings.HasPrefix(chainString, &quot;KUBE-XLB-&quot;) {
+				// Ignore chains that aren't ours.
+				continue
+			}
+			// We must (as per iptables) write a chain-line for it, which has
+			// the nice effect of flushing the chain.  Then we can remove the
+			// chain.
+			writeLine(proxier.natChains, existingNATChains[chain])
+			writeLine(proxier.natRules, &quot;-X&quot;, chainString)
+		}
+	}
+</code></pre>
+
+<p>删除不在使用的chain,遍历所有的chain,proxy会维护一个活跃的chain Map,如果chain不存在这个Map中就会被删除。</p>
+
+<p>在1304-1311行:</p>
+
+<pre><code>err = proxier.iptables.RestoreAll(proxier.iptablesData.Bytes(), utiliptables.NoFlushTables, utiliptables.RestoreCounters)
+	if err != nil {
+		glog.Errorf(&quot;Failed to execute iptables-restore: %v&quot;, err)
+		// Revert new local ports.
+		glog.V(2).Infof(&quot;Closing local ports after iptables-restore failure&quot;)
+		utilproxy.RevertPorts(replacementPortsMap, proxier.portsMap)
+		return
+	}
+</code></pre>
+
+<p>把新一轮同步iptables的规则同步到node的iptables中去.</p>
+
+<p>在1105-1113行:</p>
+
+<pre><code>	// Update healthchecks.  The endpoints list might include services that are
+	// not &quot;OnlyLocal&quot;, but the services list will not, and the healthChecker
+	// will just drop those endpoints.
+	if err := proxier.healthChecker.SyncServices(serviceUpdateResult.hcServices); err != nil {
+		glog.Errorf(&quot;Error syncing healtcheck services: %v&quot;, err)
+	}
+	if err := proxier.healthChecker.SyncEndpoints(endpointUpdateResult.hcEndpoints); err != nil {
+		glog.Errorf(&quot;Error syncing healthcheck endoints: %v&quot;, err)
+	}
+
+</code></pre>
+
+<p>我们看到了proxy与apiserver通信来实现service和Endpoint的同步。</p>
+
+<h4 id="另外">另外<a href="#另外" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p><strong>在之前一个版本:</strong>
+kube-proxy不但要维护iptables的数据,kube-proxy还负责真正的负载均衡,使用Round Robin算法(循环列表逐个选取endpoint,一轮结束,从头开始下一轮),另一方面,为了支持session保持,还增加了affinityState查询(即:kube-proxy会从本地查找是否存在该IP的affinityState对象，如果存在且Session没有超时,那么这个请求就会指向affinityState对象所指向的那个pod,否则还是使用Round Robin算法。)</p>
+
+<p>在之后的版本:kube-proxy只是单纯维护iptables的数据,而不管负载均衡，iptables来做负载均衡</p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/kubernetes">kubernetes</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>605 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-07-22 20:54 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/go/knowledge/2018-08-20-go-funcs/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>Go func作为类型妙用提高代码的抽象粒度</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/kubernetes/knowledge/2018-06-26-kubernetes-up-to-1.11/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>Kubernetes 1.11新特性,欢呼！</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

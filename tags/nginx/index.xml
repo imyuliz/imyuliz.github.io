@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>nginx on yulibaozi</title>
+    <link>https://yulibaozi.com/tags/nginx/</link>
+    <description>Recent content in nginx on yulibaozi</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-hans</language>
+    <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
+    <lastBuildDate>Wed, 24 Jan 2018 20:42:38 +0800</lastBuildDate>
+    
+	<atom:link href="https://yulibaozi.com/tags/nginx/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Nginx日常配置</title>
+      <link>https://yulibaozi.com/posts/nginx/2018-01-24-nginx/</link>
+      <pubDate>Wed, 24 Jan 2018 20:42:38 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/nginx/2018-01-24-nginx/</guid>
+      <description>性能部分 1、worker_processes  表示工作进程的数量，一般设置成CPU核的数量即可
+ 2、worker_connections  表示每个工作进程的并发连接数，默认设置为1024
+ worker_processes 1; worker_connections 1024;  3、Buffers  如果Buffer太小，Nginx会不停的写一些临时文件； client_body_buffer_size 允许客户端请求单个文件字节数； client_header_buffer_size 用于设置客户请求的Header头缓冲区大小； client_max_body_size 设置客户端能上传文件的大小，默认为1m； large_client_header_buffers 设置客户端请求的Header头缓冲大小
+ client_body_buffer_size 10K; client_header_buffer_size 1k; client_max_body_size 8m; large_client_header_buffers 2 1k;  4、Timeouts  client_header_timeout 和 client_body_timeout设置请求头和请求体(各自)的超时时间，如果没有发送请求头和请求体，Nginx服务器会返回408错误或者request time out。
+keepalive_timeout 给客户端分配keep-alive链接超时时间。服务器将在这个超时时间过后关闭链接，我们将它设置低些可以让Nginx持续工作的时间更长。
+send_timeout 指定客户端的响应超时时间。这个设置不会用于整个转发器，而是在两次客户端读取操作之间。如果在这段时间内，客户端没有读取任何数据，Nginx就会关闭连接
+ client_body_timeout 12; client_header_timeout 12; keepalive_timeout 15; send_timeout 10;  5、Gzip Compression  开启Gzip,可以帮助nginx减少大量的网络传输工作，需要注意：gzip_comp_level的设置，如果太高，Nginx服务会浪费CPU的执行周期。
+ gzip on; gzip_vary on; gzip_comp_level 2; gzip_buffers 16 8k; gzip_min_length 1000; gzip_proxied any; gzip_disable &amp;quot;msie6&amp;quot;; gzip_http_version 1.</description>
+    </item>
+    
+  </channel>
+</rss>

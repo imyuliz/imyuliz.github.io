@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="Kubernetes 1.11新特性,欢呼！">
+<meta itemprop="description" content="kubernetes 1.11新特性 重要 文章同步微信公众号：容器时代(https://mp.weixin.qq.com/s/8bW-Et9WHVgQ8O2JwJarUw)
+前言 Kubernetes 社区已经在6月21号放出了Kubernetes 1.11的第一个rc版本，这意味着现在你可以尝试着去运用一些新的特性和功能, 并在正式版上线前为开发组提供珍贵的反馈信息。正式版计划将在2018年6月26日上线，其中包含了六个全新的alpha功能和十八个更加成熟稳定的功能。
+你可以从以下链接当中下载最新的Kubernetes1.11版本 https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.11.md
+如果你希望将你的使用情况反馈给开发社区，可向Kubernetes 1.11 milestone提交一个新的issue(https://github.com/kubernetes/kubernetes/issues/new?milestone=v1.11)，并标记相应的SIG团队
+SIG-AUTH  Provide RunAsGroup feature for Containers in a Pod(Alpha):
+目前，我们可以控制容器的UID同时也可以补充组，但是，无法控制那些运行的容器的GID总是0（root）。这个功能能够以非root运行容器，并且帮助我们提高容器的安全级别。(https://github.com/kubernetes/features/issues/213)
+ TokenRequest API and Kubelet integration(Alpha):
+TokenRequest API 提供了对service account token基础的改进。这个功能将允许生成Secret APIs之外、针对特定对象的（例如external secretstores）、可以调整有效期的以及可以绑定于特定Pods 的tokens(https://github.com/kubernetes/features/issues/542)
+ Limit node access to API(beta):
+可以对节点上的API调用进行限制，限制节点的作用域，比如：只能自己节点上的Node API Objects，只能修改绑定在自己节点上的Pod Objects，只能获取自己节点上的secrets和configmaps 等。(https://github.com/kubernetes/features/issues/279)
+ ClusterRole Aggregation（Stable）:
+为了CustomResources and ExtensionAPIServers更容易支持 RBAC，我们可以让API extenders为其添加一些权限，比如修改，查看等。(https://github.com/kubernetes/features/issues/502)
+  SIG-API-MACHINERY  Custom Resource Definition Versioning(beta):  CRD因其提高了Kubernetes的扩展性而被广泛接纳，为CRD增加版本，这样CRD的作者可以定义不同的资源版本，同时添加一种版本间的转换机制。目前，每个CR只有一个版本，每当更新的时候，只能重新增加一个CRD，然后以手动的方式同步。 * 支持API级别的版本控制 * 支持不同版本之间的转换 * 支持修改版本库 * 所有版本支持Validation/OpenAPI 模式 (https://github.">
+
+
+<meta itemprop="datePublished" content="2018-06-26T20:52:40&#43;08:00" />
+<meta itemprop="dateModified" content="2018-06-26T20:52:40&#43;08:00" />
+<meta itemprop="wordCount" content="224">
+
+
+
+<meta itemprop="keywords" content="kubernetes," />
+<meta property="og:title" content="Kubernetes 1.11新特性,欢呼！" />
+<meta property="og:description" content="kubernetes 1.11新特性 重要 文章同步微信公众号：容器时代(https://mp.weixin.qq.com/s/8bW-Et9WHVgQ8O2JwJarUw)
+前言 Kubernetes 社区已经在6月21号放出了Kubernetes 1.11的第一个rc版本，这意味着现在你可以尝试着去运用一些新的特性和功能, 并在正式版上线前为开发组提供珍贵的反馈信息。正式版计划将在2018年6月26日上线，其中包含了六个全新的alpha功能和十八个更加成熟稳定的功能。
+你可以从以下链接当中下载最新的Kubernetes1.11版本 https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.11.md
+如果你希望将你的使用情况反馈给开发社区，可向Kubernetes 1.11 milestone提交一个新的issue(https://github.com/kubernetes/kubernetes/issues/new?milestone=v1.11)，并标记相应的SIG团队
+SIG-AUTH  Provide RunAsGroup feature for Containers in a Pod(Alpha):
+目前，我们可以控制容器的UID同时也可以补充组，但是，无法控制那些运行的容器的GID总是0（root）。这个功能能够以非root运行容器，并且帮助我们提高容器的安全级别。(https://github.com/kubernetes/features/issues/213)
+ TokenRequest API and Kubelet integration(Alpha):
+TokenRequest API 提供了对service account token基础的改进。这个功能将允许生成Secret APIs之外、针对特定对象的（例如external secretstores）、可以调整有效期的以及可以绑定于特定Pods 的tokens(https://github.com/kubernetes/features/issues/542)
+ Limit node access to API(beta):
+可以对节点上的API调用进行限制，限制节点的作用域，比如：只能自己节点上的Node API Objects，只能修改绑定在自己节点上的Pod Objects，只能获取自己节点上的secrets和configmaps 等。(https://github.com/kubernetes/features/issues/279)
+ ClusterRole Aggregation（Stable）:
+为了CustomResources and ExtensionAPIServers更容易支持 RBAC，我们可以让API extenders为其添加一些权限，比如修改，查看等。(https://github.com/kubernetes/features/issues/502)
+  SIG-API-MACHINERY  Custom Resource Definition Versioning(beta):  CRD因其提高了Kubernetes的扩展性而被广泛接纳，为CRD增加版本，这样CRD的作者可以定义不同的资源版本，同时添加一种版本间的转换机制。目前，每个CR只有一个版本，每当更新的时候，只能重新增加一个CRD，然后以手动的方式同步。 * 支持API级别的版本控制 * 支持不同版本之间的转换 * 支持修改版本库 * 所有版本支持Validation/OpenAPI 模式 (https://github." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/kubernetes/knowledge/2018-06-26-kubernetes-up-to-1.11/" />
+<meta property="article:published_time" content="2018-06-26T20:52:40&#43;08:00"/>
+<meta property="article:modified_time" content="2018-06-26T20:52:40&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Kubernetes 1.11新特性,欢呼！"/>
+<meta name="twitter:description" content="kubernetes 1.11新特性 重要 文章同步微信公众号：容器时代(https://mp.weixin.qq.com/s/8bW-Et9WHVgQ8O2JwJarUw)
+前言 Kubernetes 社区已经在6月21号放出了Kubernetes 1.11的第一个rc版本，这意味着现在你可以尝试着去运用一些新的特性和功能, 并在正式版上线前为开发组提供珍贵的反馈信息。正式版计划将在2018年6月26日上线，其中包含了六个全新的alpha功能和十八个更加成熟稳定的功能。
+你可以从以下链接当中下载最新的Kubernetes1.11版本 https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.11.md
+如果你希望将你的使用情况反馈给开发社区，可向Kubernetes 1.11 milestone提交一个新的issue(https://github.com/kubernetes/kubernetes/issues/new?milestone=v1.11)，并标记相应的SIG团队
+SIG-AUTH  Provide RunAsGroup feature for Containers in a Pod(Alpha):
+目前，我们可以控制容器的UID同时也可以补充组，但是，无法控制那些运行的容器的GID总是0（root）。这个功能能够以非root运行容器，并且帮助我们提高容器的安全级别。(https://github.com/kubernetes/features/issues/213)
+ TokenRequest API and Kubelet integration(Alpha):
+TokenRequest API 提供了对service account token基础的改进。这个功能将允许生成Secret APIs之外、针对特定对象的（例如external secretstores）、可以调整有效期的以及可以绑定于特定Pods 的tokens(https://github.com/kubernetes/features/issues/542)
+ Limit node access to API(beta):
+可以对节点上的API调用进行限制，限制节点的作用域，比如：只能自己节点上的Node API Objects，只能修改绑定在自己节点上的Pod Objects，只能获取自己节点上的secrets和configmaps 等。(https://github.com/kubernetes/features/issues/279)
+ ClusterRole Aggregation（Stable）:
+为了CustomResources and ExtensionAPIServers更容易支持 RBAC，我们可以让API extenders为其添加一些权限，比如修改，查看等。(https://github.com/kubernetes/features/issues/502)
+  SIG-API-MACHINERY  Custom Resource Definition Versioning(beta):  CRD因其提高了Kubernetes的扩展性而被广泛接纳，为CRD增加版本，这样CRD的作者可以定义不同的资源版本，同时添加一种版本间的转换机制。目前，每个CR只有一个版本，每当更新的时候，只能重新增加一个CRD，然后以手动的方式同步。 * 支持API级别的版本控制 * 支持不同版本之间的转换 * 支持修改版本库 * 所有版本支持Validation/OpenAPI 模式 (https://github."/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Kubernetes 1.11新特性,欢呼！</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Jun 26, 2018</span></div>
+				<h1>Kubernetes 1.11新特性,欢呼！</h1>
+			</header>
+			<div class="content">
+				
+
+<h2 id="kubernetes-1-11新特性">kubernetes 1.11新特性<a href="#kubernetes-1-11新特性" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<h3 id="重要">重要<a href="#重要" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>文章同步微信公众号：容器时代(<a href="https://mp.weixin.qq.com/s/8bW-Et9WHVgQ8O2JwJarUw">https://mp.weixin.qq.com/s/8bW-Et9WHVgQ8O2JwJarUw</a>)</p>
+
+<h3 id="前言">前言<a href="#前言" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>Kubernetes 社区已经在6月21号放出了Kubernetes 1.11的第一个rc版本，这意味着现在你可以尝试着去运用一些新的特性和功能, 并在正式版上线前为开发组提供珍贵的反馈信息。正式版计划将在2018年6月26日上线，其中包含了六个全新的alpha功能和十八个更加成熟稳定的功能。</p>
+
+<p>你可以从以下链接当中下载最新的Kubernetes1.11版本
+<a href="https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.11.md">https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.11.md</a></p>
+
+<p>如果你希望将你的使用情况反馈给开发社区，可向Kubernetes 1.11 milestone提交一个新的issue(<a href="https://github.com/kubernetes/kubernetes/issues/new?milestone=v1.11)，并标记相应的SIG团队">https://github.com/kubernetes/kubernetes/issues/new?milestone=v1.11)，并标记相应的SIG团队</a></p>
+
+<h3 id="sig-auth">SIG-AUTH<a href="#sig-auth" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li><p>Provide RunAsGroup feature for Containers in a Pod(Alpha):</p>
+
+<p>目前，我们可以控制容器的UID同时也可以补充组，但是，无法控制那些运行的容器的GID总是0（root）。这个功能能够以非root运行容器，并且帮助我们提高容器的安全级别。(<a href="https://github.com/kubernetes/features/issues/213">https://github.com/kubernetes/features/issues/213</a>)</p></li>
+
+<li><p>TokenRequest API and Kubelet integration(Alpha):<br />
+TokenRequest API 提供了对service account token基础的改进。这个功能将允许生成Secret APIs之外、针对特定对象的（例如external secretstores）、可以调整有效期的以及可以绑定于特定Pods 的tokens(<a href="https://github.com/kubernetes/features/issues/542">https://github.com/kubernetes/features/issues/542</a>)</p></li>
+
+<li><p>Limit node access to API(beta):</p>
+
+<p>可以对节点上的API调用进行限制，限制节点的作用域，比如：只能自己节点上的Node API Objects，只能修改绑定在自己节点上的Pod Objects，只能获取自己节点上的secrets和configmaps 等。(<a href="https://github.com/kubernetes/features/issues/279">https://github.com/kubernetes/features/issues/279</a>)</p></li>
+
+<li><p>ClusterRole Aggregation（Stable）:</p>
+
+<p>为了CustomResources and ExtensionAPIServers更容易支持 RBAC，我们可以让API extenders为其添加一些权限，比如修改，查看等。(<a href="https://github.com/kubernetes/features/issues/502">https://github.com/kubernetes/features/issues/502</a>)</p></li>
+</ol>
+
+<h3 id="sig-api-machinery">SIG-API-MACHINERY<a href="#sig-api-machinery" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li>Custom Resource Definition Versioning(beta):</li>
+</ol>
+
+<p>CRD因其提高了Kubernetes的扩展性而被广泛接纳，为CRD增加版本，这样CRD的作者可以定义不同的资源版本，同时添加一种版本间的转换机制。目前，每个CR只有一个版本，每当更新的时候，只能重新增加一个CRD，然后以手动的方式同步。
+*   支持API级别的版本控制
+*   支持不同版本之间的转换
+*   支持修改版本库
+*   所有版本支持Validation/OpenAPI 模式
+(<a href="https://github.com/kubernetes/features/issues/544">https://github.com/kubernetes/features/issues/544</a>)</p>
+
+<ol>
+<li>Subresources for Custom Resources(beta):</li>
+</ol>
+
+<p>为CR引入子资源(Subresources)。而此前CR并不支持子资源。在本版本中添加了/status 和 /scale子资源。
+* 支持独立的Status和Spec定义
+    * 在resource主访问点上忽略Status字段的变化
+    * 提供/status路径提供对Status字段变化的访问
+    * metadata.Generation只有当Spec字段改变的时候才递增
+* 支持/scale子资源
+* 保持向后兼容性
+* 如果一个CR早已构建了Spec或Status，它可以轻而易举地转为使用/status和/scale进行访问
+* 与JSON Schema Validation无缝对接
+    (<a href="https://github.com/kubernetes/features/issues/571">https://github.com/kubernetes/features/issues/571</a>)</p>
+
+<h3 id="sig-azure">SIG-AZURE<a href="#sig-azure" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li><p>Add support for Azure Virtual Machine Scale Sets（Beta）:</p>
+
+<p>添加对VMSS的支持，具体包含同时支持VMSS和标准VM，LB规则、探测以及PVs
+(<a href="https://github.com/kubernetes/features/issues/513">https://github.com/kubernetes/features/issues/513</a>)</p></li>
+
+<li><p>Add Azure support to cluster-autoscaler (Beta):</p>
+
+<p>在弹性伸缩中，支持Azure VMSS，支持Availability Set，支持节点组以及相关单元测试和文档 (<a href="https://github.com/kubernetes/features/issues/514">https://github.com/kubernetes/features/issues/514</a>)</p></li>
+</ol>
+
+<h3 id="sig-cloud-provider">SIG-cloud-provider<a href="#sig-cloud-provider" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li><p>Support out-of-process and out-of-tree cloud providers(Beta):</p>
+
+<p>支持可插拔云提供商。云服务商的依赖需要从Kubernetes二进制中移除。(<a href="https://github.com/kubernetes/features/issues/88">https://github.com/kubernetes/features/issues/88</a>)</p></li>
+</ol>
+
+<h3 id="sig-network">SIG-NETWORK<a href="#sig-network" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li><p>Implement IPVS-based in-cluster service load balancing(Stable):</p>
+
+<p>实现基于IPVS的负载均衡,IPVS基于内核哈希表,与iptables相比,IPVS还支持更复杂的负载均衡算法（最少负载，最少连接数，局部性，加权）以及其他有用的功能（例如健康检查，重试等）。(<a href="https://github.com/kubernetes/features/issues/265">https://github.com/kubernetes/features/issues/265</a>)</p></li>
+
+<li><p>Enable CoreDNS as a DNS plugin for Kubernetes(Stable):</p>
+
+<p>启用CoreDns作为k8s的DNS插件。(<a href="https://github.com/kubernetes/features/issues/427">https://github.com/kubernetes/features/issues/427</a>)</p></li>
+</ol>
+
+<h3 id="sig-node">SIG-NODE<a href="#sig-node" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li><p>Dynamic Kubelet Configuration（Beta）:</p>
+
+<p>目前，Kubelet通过命令行的标志位来设置，这意味着需要改变启动配置，同时还有可能修改了之前的配置，这非常繁琐也可能容易出错，所以，支持动态修改配置能够减轻这些负担。(<a href="https://github.com/kubernetes/features/issues/281">https://github.com/kubernetes/features/issues/281</a>)</p></li>
+
+<li><p>Add sysctl support（Beta）:</p>
+
+<p>扩展pod的规范，让pod能够支持内核上的命名空间隔离。(<a href="https://github.com/kubernetes/features/issues/34">https://github.com/kubernetes/features/issues/34</a>)</p></li>
+
+<li><p>Add support for Windows Container Configuration in CRI（Beta）:</p>
+
+<p>在CRI上添加对Windows容器配置的支持,例如：cpu/memory限制。(<a href="https://github.com/kubernetes/features/issues/547">https://github.com/kubernetes/features/issues/547</a>)</p></li>
+
+<li><p>CRI: logging, stats, and more（Beta）:</p>
+
+<p>实现CRI容器日志的滚动收集；添加对CRI容器的统计功能。(<a href="https://github.com/kubernetes/features/issues/552">https://github.com/kubernetes/features/issues/552</a>)</p></li>
+
+<li><p>CRI validation test suite（Stable）:</p>
+
+<p>为Kubelet CRI提供通用的验证/测试工具。(<a href="https://github.com/kubernetes/features/issues/292">https://github.com/kubernetes/features/issues/292</a>)</p></li>
+</ol>
+
+<h3 id="sig-scheduling">SIG-scheduling<a href="#sig-scheduling" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li><p>Schedule DaemonSet Pods by kube-scheduler(Alpha):</p>
+
+<p>目前DaemonSet由DaemonSet Controller完成调度，这会带来一些问题，比如DaemonSet调度时会忽略节点资源变化、DaemonSet忽略Pod亲和性和反亲和性的影响、以及对DaemonSet调度故障的排查等。使用通用的调度器要比使用自己的调度器更好。
+(<a href="https://github.com/kubernetes/features/issues/548">https://github.com/kubernetes/features/issues/548</a>)</p></li>
+
+<li><p>Add pod priority and preemption(Beta):</p>
+
+<p>运行拥有不同优先级的工作负载通常可以提高中大型集群资源使用率。工作负载的重要程度可以由优先级、QoS或者其他集群特定的指标进行评估。超卖在云上很常见，为Pod添加优先级和抢占式策略，一些Pod承担的工作可能重要一些，一些Pod承担的工作可能要次要一些，在集群中，可能会遇到资源紧张或者某pod优先使用某资源的情况，我们可以通过设置pod的优先级或者抢占方式来保证承担重要任务的pod能够工作。(<a href="https://github.com/kubernetes/features/issues/564">https://github.com/kubernetes/features/issues/564</a>)</p></li>
+</ol>
+
+<h3 id="sig-storage">SIG-storage<a href="#sig-storage" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li><p>Add support for online resizing of PVs（Alpha）:</p>
+
+<p>支持在线（正在被Pod使用的PV）调整pv的大小。(<a href="https://github.com/kubernetes/features/issues/531">https://github.com/kubernetes/features/issues/531</a>)</p></li>
+
+<li><p>Dynamic Maximum volume count（Alpha）:</p>
+
+<p>支持动态统计node上的挂载数量，可以避免挂载到已经挂满的节点上。(<a href="https://github.com/kubernetes/features/issues/554">https://github.com/kubernetes/features/issues/554</a>)</p></li>
+
+<li><p>Provide environment variables expansion in sub path mount(Alpha):
+当挂载卷的时候根据环境变量动态生成宿主目录，subPath可以按需创建目录，但分配给这些目录的名字是静态的。
+(<a href="https://github.com/kubernetes/features/issues/559">https://github.com/kubernetes/features/issues/559</a>)</p></li>
+
+<li><p>Add support for resizing PVs(Beta):</p>
+
+<p>支持调整 PVs (<a href="https://github.com/kubernetes/features/issues/284">https://github.com/kubernetes/features/issues/284</a>)</p></li>
+
+<li><p>StorageObjectInUseProtection (Stable):</p>
+
+<p>提供PVC保护，如果PVC在Pod的使用的情况下，不允许删除PVC。(<a href="https://github.com/kubernetes/features/issues/498">https://github.com/kubernetes/features/issues/498</a>)</p></li>
+
+<li><p>StorageObjectInUseProtection(Stable):
+提供PV保护，在有Pod使用该PV的情况下,PV不允许被删除。(<a href="https://github.com/kubernetes/features/issues/499">https://github.com/kubernetes/features/issues/499</a>)</p></li>
+</ol>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/kubernetes">kubernetes</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>224 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-06-26 20:52 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/kubernetes/knowledge/2018-07-22-proxy-network/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>kubernetes中请求网络链路的分析与总结</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/kubernetes/deploy/2018-05-16-deploy-weavescope/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>安装Weave Scope</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

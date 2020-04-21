@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="Golang的websocket开发与实践">
+<meta itemprop="description" content="进入正题(以一个聊天室入手,层层剖析):
+#### websocket核心要义： 浏览器通过js向服务器端发起建立websocket连接,连接建立以后，客户端和服务器端就可以通过 TCP 连接直接交换数据。因为WebSocket连接本质上就是一个 TCP 连接，也就是说首次建立链接后,后续就直接交换数据。
+#### 是如何建立websocket链接的呢? 请求的时候他仍然是个普通请求,比如GET,在服务端的接口中把这个请求升级成websocket; &gt; 具体的代码:
+ var upgrader = websocket.Upgrader{ ReadBufferSize: 1024, WriteBufferSize: 1024, } 控制器中: conn, err := upgrader.Upgrade(base.Ctx.ResponseWriter, base.Ctx.Request, nil) if _, ok := err.(websocket.HandshakeError); ok { http.Error(base.Ctx.ResponseWriter, &quot;不是合法的WebSocket请求&quot;, 400) return }  这样就把这个链接升级成了websocket。这个就是websocket的核心代码之一。
+#### 聊天室的结构设计:聊天室结构详解:
+ Room:
+ 某一个单独的聊天室,也就是某一个房间,创建一个房间的时候,需要为这个房间开个go程监听这个房间的一切事情,比如某人进入了房间,某人离开了房间,某人说了些什么,我们称之为营业,这是必须的。
+ Client:
+ 相对于Room来说,Client就是用户的角色。当用户进入到某个房间称之为注册,当然用户得能说会道。所以,Client得有两个功能:监听房间里面的消息,能在房间里面说话,所以,我们考虑开两个Go程读取和发送消息是合理的。
+ 用户和Client的真实关系。
+ 相对于服务端来说,Client的角色就是用户,其实不然,真实用户和Client之间其实还有个中间介质,那就是websocket,真实用户通过websocket发送消息到Client,Client接收房间里面然后通过websocket发送给真实用户。Client是用户在服务端的一个代理身份,如果理清了这个关系,将极大的帮助你理解代码。
+ 聊天室的消息广播是怎么回事?
+ 其实,这个东西非常简单,不要想得那么复杂。 1. 如果是个演示项目的话: 其实是循环向每个客户端发送这条消息,也就是代码里面的for,看完你将哑然失笑。 2. 如果你想专业一点的话,你可以使用消息队列,把用户发送的这条消息写入到消息队列(比如nats等)中,然后所有订阅此topic的客户端都将收到这条消息。
+HTML5中Wesocket的使用有哪些?  onopen() 与服务端建立链接 onclose() 关闭与服务端的链接 onerror() 突发错误。 onmessage() 接收来自服务端的消息。 onsend() 向服务端发送消息。  展示聊天室代码和详细注释: yulibaozi/chatroom">
+
+
+<meta itemprop="datePublished" content="2018-03-26T22:16:12&#43;08:00" />
+<meta itemprop="dateModified" content="2018-03-26T22:16:12&#43;08:00" />
+<meta itemprop="wordCount" content="78">
+
+
+
+<meta itemprop="keywords" content="go," />
+<meta property="og:title" content="Golang的websocket开发与实践" />
+<meta property="og:description" content="进入正题(以一个聊天室入手,层层剖析):
+#### websocket核心要义： 浏览器通过js向服务器端发起建立websocket连接,连接建立以后，客户端和服务器端就可以通过 TCP 连接直接交换数据。因为WebSocket连接本质上就是一个 TCP 连接，也就是说首次建立链接后,后续就直接交换数据。
+#### 是如何建立websocket链接的呢? 请求的时候他仍然是个普通请求,比如GET,在服务端的接口中把这个请求升级成websocket; &gt; 具体的代码:
+ var upgrader = websocket.Upgrader{ ReadBufferSize: 1024, WriteBufferSize: 1024, } 控制器中: conn, err := upgrader.Upgrade(base.Ctx.ResponseWriter, base.Ctx.Request, nil) if _, ok := err.(websocket.HandshakeError); ok { http.Error(base.Ctx.ResponseWriter, &quot;不是合法的WebSocket请求&quot;, 400) return }  这样就把这个链接升级成了websocket。这个就是websocket的核心代码之一。
+#### 聊天室的结构设计:聊天室结构详解:
+ Room:
+ 某一个单独的聊天室,也就是某一个房间,创建一个房间的时候,需要为这个房间开个go程监听这个房间的一切事情,比如某人进入了房间,某人离开了房间,某人说了些什么,我们称之为营业,这是必须的。
+ Client:
+ 相对于Room来说,Client就是用户的角色。当用户进入到某个房间称之为注册,当然用户得能说会道。所以,Client得有两个功能:监听房间里面的消息,能在房间里面说话,所以,我们考虑开两个Go程读取和发送消息是合理的。
+ 用户和Client的真实关系。
+ 相对于服务端来说,Client的角色就是用户,其实不然,真实用户和Client之间其实还有个中间介质,那就是websocket,真实用户通过websocket发送消息到Client,Client接收房间里面然后通过websocket发送给真实用户。Client是用户在服务端的一个代理身份,如果理清了这个关系,将极大的帮助你理解代码。
+ 聊天室的消息广播是怎么回事?
+ 其实,这个东西非常简单,不要想得那么复杂。 1. 如果是个演示项目的话: 其实是循环向每个客户端发送这条消息,也就是代码里面的for,看完你将哑然失笑。 2. 如果你想专业一点的话,你可以使用消息队列,把用户发送的这条消息写入到消息队列(比如nats等)中,然后所有订阅此topic的客户端都将收到这条消息。
+HTML5中Wesocket的使用有哪些?  onopen() 与服务端建立链接 onclose() 关闭与服务端的链接 onerror() 突发错误。 onmessage() 接收来自服务端的消息。 onsend() 向服务端发送消息。  展示聊天室代码和详细注释: yulibaozi/chatroom" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/go/knowledge/2018-03-26-go-and-websocket/" />
+<meta property="article:published_time" content="2018-03-26T22:16:12&#43;08:00"/>
+<meta property="article:modified_time" content="2018-03-26T22:16:12&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Golang的websocket开发与实践"/>
+<meta name="twitter:description" content="进入正题(以一个聊天室入手,层层剖析):
+#### websocket核心要义： 浏览器通过js向服务器端发起建立websocket连接,连接建立以后，客户端和服务器端就可以通过 TCP 连接直接交换数据。因为WebSocket连接本质上就是一个 TCP 连接，也就是说首次建立链接后,后续就直接交换数据。
+#### 是如何建立websocket链接的呢? 请求的时候他仍然是个普通请求,比如GET,在服务端的接口中把这个请求升级成websocket; &gt; 具体的代码:
+ var upgrader = websocket.Upgrader{ ReadBufferSize: 1024, WriteBufferSize: 1024, } 控制器中: conn, err := upgrader.Upgrade(base.Ctx.ResponseWriter, base.Ctx.Request, nil) if _, ok := err.(websocket.HandshakeError); ok { http.Error(base.Ctx.ResponseWriter, &quot;不是合法的WebSocket请求&quot;, 400) return }  这样就把这个链接升级成了websocket。这个就是websocket的核心代码之一。
+#### 聊天室的结构设计:聊天室结构详解:
+ Room:
+ 某一个单独的聊天室,也就是某一个房间,创建一个房间的时候,需要为这个房间开个go程监听这个房间的一切事情,比如某人进入了房间,某人离开了房间,某人说了些什么,我们称之为营业,这是必须的。
+ Client:
+ 相对于Room来说,Client就是用户的角色。当用户进入到某个房间称之为注册,当然用户得能说会道。所以,Client得有两个功能:监听房间里面的消息,能在房间里面说话,所以,我们考虑开两个Go程读取和发送消息是合理的。
+ 用户和Client的真实关系。
+ 相对于服务端来说,Client的角色就是用户,其实不然,真实用户和Client之间其实还有个中间介质,那就是websocket,真实用户通过websocket发送消息到Client,Client接收房间里面然后通过websocket发送给真实用户。Client是用户在服务端的一个代理身份,如果理清了这个关系,将极大的帮助你理解代码。
+ 聊天室的消息广播是怎么回事?
+ 其实,这个东西非常简单,不要想得那么复杂。 1. 如果是个演示项目的话: 其实是循环向每个客户端发送这条消息,也就是代码里面的for,看完你将哑然失笑。 2. 如果你想专业一点的话,你可以使用消息队列,把用户发送的这条消息写入到消息队列(比如nats等)中,然后所有订阅此topic的客户端都将收到这条消息。
+HTML5中Wesocket的使用有哪些?  onopen() 与服务端建立链接 onclose() 关闭与服务端的链接 onerror() 突发错误。 onmessage() 接收来自服务端的消息。 onsend() 向服务端发送消息。  展示聊天室代码和详细注释: yulibaozi/chatroom"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Golang的websocket开发与实践</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Mar 26, 2018</span></div>
+				<h1>Golang的websocket开发与实践</h1>
+			</header>
+			<div class="content">
+				
+
+<p>进入正题(以一个聊天室入手,层层剖析):</p>
+
+<p>#### websocket核心要义：
+ 浏览器通过js向服务器端发起建立websocket连接,连接建立以后，客户端和服务器端就可以通过 TCP 连接直接交换数据。因为WebSocket连接本质上就是一个 TCP 连接，也就是说首次建立链接后,后续就直接交换数据。</p>
+
+<p>#### 是如何建立websocket链接的呢?
+ 请求的时候他仍然是个普通请求,比如GET,在服务端的接口中把这个请求升级成websocket;
+ &gt; 具体的代码:</p>
+
+<pre><code> var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
+控制器中:
+
+conn, err := upgrader.Upgrade(base.Ctx.ResponseWriter, base.Ctx.Request, nil)
+	if _, ok := err.(websocket.HandshakeError); ok {
+		http.Error(base.Ctx.ResponseWriter, &quot;不是合法的WebSocket请求&quot;, 400)
+		return
+	} 
+</code></pre>
+
+<p>这样就把这个链接升级成了websocket。这个就是websocket的核心代码之一。</p>
+
+<p>#### 聊天室的结构设计:<img src="http://index.yulibaozi.com/653028c9-6ae4-4907-bbc5-3eb26cdb1e5dQQ20180326-0.jpg" alt="image" /></p>
+
+<p>聊天室结构详解:</p>
+
+<blockquote>
+<p>Room:</p>
+</blockquote>
+
+<p>某一个单独的聊天室,也就是某一个房间,创建一个房间的时候,需要为这个房间开个go程监听这个房间的一切事情,比如某人进入了房间,某人离开了房间,某人说了些什么,我们称之为营业,这是必须的。</p>
+
+<blockquote>
+<p>Client:</p>
+</blockquote>
+
+<p>相对于Room来说,Client就是用户的角色。当用户进入到某个房间称之为注册,当然用户得能说会道。所以,Client得有两个功能:监听房间里面的消息,能在房间里面说话,所以,我们考虑开两个Go程读取和发送消息是合理的。</p>
+
+<blockquote>
+<p>用户和Client的真实关系。</p>
+</blockquote>
+
+<p>相对于服务端来说,Client的角色就是用户,其实不然,真实用户和Client之间其实还有个中间介质,那就是websocket,真实用户通过websocket发送消息到Client,Client接收房间里面然后通过websocket发送给真实用户。Client是用户在服务端的一个代理身份,如果理清了这个关系,将极大的帮助你理解代码。</p>
+
+<blockquote>
+<p>聊天室的消息广播是怎么回事?</p>
+</blockquote>
+
+<p>其实,这个东西非常简单,不要想得那么复杂。
+1. 如果是个演示项目的话:
+其实是循环向每个客户端发送这条消息,也就是代码里面的for,看完你将哑然失笑。
+2. 如果你想专业一点的话,你可以使用消息队列,把用户发送的这条消息写入到消息队列(比如nats等)中,然后所有订阅此topic的客户端都将收到这条消息。</p>
+
+<h4 id="html5中wesocket的使用有哪些">HTML5中Wesocket的使用有哪些?<a href="#html5中wesocket的使用有哪些" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<ol>
+<li>onopen() 与服务端建立链接</li>
+<li>onclose() 关闭与服务端的链接</li>
+<li>onerror() 突发错误。</li>
+<li>onmessage() 接收来自服务端的消息。</li>
+<li>onsend() 向服务端发送消息。</li>
+</ol>
+
+<p>展示聊天室代码和详细注释:
+<a href="https://github.com/yulibaozi/chatroom">yulibaozi/chatroom</a></p>
+
+<p>参考文档及项目:</p>
+
+<p><a href="https://github.com/gorilla/websocket">gorilla/websocket</a></p>
+
+<p><a href="https://www.ibm.com/developerworks/cn/web/1112_huangxa_websocket/index.html">使用 HTML5 WebSocket 构建实时 Web 应用</a></p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/go">go</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>78 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-03-26 22:16 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/go/knowledge/2018-04-12-go-pprof/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>Go性能测试手册</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/go/algorithm/2018-02-23-binary-tree/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>Golang实现二叉查找树</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

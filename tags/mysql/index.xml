@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>mysql on yulibaozi</title>
+    <link>https://yulibaozi.com/tags/mysql/</link>
+    <description>Recent content in mysql on yulibaozi</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-hans</language>
+    <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
+    <lastBuildDate>Wed, 24 Jan 2018 20:45:09 +0800</lastBuildDate>
+    
+	<atom:link href="https://yulibaozi.com/tags/mysql/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Mysql不同数据类型的差异对比与取舍</title>
+      <link>https://yulibaozi.com/posts/mysql/knowledge/2018-01-24-mysql/</link>
+      <pubDate>Wed, 24 Jan 2018 20:45:09 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/mysql/knowledge/2018-01-24-mysql/</guid>
+      <description>数据库设计  前要：字符串长度不是定义字节数，而是字符数，多字节字符集需要更多的空间存储单个字符。
+ 字段设计维度的思考 可以按照以下三个维度考虑设计： - 按照字段的使用频率设计，预判性的分为冷、温、热字段设计表 - 根据展示数据展示位置来设计，比如有些数据只在个人中心显示而不会在其他地方显示 - 根据字段的大小设计表，比如，有些大文本 text，blob的类型的可以考虑拆分。 - 按照读／写（更新）的比例来设计表
+数据类型的选择  更小的通常更快，性能更佳原因在于占用更少的磁盘，内存，cpu缓存并且需要处理的cpu周期也更小。但是要确认你没有低估存储值的范围 尽量避免NULL，相对于mysql来说，他更难优化，因为NULL的列使得索引、索引统计和值比较都更为复杂。 在mysql中，整型的计算一般使用bigint（64位）来计算，即使是32位的环境也是如此。但是一些聚合函数例外，他们使用decimal和double来计算 decimal类型通常用来存储精确小数，因为他支持高精确计算（5.0及其以后）   索引的建立  尽量避免在可为NULL的列上创建索引  应该使用整型来存储IP地址？ 通常情况下，人们使用varchar（15）来存储IPv4的地址，事实上，他们是32位的无符号整型，而不是字符串，用小数点分割成四部分只是为了让人们简单易懂，所以应该用无符号整型来存储ip地址，mysql同时也提供了INET_ATON（）和INET_NTOA()函数在这两者之间转换。
+如何在数据库中存储钱？ 将需要存储的货币单位更加小数的位数乘以相应的倍数即可，假设，我们要存储到万分之一分，那么我们就把所有的金额乘以一百万，将结果存储在bigint中，这样就可以避免浮点存储计算不精确和decimal精确计算代价高的问题。
+数据库中DATETIME和TIMESAMP的区别？ 他们都可以存储相同的数据类型：时间和日期，精确到秒。 但是区别： - TIMESAMP只使用DATETIME一半的存储空间，并且会根据时区变化，具有特殊的自动更新能力。 - TIMESAMP允许的时间范围要小很多，所以有时候他上面的特殊能力可能为成为他的障碍。 - TIMESAMP能表示从1970年1月1日午夜以来的秒数到2038年,而DATETIME能保存1001年到9999年，精度为秒。
+在数据库中如何保存到微秒级别的时间戳？ 答案是：使用bigint类型存储微秒级别的时间戳也可以切换到mariadb来代替mysql
+varchar和char的区别？ varchar：
+varchar类型存储的是可变长的字符串，他比定长类型的更节省空间，因为他只用必要的空间，字符越短使用越少的空间，但是有一种情况例外，就是使用ROW_FORMAT=FIXED创建的话，每一行都使用的定长存储，这很浪费空间，另外varchar需要一到两个字节额外记录字符串的长度，如果列小于255个字节，那么使用一个字节，否则使用两个。假设使用latin1字符集，则一个varchar（10）的列需要11个字节的存储空间，而varchar（20000）需要20002个字节，因为需要存储长度信息。
+varchar虽然节省了空间，对性能有帮助，但由于是变长的，在update时可能会让行比原来更长，那么这就有额外的工作，这个行占用的空间增长，并且在此页内没有更多的空间存储，这种情况下，不同的存储引擎的处理方式不一样，比如：myisam将拆成不同的片段存储，innodb则需要分裂页使得行可以放在列内，总之，就是加重了碎片化。
+char： char是定长的，mysql会根据定义的字符串长度来分配足够的空间，当存储char的时候，mysql会删除末尾的空格，且char值会根据采用空格进行填充
+总结： varchar适合 - 字符串列的最大长度比平均长度大很多，列更新很少的情况，这样碎片化不是问题，就像使用utf-8这样复杂的字符集，每个字符度使用不同的字节数进行存储。 - 注意：innodb会把过长的varchar处理成blob
+char适合 - 存储很短的字符串或者所有的值接近同一个长度，例如char比较适合存储密码md5值，因为这是一个定长的值。 - 对于经常变更的数据，char也比varchar更好，因为定长的不容易产生碎片。 - 对于非常短的列，char比varchar在存储空间上更有效率，因为varchar会需要额外字节来记录长度。
+数据库索引 一、索引的特点  1.索引可以加快数据库的检索速度 2.索引降低了数据库插入、修改、删除等维护任务的速度 3.索引创建在表上，不能创建在视图上 4.索引既可以直接创建，也可以间接创建 5.可以在优化隐藏中，使用索引 6.</description>
+    </item>
+    
+  </channel>
+</rss>

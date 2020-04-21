@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="Docker 使用手册">
+<meta itemprop="description" content="docker使用笔记 1、基于dockerfile使用docker build 创建images  格式
+ docker build . -t 需要打包成的镜像名称 备注：.代表dockerfile在当前目录,以dockerfile为准   示例
+ docker build . -t liimages/spider1.0  2、基于image运行docker容器同时运行指定主机端口  格式
+ docker run -d -p 主机端口:容器端口 镜像名称或者Id 备注：-d:后台运行,-p 暴露端口 4000:80的意思是容器的80的端口映射到主机的4000端口 外部以400端口访问   示例
+ docker run -d -p 4000:80 liimages/spider1.0  3、基于image运行docker容器同时运行指定主机端口且挂载外部目录，且出错重启  格式
+  -v 参数： 冒号前为宿主机目录，必须为绝对路径，冒号后为镜像内挂载的路径。   示例
+ docker run --restart=always -itdp 1230:1235 -v /etc/localtime:/etc/localtime:ro liimages/spider2.0 ./run.sh  4、进入到容器内部可以修改相关配置,不使用attach，attach方式因为退出，导致整个容器退出。  格式">
+
+
+<meta itemprop="datePublished" content="2018-01-24T22:28:04&#43;08:00" />
+<meta itemprop="dateModified" content="2018-01-24T22:28:04&#43;08:00" />
+<meta itemprop="wordCount" content="143">
+
+
+
+<meta itemprop="keywords" content="docker," />
+<meta property="og:title" content="Docker 使用手册" />
+<meta property="og:description" content="docker使用笔记 1、基于dockerfile使用docker build 创建images  格式
+ docker build . -t 需要打包成的镜像名称 备注：.代表dockerfile在当前目录,以dockerfile为准   示例
+ docker build . -t liimages/spider1.0  2、基于image运行docker容器同时运行指定主机端口  格式
+ docker run -d -p 主机端口:容器端口 镜像名称或者Id 备注：-d:后台运行,-p 暴露端口 4000:80的意思是容器的80的端口映射到主机的4000端口 外部以400端口访问   示例
+ docker run -d -p 4000:80 liimages/spider1.0  3、基于image运行docker容器同时运行指定主机端口且挂载外部目录，且出错重启  格式
+  -v 参数： 冒号前为宿主机目录，必须为绝对路径，冒号后为镜像内挂载的路径。   示例
+ docker run --restart=always -itdp 1230:1235 -v /etc/localtime:/etc/localtime:ro liimages/spider2.0 ./run.sh  4、进入到容器内部可以修改相关配置,不使用attach，attach方式因为退出，导致整个容器退出。  格式" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/docker/knowledge/2018-01-24-docker-use/" />
+<meta property="article:published_time" content="2018-01-24T22:28:04&#43;08:00"/>
+<meta property="article:modified_time" content="2018-01-24T22:28:04&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Docker 使用手册"/>
+<meta name="twitter:description" content="docker使用笔记 1、基于dockerfile使用docker build 创建images  格式
+ docker build . -t 需要打包成的镜像名称 备注：.代表dockerfile在当前目录,以dockerfile为准   示例
+ docker build . -t liimages/spider1.0  2、基于image运行docker容器同时运行指定主机端口  格式
+ docker run -d -p 主机端口:容器端口 镜像名称或者Id 备注：-d:后台运行,-p 暴露端口 4000:80的意思是容器的80的端口映射到主机的4000端口 外部以400端口访问   示例
+ docker run -d -p 4000:80 liimages/spider1.0  3、基于image运行docker容器同时运行指定主机端口且挂载外部目录，且出错重启  格式
+  -v 参数： 冒号前为宿主机目录，必须为绝对路径，冒号后为镜像内挂载的路径。   示例
+ docker run --restart=always -itdp 1230:1235 -v /etc/localtime:/etc/localtime:ro liimages/spider2.0 ./run.sh  4、进入到容器内部可以修改相关配置,不使用attach，attach方式因为退出，导致整个容器退出。  格式"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Docker 使用手册</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Jan 24, 2018</span></div>
+				<h1>Docker 使用手册</h1>
+			</header>
+			<div class="content">
+				
+
+<h2 id="docker使用笔记">docker使用笔记<a href="#docker使用笔记" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<h4 id="1-基于dockerfile使用docker-build-创建images">1、基于dockerfile使用docker build 创建images<a href="#1-基于dockerfile使用docker-build-创建images" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<blockquote>
+<p>格式</p>
+</blockquote>
+
+<pre><code>docker build . -t 需要打包成的镜像名称    备注：.代表dockerfile在当前目录,以dockerfile为准
+
+</code></pre>
+
+<blockquote>
+<p>示例</p>
+</blockquote>
+
+<pre><code>docker build . -t liimages/spider1.0
+</code></pre>
+
+<h4 id="2-基于image运行docker容器同时运行指定主机端口">2、基于image运行docker容器同时运行指定主机端口<a href="#2-基于image运行docker容器同时运行指定主机端口" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<blockquote>
+<p>格式</p>
+</blockquote>
+
+<pre><code>docker run -d -p 主机端口:容器端口 镜像名称或者Id   
+   备注：-d:后台运行,-p 暴露端口
+   4000:80的意思是容器的80的端口映射到主机的4000端口 外部以400端口访问
+
+</code></pre>
+
+<blockquote>
+<p>示例</p>
+</blockquote>
+
+<pre><code>docker run -d -p 4000:80 liimages/spider1.0
+</code></pre>
+
+<h4 id="3-基于image运行docker容器同时运行指定主机端口且挂载外部目录-且出错重启">3、基于image运行docker容器同时运行指定主机端口且挂载外部目录，且出错重启<a href="#3-基于image运行docker容器同时运行指定主机端口且挂载外部目录-且出错重启" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<blockquote>
+<p>格式</p>
+</blockquote>
+
+<pre><code> -v 参数：
+ 冒号前为宿主机目录，必须为绝对路径，冒号后为镜像内挂载的路径。
+
+</code></pre>
+
+<blockquote>
+<p>示例</p>
+</blockquote>
+
+<pre><code>docker run --restart=always -itdp 1230:1235 -v /etc/localtime:/etc/localtime:ro liimages/spider2.0 ./run.sh
+</code></pre>
+
+<h4 id="4-进入到容器内部可以修改相关配置-不使用attach-attach方式因为退出-导致整个容器退出">4、进入到容器内部可以修改相关配置,不使用attach，attach方式因为退出，导致整个容器退出。<a href="#4-进入到容器内部可以修改相关配置-不使用attach-attach方式因为退出-导致整个容器退出" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<blockquote>
+<p>格式</p>
+</blockquote>
+
+<pre><code> docker exec -it 容器名称或者容器Id /bin/sh
+
+</code></pre>
+
+<blockquote>
+<p>示例</p>
+</blockquote>
+
+<pre><code>docker exec -it bb2 /bin/sh
+
+</code></pre>
+
+<blockquote>
+<p>相关连接：<a href="http://blog.csdn.net/halcyonbaby/article/details/46884605">CSDN追寻神迹</a></p>
+</blockquote>
+
+<h4 id="4-删除镜像-删除容器是rm">4、删除镜像.删除容器是rm<a href="#4-删除镜像-删除容器是rm" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<blockquote>
+<p>格式</p>
+</blockquote>
+
+<pre><code> 格式一：docker rmi 镜像名或者镜像Id
+ 格式二：docker rmi -f 镜像名或者镜像Id 备注：强制删除与该镜像有关的容器（包括启动中的）和该镜像
+
+</code></pre>
+
+<blockquote>
+<p>示例</p>
+</blockquote>
+
+<pre><code>docker rmi liimages/spider2.0 
+</code></pre>
+
+<h4 id="5-把打包的镜像上传到仓库">5、把打包的镜像上传到仓库<a href="#5-把打包的镜像上传到仓库" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<blockquote>
+<p>格式</p>
+</blockquote>
+
+<pre><code>前提1：镜像的名字要符合官方标准
+前提2：使用docker login 登录
+
+格式：docker push 镜像名
+
+</code></pre>
+
+<blockquote>
+<p>示例</p>
+
+<pre><code>docker push 镜像名
+</code></pre>
+
+<p>相关连接</p>
+</blockquote>
+
+<p><a href="https://yq.aliyun.com/ziliao/101923?spm=5176.8246799.0.0.1BKYVo">云栖社区PUSH失败解决方案</a></p>
+
+<p><a href="https://stackoverflow.com/questions/41984399/denied-requested-access-to-the-resource-is-denied-docker">stackoverflow错误解决方案</a></p>
+
+<h2 id="docker容器间通信">Docker容器间通信<a href="#docker容器间通信" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<ul>
+<li><p>容器每次启动时会分配个一个IP地址，这个IP地址只在宿主主机内部有用，其它主机上的程序无法访问此IP</p></li>
+
+<li><p>一台机器上的docker容器之间默认是可以通过分配的IP进行通信的，可以通过启动参数 -icc=false —iptables=true 来关闭互通，严格隔离以提高安全性</p></li>
+
+<li><p>虽然每次启动分配的IP可能会变，但启动时加类似 —link redis:db 这样的参数给容器起别名，可以起到DNS作用，原理是在 /etc/hosts 里面映射IP到别名，这样你的程序和其他容器通信就可以不用管IP，用别名，IP变但它不会变</p></li>
+
+<li><p>link只支持单主机，跨主机link最早的方案是Ambassador(docker远程代理)，每台主机启动一个Ambassador容器负责对主机上其它容器的网络转发(socket proxy)，后演变成 github.com/gliderlabs/connectable</p></li>
+
+<li><p>手动处理容器间通信很麻烦，一般用编排工具：kubernetes、swarm&hellip;&hellip;</p></li>
+</ul>
+
+<h2 id="常用服务的启动命令">常用服务的启动命令<a href="#常用服务的启动命令" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<h4 id="1-mysql的启动命令">1、mysql的启动命令<a href="#1-mysql的启动命令" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<pre><code>docker run --restart=always --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=mypassword -d docker.io/mysql 启动一个mysql
+
+其中--restart=always是自动启动的意思
+</code></pre>
+
+<h3 id="2-redis的启动命令">2、redis的启动命令<a href="#2-redis的启动命令" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<pre><code>docker run --restart=always  -p 6379:6379 --name redis -d redis redis-server --appendonly yes --requirepass mypassword
+
+其中：--appendonly yes是持久化数据的意思
+</code></pre>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/docker">docker</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>143 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-01-24 22:28 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/go/algorithm/2018-02-23-three-way-split-quick-sort/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>三向切分快速排序</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/mysql/knowledge/2018-01-24-mysql/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>Mysql不同数据类型的差异对比与取舍</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>docker on yulibaozi</title>
+    <link>https://yulibaozi.com/tags/docker/</link>
+    <description>Recent content in docker on yulibaozi</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-hans</language>
+    <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
+    <lastBuildDate>Wed, 24 Jan 2018 22:28:04 +0800</lastBuildDate>
+    
+	<atom:link href="https://yulibaozi.com/tags/docker/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Docker 使用手册</title>
+      <link>https://yulibaozi.com/posts/docker/knowledge/2018-01-24-docker-use/</link>
+      <pubDate>Wed, 24 Jan 2018 22:28:04 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/docker/knowledge/2018-01-24-docker-use/</guid>
+      <description>docker使用笔记 1、基于dockerfile使用docker build 创建images  格式
+ docker build . -t 需要打包成的镜像名称 备注：.代表dockerfile在当前目录,以dockerfile为准   示例
+ docker build . -t liimages/spider1.0  2、基于image运行docker容器同时运行指定主机端口  格式
+ docker run -d -p 主机端口:容器端口 镜像名称或者Id 备注：-d:后台运行,-p 暴露端口 4000:80的意思是容器的80的端口映射到主机的4000端口 外部以400端口访问   示例
+ docker run -d -p 4000:80 liimages/spider1.0  3、基于image运行docker容器同时运行指定主机端口且挂载外部目录，且出错重启  格式
+  -v 参数： 冒号前为宿主机目录，必须为绝对路径，冒号后为镜像内挂载的路径。   示例
+ docker run --restart=always -itdp 1230:1235 -v /etc/localtime:/etc/localtime:ro liimages/spider2.0 ./run.sh  4、进入到容器内部可以修改相关配置,不使用attach，attach方式因为退出，导致整个容器退出。  格式</description>
+    </item>
+    
+  </channel>
+</rss>

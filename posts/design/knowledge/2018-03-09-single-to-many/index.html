@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="网站从单机到分布式的变迁">
+<meta itemprop="description" content="变迁的过程分8步:
+ 单机 单机负载警告，数据与应用分离 应用服务器警告，应用服务器集群 数据库压力过大，读写分离 数据库再遇瓶颈，数据库垂直拆分à 单机数据库又遇瓶颈，水平拆分 数据库解决问后，应用面临新挑战，应用拆分 服务化结构  各个阶段遇到的问题和解决办法 1、 单机 只是在应用中把数据库的地址从本地改到另外一台机器上。
+2、 单机负载警告，数据与应用分离 应用服务器之间没有交互，他们都是依赖数据库提供服务的。
+3、 应用服务器警告，应用服务器集群
+ 3.1、出现的问题和解决办法
+  用户对应用服务器访问的选择问题
+问题描述：当用户访问的时候，应该选择那一台应用服务器响应用户请求。 解决办法： 1.1、通过DNS解决。 通过DNS服务器进行调度和控制，用户解析DNS的时候，就给用户一个应用服务器地址。 1.2、通过在应用服务器前增加负载均衡设备解决。 所有用户请求访问的时候都经过负载均衡设备来完成请求转发控制。  Session问题：
+问题描述：当Http请求web服务器的时候，需要在http请求中找到会话数据（Session）,问题在于会话数据保存在单机上的，我第一次访问落在左边服务器（假设服务器有两台），这时候我的Session就创建在左边服务器，右边服务器就没有，我如何保证我每次访问都在同一台服务器或者说都能够拿到Session呢？ 解决办法： 2.1、添加负载均衡器，保证同样的Session请求都发送到同一个服务端处理。 优点:有利于针对Session进行服务器本地缓存。 缺点：如果一台Web服务器重启，这台机器的会话数据会丢失； 2.2、不要求负载均衡器保证同样的Session请求发送到同一服务端，而是在服务端进行Session数据同步。 缺点：同步Session数据会带来带宽开销，只要Session有变化就需要同步；每台Web服务器都需要保存所有的Session数据，性能下降厉害。 2.3、把Session数据集中处理，Web服务器需要使用Session数据时，去集中存储的地方读取就好。 缺点：读写Session数据引入了网络操作，存在时延和不稳定性；如果集中存储Session数据的地方出问题，影响巨大，但是对于Session数据很多的时候，优势巨大。 2.4、把Session数据放在Cookie中，每次Web服务器就从Cookie中生成对应的Session数据。 优点：同一会话的不同请求不限制具体处理机器。不依赖外部存储系统，不存在时延等问题。 缺点：Cookie长度限制，这会限制Session的长度；安全性，Session数据本来是服务端数据；性能影响，每次Http请求响应都带有Session数据。  数据库压力过大，读写分离
+读写分离解决的是写数据读的压力。 带来的问题和解决办法： 数据复制问题 Master&#43;Slave结构可以提供数据复制机制。（一主多从） 当主/从非对称且数据结构相同，多从对应一主的场景数据复制问题 解决办法： 应用通过数据访问层访问数据库，通过消息系统就数据库的通知发出消息通知，数据库同步服务器得到消息后进行数据复制，分库规则配置则复制在读数据以及数据同步服务器更新分库时让数据层知道分库规则，其中，数据同步服务器和DB主库得到交互主要是根据被修改或新增的数据主键来获取内容，他们采用的是行复制的方式。 第二钟基于数据库日志来进行数据的复制。 当主/从非对称且主/备分库方式不同时数据复制问题 非对称指的是：源数据和目标数据不是镜像关系。 应用数据源选择问题。 数据缓存:我们可以用Key-value进行缓存（例如：Redis），在缓存中，一般存放的是热数据而不是全部数据。应用先访问缓存，如果访问不存在再去访问数据库。 页面缓存。我们可以把静态页面，热页面，Js等进行缓存，例如CDN。  数据库再遇瓶颈，数据库垂直拆分
+垂直拆分是指：专库专用，把数据库中不同的业务数据拆分到不同的数据库中。 遇到的问题: 应用需要配置多个数据源。 单机的ACID（原子性，一致性，隔离性，持久性）被打破。原单机事务控制的逻辑被打破。（见下） 靠外键进行约束的场景会受到影响。 Jion操作变得困难，因为数据可能已经在两个数据库中。（见下）  单机数据库又遇瓶颈，水平拆分">
+
+
+<meta itemprop="datePublished" content="2018-02-24T22:37:47&#43;08:00" />
+<meta itemprop="dateModified" content="2018-02-24T22:37:47&#43;08:00" />
+<meta itemprop="wordCount" content="132">
+
+
+
+<meta itemprop="keywords" content="design," />
+<meta property="og:title" content="网站从单机到分布式的变迁" />
+<meta property="og:description" content="变迁的过程分8步:
+ 单机 单机负载警告，数据与应用分离 应用服务器警告，应用服务器集群 数据库压力过大，读写分离 数据库再遇瓶颈，数据库垂直拆分à 单机数据库又遇瓶颈，水平拆分 数据库解决问后，应用面临新挑战，应用拆分 服务化结构  各个阶段遇到的问题和解决办法 1、 单机 只是在应用中把数据库的地址从本地改到另外一台机器上。
+2、 单机负载警告，数据与应用分离 应用服务器之间没有交互，他们都是依赖数据库提供服务的。
+3、 应用服务器警告，应用服务器集群
+ 3.1、出现的问题和解决办法
+  用户对应用服务器访问的选择问题
+问题描述：当用户访问的时候，应该选择那一台应用服务器响应用户请求。 解决办法： 1.1、通过DNS解决。 通过DNS服务器进行调度和控制，用户解析DNS的时候，就给用户一个应用服务器地址。 1.2、通过在应用服务器前增加负载均衡设备解决。 所有用户请求访问的时候都经过负载均衡设备来完成请求转发控制。  Session问题：
+问题描述：当Http请求web服务器的时候，需要在http请求中找到会话数据（Session）,问题在于会话数据保存在单机上的，我第一次访问落在左边服务器（假设服务器有两台），这时候我的Session就创建在左边服务器，右边服务器就没有，我如何保证我每次访问都在同一台服务器或者说都能够拿到Session呢？ 解决办法： 2.1、添加负载均衡器，保证同样的Session请求都发送到同一个服务端处理。 优点:有利于针对Session进行服务器本地缓存。 缺点：如果一台Web服务器重启，这台机器的会话数据会丢失； 2.2、不要求负载均衡器保证同样的Session请求发送到同一服务端，而是在服务端进行Session数据同步。 缺点：同步Session数据会带来带宽开销，只要Session有变化就需要同步；每台Web服务器都需要保存所有的Session数据，性能下降厉害。 2.3、把Session数据集中处理，Web服务器需要使用Session数据时，去集中存储的地方读取就好。 缺点：读写Session数据引入了网络操作，存在时延和不稳定性；如果集中存储Session数据的地方出问题，影响巨大，但是对于Session数据很多的时候，优势巨大。 2.4、把Session数据放在Cookie中，每次Web服务器就从Cookie中生成对应的Session数据。 优点：同一会话的不同请求不限制具体处理机器。不依赖外部存储系统，不存在时延等问题。 缺点：Cookie长度限制，这会限制Session的长度；安全性，Session数据本来是服务端数据；性能影响，每次Http请求响应都带有Session数据。  数据库压力过大，读写分离
+读写分离解决的是写数据读的压力。 带来的问题和解决办法： 数据复制问题 Master&#43;Slave结构可以提供数据复制机制。（一主多从） 当主/从非对称且数据结构相同，多从对应一主的场景数据复制问题 解决办法： 应用通过数据访问层访问数据库，通过消息系统就数据库的通知发出消息通知，数据库同步服务器得到消息后进行数据复制，分库规则配置则复制在读数据以及数据同步服务器更新分库时让数据层知道分库规则，其中，数据同步服务器和DB主库得到交互主要是根据被修改或新增的数据主键来获取内容，他们采用的是行复制的方式。 第二钟基于数据库日志来进行数据的复制。 当主/从非对称且主/备分库方式不同时数据复制问题 非对称指的是：源数据和目标数据不是镜像关系。 应用数据源选择问题。 数据缓存:我们可以用Key-value进行缓存（例如：Redis），在缓存中，一般存放的是热数据而不是全部数据。应用先访问缓存，如果访问不存在再去访问数据库。 页面缓存。我们可以把静态页面，热页面，Js等进行缓存，例如CDN。  数据库再遇瓶颈，数据库垂直拆分
+垂直拆分是指：专库专用，把数据库中不同的业务数据拆分到不同的数据库中。 遇到的问题: 应用需要配置多个数据源。 单机的ACID（原子性，一致性，隔离性，持久性）被打破。原单机事务控制的逻辑被打破。（见下） 靠外键进行约束的场景会受到影响。 Jion操作变得困难，因为数据可能已经在两个数据库中。（见下）  单机数据库又遇瓶颈，水平拆分" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/design/knowledge/2018-03-09-single-to-many/" />
+<meta property="article:published_time" content="2018-02-24T22:37:47&#43;08:00"/>
+<meta property="article:modified_time" content="2018-02-24T22:37:47&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="网站从单机到分布式的变迁"/>
+<meta name="twitter:description" content="变迁的过程分8步:
+ 单机 单机负载警告，数据与应用分离 应用服务器警告，应用服务器集群 数据库压力过大，读写分离 数据库再遇瓶颈，数据库垂直拆分à 单机数据库又遇瓶颈，水平拆分 数据库解决问后，应用面临新挑战，应用拆分 服务化结构  各个阶段遇到的问题和解决办法 1、 单机 只是在应用中把数据库的地址从本地改到另外一台机器上。
+2、 单机负载警告，数据与应用分离 应用服务器之间没有交互，他们都是依赖数据库提供服务的。
+3、 应用服务器警告，应用服务器集群
+ 3.1、出现的问题和解决办法
+  用户对应用服务器访问的选择问题
+问题描述：当用户访问的时候，应该选择那一台应用服务器响应用户请求。 解决办法： 1.1、通过DNS解决。 通过DNS服务器进行调度和控制，用户解析DNS的时候，就给用户一个应用服务器地址。 1.2、通过在应用服务器前增加负载均衡设备解决。 所有用户请求访问的时候都经过负载均衡设备来完成请求转发控制。  Session问题：
+问题描述：当Http请求web服务器的时候，需要在http请求中找到会话数据（Session）,问题在于会话数据保存在单机上的，我第一次访问落在左边服务器（假设服务器有两台），这时候我的Session就创建在左边服务器，右边服务器就没有，我如何保证我每次访问都在同一台服务器或者说都能够拿到Session呢？ 解决办法： 2.1、添加负载均衡器，保证同样的Session请求都发送到同一个服务端处理。 优点:有利于针对Session进行服务器本地缓存。 缺点：如果一台Web服务器重启，这台机器的会话数据会丢失； 2.2、不要求负载均衡器保证同样的Session请求发送到同一服务端，而是在服务端进行Session数据同步。 缺点：同步Session数据会带来带宽开销，只要Session有变化就需要同步；每台Web服务器都需要保存所有的Session数据，性能下降厉害。 2.3、把Session数据集中处理，Web服务器需要使用Session数据时，去集中存储的地方读取就好。 缺点：读写Session数据引入了网络操作，存在时延和不稳定性；如果集中存储Session数据的地方出问题，影响巨大，但是对于Session数据很多的时候，优势巨大。 2.4、把Session数据放在Cookie中，每次Web服务器就从Cookie中生成对应的Session数据。 优点：同一会话的不同请求不限制具体处理机器。不依赖外部存储系统，不存在时延等问题。 缺点：Cookie长度限制，这会限制Session的长度；安全性，Session数据本来是服务端数据；性能影响，每次Http请求响应都带有Session数据。  数据库压力过大，读写分离
+读写分离解决的是写数据读的压力。 带来的问题和解决办法： 数据复制问题 Master&#43;Slave结构可以提供数据复制机制。（一主多从） 当主/从非对称且数据结构相同，多从对应一主的场景数据复制问题 解决办法： 应用通过数据访问层访问数据库，通过消息系统就数据库的通知发出消息通知，数据库同步服务器得到消息后进行数据复制，分库规则配置则复制在读数据以及数据同步服务器更新分库时让数据层知道分库规则，其中，数据同步服务器和DB主库得到交互主要是根据被修改或新增的数据主键来获取内容，他们采用的是行复制的方式。 第二钟基于数据库日志来进行数据的复制。 当主/从非对称且主/备分库方式不同时数据复制问题 非对称指的是：源数据和目标数据不是镜像关系。 应用数据源选择问题。 数据缓存:我们可以用Key-value进行缓存（例如：Redis），在缓存中，一般存放的是热数据而不是全部数据。应用先访问缓存，如果访问不存在再去访问数据库。 页面缓存。我们可以把静态页面，热页面，Js等进行缓存，例如CDN。  数据库再遇瓶颈，数据库垂直拆分
+垂直拆分是指：专库专用，把数据库中不同的业务数据拆分到不同的数据库中。 遇到的问题: 应用需要配置多个数据源。 单机的ACID（原子性，一致性，隔离性，持久性）被打破。原单机事务控制的逻辑被打破。（见下） 靠外键进行约束的场景会受到影响。 Jion操作变得困难，因为数据可能已经在两个数据库中。（见下）  单机数据库又遇瓶颈，水平拆分"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>网站从单机到分布式的变迁</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Feb 24, 2018</span></div>
+				<h1>网站从单机到分布式的变迁</h1>
+			</header>
+			<div class="content">
+				
+
+<p>变迁的过程分8步:</p>
+
+<ol>
+<li>单机</li>
+<li>单机负载警告，数据与应用分离</li>
+<li>应用服务器警告，应用服务器集群</li>
+<li>数据库压力过大，读写分离</li>
+<li>数据库再遇瓶颈，数据库垂直拆分à</li>
+<li>单机数据库又遇瓶颈，水平拆分</li>
+<li>数据库解决问后，应用面临新挑战，应用拆分</li>
+<li>服务化结构</li>
+</ol>
+
+<h4 id="各个阶段遇到的问题和解决办法">各个阶段遇到的问题和解决办法<a href="#各个阶段遇到的问题和解决办法" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>1、  单机
+只是在应用中把数据库的地址从本地改到另外一台机器上。</p>
+
+<p>2、  单机负载警告，数据与应用分离
+应用服务器之间没有交互，他们都是依赖数据库提供服务的。</p>
+
+<p>3、  应用服务器警告，应用服务器集群</p>
+
+<blockquote>
+<p>3.1、出现的问题和解决办法</p>
+</blockquote>
+
+<ol>
+<li><p>用户对应用服务器访问的选择问题</p>
+
+<pre><code>问题描述：当用户访问的时候，应该选择那一台应用服务器响应用户请求。
+
+解决办法：
+
+1.1、通过DNS解决。
+
+通过DNS服务器进行调度和控制，用户解析DNS的时候，就给用户一个应用服务器地址。
+
+1.2、通过在应用服务器前增加负载均衡设备解决。
+
+所有用户请求访问的时候都经过负载均衡设备来完成请求转发控制。
+</code></pre></li>
+
+<li><p>Session问题：</p>
+
+<pre><code>问题描述：当Http请求web服务器的时候，需要在http请求中找到会话数据（Session）,问题在于会话数据保存在单机上的，我第一次访问落在左边服务器（假设服务器有两台），这时候我的Session就创建在左边服务器，右边服务器就没有，我如何保证我每次访问都在同一台服务器或者说都能够拿到Session呢？
+
+解决办法：
+
+2.1、添加负载均衡器，保证同样的Session请求都发送到同一个服务端处理。
+
+优点:有利于针对Session进行服务器本地缓存。
+
+缺点：如果一台Web服务器重启，这台机器的会话数据会丢失；
+
+ 
+
+2.2、不要求负载均衡器保证同样的Session请求发送到同一服务端，而是在服务端进行Session数据同步。
+
+缺点：同步Session数据会带来带宽开销，只要Session有变化就需要同步；每台Web服务器都需要保存所有的Session数据，性能下降厉害。
+
+ 
+
+2.3、把Session数据集中处理，Web服务器需要使用Session数据时，去集中存储的地方读取就好。
+
+缺点：读写Session数据引入了网络操作，存在时延和不稳定性；如果集中存储Session数据的地方出问题，影响巨大，但是对于Session数据很多的时候，优势巨大。
+
+ 
+
+2.4、把Session数据放在Cookie中，每次Web服务器就从Cookie中生成对应的Session数据。
+
+优点：同一会话的不同请求不限制具体处理机器。不依赖外部存储系统，不存在时延等问题。
+
+缺点：Cookie长度限制，这会限制Session的长度；安全性，Session数据本来是服务端数据；性能影响，每次Http请求响应都带有Session数据。
+</code></pre></li>
+
+<li><p>数据库压力过大，读写分离</p>
+
+<pre><code>读写分离解决的是写数据读的压力。
+
+带来的问题和解决办法：
+
+数据复制问题
+Master+Slave结构可以提供数据复制机制。（一主多从）
+
+当主/从非对称且数据结构相同，多从对应一主的场景数据复制问题
+解决办法：
+
+应用通过数据访问层访问数据库，通过消息系统就数据库的通知发出消息通知，数据库同步服务器得到消息后进行数据复制，分库规则配置则复制在读数据以及数据同步服务器更新分库时让数据层知道分库规则，其中，数据同步服务器和DB主库得到交互主要是根据被修改或新增的数据主键来获取内容，他们采用的是行复制的方式。
+第二钟基于数据库日志来进行数据的复制。
+当主/从非对称且主/备分库方式不同时数据复制问题
+非对称指的是：源数据和目标数据不是镜像关系。
+
+应用数据源选择问题。
+数据缓存:我们可以用Key-value进行缓存（例如：Redis），在缓存中，一般存放的是热数据而不是全部数据。应用先访问缓存，如果访问不存在再去访问数据库。
+页面缓存。我们可以把静态页面，热页面，Js等进行缓存，例如CDN。
+</code></pre></li>
+
+<li><p>数据库再遇瓶颈，数据库垂直拆分</p>
+
+<pre><code>垂直拆分是指：专库专用，把数据库中不同的业务数据拆分到不同的数据库中。
+
+遇到的问题:
+
+应用需要配置多个数据源。
+单机的ACID（原子性，一致性，隔离性，持久性）被打破。原单机事务控制的逻辑被打破。（见下）
+靠外键进行约束的场景会受到影响。
+Jion操作变得困难，因为数据可能已经在两个数据库中。（见下）
+</code></pre></li>
+
+<li><p>单机数据库又遇瓶颈，水平拆分</p>
+
+<pre><code>水平拆分是指:把同一表中的数据拆分到两个数据库中。（例如按照地域拆分）
+
+遇到的问题：
+数据量太大进行分页处理的解决办法
+非排序分页
+同等步长地多个在多个数据源上分页处理。
+分页的每页中来自不同数据源的记录数是一样的。
+
+同等比例地分页处理。
+分页的每页中，来自不同数据源的数据数占这个数据源符合条件的数据总数的比例是一样的。
+
+排序后分页，这种情况是复杂的情况，假设我们有两个数据源
+我们需要考虑极端情况就是 一页中数据可能来自同一个数据源，所以，假设我们一页需要5条数据，然后需要从两个数据源各取5条归并排序，对于第二页就需要把两个数据源的前10条（共计20条）进行归并，这意味着越往后翻，负担越大。
+单机的ACID（原子性，一致性，隔离性，持久性）被打破。原单机事务控制的逻辑被打破。
+靠外键进行约束的场景会受到影响。
+依赖单库的自增序列生成唯一ID会受到影响。
+</code></pre></li>
+</ol>
+
+<blockquote>
+<p>唯一性问题</p>
+</blockquote>
+
+<p>如果只考虑Id的唯一性可以参考UUID的生成方式；根据业务情况使用各个种子（比如IP、MAC、时间等）生成唯一的Id。缺点是：连续性不好</p>
+
+<blockquote>
+<p>连续性问题</p>
+</blockquote>
+
+<p>把所有的Id放在同一个地方进行管理。对每个Id序列独立管理，每个机器使用Id时，都从这个Id生成器上取。缺点：性能问题，生成器的稳定问题，存储问题。</p>
+
+<p>为了解决生成器的稳定问题，我们可以把Id生成器从机器和存储之间舍掉，在每个应用上完成生成器（生成Id）要做的工作，然后给应用请求使用。</p>
+
+<p>单个逻辑意义上的表查询可能需要跨表查询。</p>
+
+<blockquote>
+<p>6.1、查询结果在应用上合并问题：</p>
+</blockquote>
+
+<p>1、排序问题：</p>
+
+<p>如果查出来就是排好顺序，进行多路归并就好。</p>
+
+<p>如果查出来的数据未排序，就要进行全排序。</p>
+
+<p>2、函数处理问题</p>
+
+<p>即使用Max、Min等对数据结果进行函数处理。</p>
+
+<p>3、求平均值问题</p>
+
+<p>需要把SQL改为查询SUM和Count 然后对多个数据来源的SUM求和，和Count求和，然后计算平均值。</p>
+
+<p>Jion操作变得困难，因为数据可能已经在两个数据库中。（见下）</p>
+
+<blockquote>
+<p>水平拆分和垂直拆分遇到的共同问题解决:</p>
+</blockquote>
+
+<p>1、单机的ACID（原子性，一致性，隔离性，持久性）被打破。原单机事务控制的逻辑被打破。</p>
+
+<p>解决办法：</p>
+
+<p>两阶段提交。提交之前进行了准备阶段，如果在一个阶段失败，那么就在第二阶段的处理就是回滚所有资源。在必要的情况下才建议使用。
+2、Paxos协议：</p>
+
+<p>优点：比两阶段提交更轻量级。</p>
+
+<p>前提:不存在拜占庭将军问题，也就是说需要保证一个可靠的安全的通信环境。</p>
+
+<blockquote>
+<p>2、Jion操作变得困难，因为数据可能已经在两个数据库中。</p>
+</blockquote>
+
+<p>解决办法：</p>
+
+<p>7.1、把应用层原来数据库的Jion操作分成多个数据库操作。</p>
+
+<p>7.2、数据冗余，对一些常用的信息进行数据冗余，这样就不需要Jion就变成单表操作。</p>
+
+<p>7.3、借助外部系统（如搜素引擎）解决跨库问题。</p>
+
+<blockquote>
+<p>3、选择何种方式进行分库？</p>
+</blockquote>
+
+<p>1、根据某个字段(例如用户id)取模，然后将数据分散到不同的数据库和表中。分库的标准是尽可能的避免跨库查询。</p>
+
+<p>2、除了id取模，还可以根据时间维度,好处在于数据备份、迁移和数据清空很方便。</p>
+
+<p>4、如何进行分表？假设我们把同类数据放在两个数据库的四张表中</p>
+
+<p>1、首先通过模2确定数据的分库，然后通过模4进行数据库内部分表。</p>
+
+<p>2、3和4其实都是采用了固定哈希算法作为分库分表的规则。</p>
+
+<p>5、一致性哈希的好处：</p>
+
+<p>1、把节点对应的哈希值编程了一个范围，不再是离散的。</p>
+
+<p>6、SQL的改写:</p>
+
+<p>为什么要改写SQL？</p>
+
+<p>分布在不同数据库的表结构一样，但表名未必一样，如果表名一样会产生误操作且不优雅。表名不一样进行路由和数据迁移时也比较便利。
+SQL用到的索引名也需要修改，需要从逻辑上的名字变为对应数据库的物理名字。
+在跨库计算平均值的时候也需要SQL为:获得数据后在计算。
+如何选择数据源？
+因为会为分库提供备库，分库把数据分到不同的数据分组中，根据执行SQL的特点（读，写），是否在事务中以及各库的权重规则计算得到SQL需要访问的数据库。</p>
+
+<blockquote>
+<p>8、如何做到数据平滑迁移？</p>
+</blockquote>
+
+<p>当在迁移的过程中又有数据的变化，可以考虑:</p>
+
+<p>1、在开始进行数据迁移时，记录增量的日志，在迁移结束后，再对增量的变化进行处理，最后要把迁移的数据写暂停，保证增量日志处理完毕后，再切换规则，放开所有的写，完成迁移工作。</p>
+
+<blockquote>
+<p>7、  应用面临新挑战，应用拆分
+为什么要拆分？</p>
+</blockquote>
+
+<p>业务越来越多，应用的功能也就越来越多，应用越来越大，我们需要考虑如何不让应用显得臃肿。</p>
+
+<p>如何拆分：根据业务特性把应用拆分；根据功能拆分，但要解决代码复用的问题。</p>
+
+<p>8、服务化结构
+服务化好处：</p>
+
+<p>应用立体化，可以把应用分为三层：Web系统，完成不同的业务处理，中间是多个服务中心，不同的服务中心提供不同的服务（例如：商品中心，交易中心，用户中心等），下层是数据库；
+共享代码不在散落在不同的应用，而是放在各个服务中心。
+业务功能访问不在受限于单机，引入了远程服务调用。
+服务中心和数据库交互，前端web专注于和浏览器的交互。</p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/design">design</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>132 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-02-24 22:37 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/design/knowledge/2018-03-09-microservices/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>微服务设计与实践的经验总结</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/go/knowledge/2018-02-24-go-and-jwt/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>Golang使用jwt做用户身份验证</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

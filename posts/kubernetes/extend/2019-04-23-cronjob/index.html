@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="CronJob 原理和源码分析">
+<meta itemprop="description" content="CronJob是Kubernetes提供的定时任务功能，CronJob可以根据你指定的cron策略来完成任务。  我们在使用CronJob的时候，我们发现，当创建一个CronJob的时候，只会创建一个CronJob，当到指定时间时，会创建一个job和一个pod,随着时间的推移，我们会发现，越来越多的job和pod，甚至是满屏的job和pod，我们在调用API删除这个cronjob的时候，发现只会删除cronjob这个资源，而不会删除对应的已有的job和pod，然后，我们尝试删除job，发现删除job，会把对应的pod删除掉，为什么好多的操作不符合心理预期呢？心里冒着十万个为什么
+迷雾沼泽  cronjob是怎么定时创建job的呢？
+ 为什么删除的时候，只是删除了cronjob，而没有删除对应的job和pod呢？
+ cronjob、job和pod之间的关系是怎么样的呢？
+ job和pod的关系是怎么对应上的呢？
+  探索一(从命令行结果开始探索)  kubectl describe cronjob hello
+ 我们看到上图的Events，看到了cronjob-controller,且Message 里面创建了job，我们猜测是cronjob通过controller-manager下的cronjob-controller来实现对job的创建工作
+ kubectl describe job jobname
+ 我们看到这个job是被CronJob/hello创建，而并非我们上文猜测的cronjob-controller,但是想来应该存在某种关系的，然后看到下面的Events,我们看到通过job-controller创建了pod.
+ kubectl describe pod podname
+ 看到这个pod是由job/hello-1528459440创建,似乎和上文猜测的job-controller看上去并无直接关系。
+到这里，我们看似发现了许多的蛛丝马迹，但是细细想来，还是不清不楚，不明不白,是时候读源码了。
+探索二（源码探索） 注意:会删除一些无关代码
+源码位于:github.com/kubernetes/kubernetes/pkg/controller/cronjob/cronjob_controller.go  回答问题：cronjob和job是如何维护关系的呢？ // syncAll lists all the CronJobs and Jobs and reconciles them. func (jm *CronJobController) syncAll() { ...... //列出所有的job jl, err := jm.kubeClient.BatchV1().Jobs(metav1.NamespaceAll).List(metav1.ListOptions{}) if err != nil { utilruntime.">
+
+
+<meta itemprop="datePublished" content="2019-04-21T20:35:24&#43;08:00" />
+<meta itemprop="dateModified" content="2019-04-21T20:35:24&#43;08:00" />
+<meta itemprop="wordCount" content="550">
+
+
+
+<meta itemprop="keywords" content="kubernetes," />
+<meta property="og:title" content="CronJob 原理和源码分析" />
+<meta property="og:description" content="CronJob是Kubernetes提供的定时任务功能，CronJob可以根据你指定的cron策略来完成任务。  我们在使用CronJob的时候，我们发现，当创建一个CronJob的时候，只会创建一个CronJob，当到指定时间时，会创建一个job和一个pod,随着时间的推移，我们会发现，越来越多的job和pod，甚至是满屏的job和pod，我们在调用API删除这个cronjob的时候，发现只会删除cronjob这个资源，而不会删除对应的已有的job和pod，然后，我们尝试删除job，发现删除job，会把对应的pod删除掉，为什么好多的操作不符合心理预期呢？心里冒着十万个为什么
+迷雾沼泽  cronjob是怎么定时创建job的呢？
+ 为什么删除的时候，只是删除了cronjob，而没有删除对应的job和pod呢？
+ cronjob、job和pod之间的关系是怎么样的呢？
+ job和pod的关系是怎么对应上的呢？
+  探索一(从命令行结果开始探索)  kubectl describe cronjob hello
+ 我们看到上图的Events，看到了cronjob-controller,且Message 里面创建了job，我们猜测是cronjob通过controller-manager下的cronjob-controller来实现对job的创建工作
+ kubectl describe job jobname
+ 我们看到这个job是被CronJob/hello创建，而并非我们上文猜测的cronjob-controller,但是想来应该存在某种关系的，然后看到下面的Events,我们看到通过job-controller创建了pod.
+ kubectl describe pod podname
+ 看到这个pod是由job/hello-1528459440创建,似乎和上文猜测的job-controller看上去并无直接关系。
+到这里，我们看似发现了许多的蛛丝马迹，但是细细想来，还是不清不楚，不明不白,是时候读源码了。
+探索二（源码探索） 注意:会删除一些无关代码
+源码位于:github.com/kubernetes/kubernetes/pkg/controller/cronjob/cronjob_controller.go  回答问题：cronjob和job是如何维护关系的呢？ // syncAll lists all the CronJobs and Jobs and reconciles them. func (jm *CronJobController) syncAll() { ...... //列出所有的job jl, err := jm.kubeClient.BatchV1().Jobs(metav1.NamespaceAll).List(metav1.ListOptions{}) if err != nil { utilruntime." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/kubernetes/extend/2019-04-23-cronjob/" />
+<meta property="article:published_time" content="2019-04-21T20:35:24&#43;08:00"/>
+<meta property="article:modified_time" content="2019-04-21T20:35:24&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="CronJob 原理和源码分析"/>
+<meta name="twitter:description" content="CronJob是Kubernetes提供的定时任务功能，CronJob可以根据你指定的cron策略来完成任务。  我们在使用CronJob的时候，我们发现，当创建一个CronJob的时候，只会创建一个CronJob，当到指定时间时，会创建一个job和一个pod,随着时间的推移，我们会发现，越来越多的job和pod，甚至是满屏的job和pod，我们在调用API删除这个cronjob的时候，发现只会删除cronjob这个资源，而不会删除对应的已有的job和pod，然后，我们尝试删除job，发现删除job，会把对应的pod删除掉，为什么好多的操作不符合心理预期呢？心里冒着十万个为什么
+迷雾沼泽  cronjob是怎么定时创建job的呢？
+ 为什么删除的时候，只是删除了cronjob，而没有删除对应的job和pod呢？
+ cronjob、job和pod之间的关系是怎么样的呢？
+ job和pod的关系是怎么对应上的呢？
+  探索一(从命令行结果开始探索)  kubectl describe cronjob hello
+ 我们看到上图的Events，看到了cronjob-controller,且Message 里面创建了job，我们猜测是cronjob通过controller-manager下的cronjob-controller来实现对job的创建工作
+ kubectl describe job jobname
+ 我们看到这个job是被CronJob/hello创建，而并非我们上文猜测的cronjob-controller,但是想来应该存在某种关系的，然后看到下面的Events,我们看到通过job-controller创建了pod.
+ kubectl describe pod podname
+ 看到这个pod是由job/hello-1528459440创建,似乎和上文猜测的job-controller看上去并无直接关系。
+到这里，我们看似发现了许多的蛛丝马迹，但是细细想来，还是不清不楚，不明不白,是时候读源码了。
+探索二（源码探索） 注意:会删除一些无关代码
+源码位于:github.com/kubernetes/kubernetes/pkg/controller/cronjob/cronjob_controller.go  回答问题：cronjob和job是如何维护关系的呢？ // syncAll lists all the CronJobs and Jobs and reconciles them. func (jm *CronJobController) syncAll() { ...... //列出所有的job jl, err := jm.kubeClient.BatchV1().Jobs(metav1.NamespaceAll).List(metav1.ListOptions{}) if err != nil { utilruntime."/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>CronJob 原理和源码分析</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Apr 21, 2019</span></div>
+				<h1>CronJob 原理和源码分析</h1>
+			</header>
+			<div class="content">
+				
+
+<pre><code>CronJob是Kubernetes提供的定时任务功能，CronJob可以根据你指定的cron策略来完成任务。
+</code></pre>
+
+<p>我们在使用CronJob的时候，我们发现，当创建一个CronJob的时候，只会创建一个CronJob，当到指定时间时，会创建一个job和一个pod,随着时间的推移，我们会发现，越来越多的job和pod，甚至是满屏的job和pod，我们在调用API删除这个cronjob的时候，发现只会删除cronjob这个资源，而不会删除对应的已有的job和pod，然后，我们尝试删除job，发现删除job，会把对应的pod删除掉，为什么好多的操作不符合心理预期呢？心里冒着十万个为什么</p>
+
+<h3 id="迷雾沼泽">迷雾沼泽<a href="#迷雾沼泽" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li><p>cronjob是怎么定时创建job的呢？</p></li>
+
+<li><p>为什么删除的时候，只是删除了cronjob，而没有删除对应的job和pod呢？</p></li>
+
+<li><p>cronjob、job和pod之间的关系是怎么样的呢？</p></li>
+
+<li><p>job和pod的关系是怎么对应上的呢？</p></li>
+</ol>
+
+<h3 id="探索一-从命令行结果开始探索">探索一(从命令行结果开始探索)<a href="#探索一-从命令行结果开始探索" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<blockquote>
+<p>kubectl describe cronjob hello</p>
+</blockquote>
+
+<p><img src="http://index.yulibaozi.com/4334dcd0-ca6d-41b7-b2c8-fd26408bbc6f1.png" alt="image" /></p>
+
+<p>我们看到上图的Events，看到了cronjob-controller,且Message 里面创建了job，我们猜测是cronjob通过controller-manager下的cronjob-controller来实现对job的创建工作</p>
+
+<blockquote>
+<p>kubectl describe job jobname</p>
+</blockquote>
+
+<p><img src="http://index.yulibaozi.com/8e09ea27-d72f-4baa-9324-e4eb9b82e14e2.png" alt="image" /></p>
+
+<p>我们看到这个job是被CronJob/hello创建，而并非我们上文猜测的cronjob-controller,但是想来应该存在某种关系的，然后看到下面的Events,我们看到通过job-controller创建了pod.</p>
+
+<blockquote>
+<p>kubectl describe pod podname</p>
+</blockquote>
+
+<p><img src="http://index.yulibaozi.com/f76dd4de-7262-4119-8807-473a394d06904.png" alt="image" /></p>
+
+<p>看到这个pod是由job/hello-1528459440创建,似乎和上文猜测的job-controller看上去并无直接关系。</p>
+
+<p>到这里，我们看似发现了许多的蛛丝马迹，但是细细想来，还是不清不楚，不明不白,是时候读源码了。</p>
+
+<h3 id="探索二-源码探索">探索二（源码探索）<a href="#探索二-源码探索" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p><em>注意:会删除一些无关代码</em></p>
+
+<pre><code>源码位于:github.com/kubernetes/kubernetes/pkg/controller/cronjob/cronjob_controller.go
+</code></pre>
+
+<h4 id="回答问题-cronjob和job是如何维护关系的呢">回答问题：cronjob和job是如何维护关系的呢？<a href="#回答问题-cronjob和job是如何维护关系的呢" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<pre><code>// syncAll lists all the CronJobs and Jobs and reconciles them.
+func (jm *CronJobController) syncAll() {
+	......
+	//列出所有的job
+	jl, err := jm.kubeClient.BatchV1().Jobs(metav1.NamespaceAll).List(metav1.ListOptions{})
+	if err != nil {
+		utilruntime.HandleError(fmt.Errorf(&quot;can't list Jobs: %v&quot;, err))
+		return
+	}
+	js := jl.Items //所有的jobs(指的是已经创建了的)
+	glog.V(4).Infof(&quot;Found %d jobs&quot;, len(js))
+	//列出所有cronjob
+	sjl, err := jm.kubeClient.BatchV1beta1().CronJobs(metav1.NamespaceAll).List(metav1.ListOptions{})
+	...
+	sjs := sjl.Items //所有的定时任务
+	glog.V(4).Infof(&quot;Found %d cronjobs&quot;, len(sjs))
+
+	//为上面所有的job分组，本质是个map，同一个cronjob是一组，是否为同一组使用types.UID来判断
+	jobsBySj := groupJobsByParent(js)
+	glog.V(4).Infof(&quot;Found %d groups&quot;, len(jobsBySj))
+
+	for _, sj := range sjs { //遍历直接查询出来的cronjob
+		// cronjob
+		syncOne(&amp;sj, jobsBySj[sj.UID], time.Now(), jm.jobControl, jm.sjControl, jm.podControl, jm.recorder)
+		cleanupFinishedJobs(&amp;sj, jobsBySj[sj.UID], jm.jobControl, jm.sjControl, jm.podControl, jm.recorder)
+	}
+}
+</code></pre>
+
+<p>A: cronjob和job关系,使用了types.UID,来判断的，每个cronjob拥有唯一的UID,然后列出所有的jobs，使用遍历job的策略来判断job应该属于哪个cronjob。</p>
+
+<h4 id="回答问题-job和pod的关系是怎么样维护的呢">回答问题：job和pod的关系是怎么样维护的呢？<a href="#回答问题-job和pod的关系是怎么样维护的呢" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<pre><code>源代码：380行
+
+selector, _ := metav1.LabelSelectorAsSelector(job.Spec.Selector)
+	options := metav1.ListOptions{LabelSelector: selector.String()}
+	podList, err := pc.ListPods(job.Namespace, options)
+	if err != nil {
+		recorder.Eventf(sj, v1.EventTypeWarning, &quot;FailedList&quot;, &quot;List job-pods: %v&quot;, err)
+		return false
+	}
+</code></pre>
+
+<p>从代码看出，我们先拿到了job中的Selector,然后，根据选择器来获取对应的pods,从截图也能发现这个这一点。</p>
+
+<h4 id="回答问题-cronjob是怎么定时创建job的呢">回答问题：cronjob是怎么定时创建job的呢？<a href="#回答问题-cronjob是怎么定时创建job的呢" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<pre><code>func (jm *CronJobController) Run(stopCh &lt;-chan struct{}) {
+	defer utilruntime.HandleCrash()
+	glog.Infof(&quot;Starting CronJob Manager&quot;)
+	// Check things every 10 second.
+	go wait.Until(jm.syncAll, 10*time.Second, stopCh)
+	&lt;-stopCh
+	glog.Infof(&quot;Shutting down CronJob Manager&quot;)
+}
+
+// syncAll lists all the CronJobs and Jobs and reconciles them.
+func (jm *CronJobController) syncAll() {
+	...
+	jl, err := jm.kubeClient.BatchV1().Jobs(metav1.NamespaceAll).List(metav1.ListOptions{})
+	if err != nil {
+		utilruntime.HandleError(fmt.Errorf(&quot;can't list Jobs: %v&quot;, err))
+		return
+	}
+	js := jl.Items
+	glog.V(4).Infof(&quot;Found %d jobs&quot;, len(js))
+
+	sjl, err := jm.kubeClient.BatchV1beta1().CronJobs(metav1.NamespaceAll).List(metav1.ListOptions{})
+	if err != nil {
+		utilruntime.HandleError(fmt.Errorf(&quot;can't list CronJobs: %v&quot;, err))
+		return
+	}
+	sjs := sjl.Items
+	glog.V(4).Infof(&quot;Found %d cronjobs&quot;, len(sjs))
+
+	jobsBySj := groupJobsByParent(js)
+	glog.V(4).Infof(&quot;Found %d groups&quot;, len(jobsBySj))
+
+	for _, sj := range sjs {
+		syncOne(&amp;sj, jobsBySj[sj.UID], time.Now(), jm.jobControl, jm.sjControl, jm.podControl, jm.recorder)
+		cleanupFinishedJobs(&amp;sj, jobsBySj[sj.UID], jm.jobControl, jm.sjControl, jm.podControl, jm.recorder)
+	}
+}
+
+func syncOne(sj *batchv1beta1.CronJob, js []batchv1.Job, now time.Time, jc jobControlInterface, sjc sjControlInterface, pc podControlInterface, recorder record.EventRecorder) {
+    ...
+    jobReq, err := getJobFromTemplate(sj, scheduledTime)
+	if err != nil {
+		glog.Errorf(&quot;Unable to make Job from template in %s: %v&quot;, nameForLog, err)
+		return
+	}
+    //创建job
+	jobResp, err := jc.CreateJob(sj.Namespace, jobReq)
+	if err != nil {
+		recorder.Eventf(sj, v1.EventTypeWarning, &quot;FailedCreate&quot;, &quot;Error creating job: %v&quot;, err)
+		return
+	}
+	glog.V(4).Infof(&quot;Created Job %s for %s&quot;, jobResp.Name, nameForLog)
+	recorder.Eventf(sj, v1.EventTypeNormal, &quot;SuccessfulCreate&quot;, &quot;Created job %v&quot;, jobResp.Name)
+	...
+	ref, err := getRef(jobResp)
+	if err != nil {
+		glog.V(2).Infof(&quot;Unable to make object reference for job for %s&quot;, nameForLog)
+	} else {
+		sj.Status.Active = append(sj.Status.Active, *ref)
+	}
+	sj.Status.LastScheduleTime = &amp;metav1.Time{Time: scheduledTime}
+	if _, err := sjc.UpdateStatus(sj); err != nil {
+		glog.Infof(&quot;Unable to update status for %s (rv = %s): %v&quot;, nameForLog, sj.ResourceVersion, err)
+	}
+
+	return
+}
+
+</code></pre>
+
+<p>A: 通过代码发现，cronjob会在后台启动一个go程，后台一直在处理cronjob,job和pod，同时也在维护cornjob的Active列表数据的正确性，同时，我们也在syncOne()函数中找到了他后台周期期创建job的操作。同时，我们也解决了上文我们猜测job是cronjob-controller创建的问题，我们的猜测是正确的，逻辑是，当创建一个cronjob后，会把这个cronjob交接到cronjob-controller下的goroutine,然后就返回了，正在创建任务的是controller下的goroutine。</p>
+
+<h4 id="回答问题-删除是cronjob-为何没有删除对应的job和pod">回答问题:删除是cronjob,为何没有删除对应的job和pod?<a href="#回答问题-删除是cronjob-为何没有删除对应的job和pod" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<pre><code>源代码 354行
+
+func deleteJob(sj *batchv1beta1.CronJob, job *batchv1.Job, jc jobControlInterface,
+	pc podControlInterface, recorder record.EventRecorder, reason string) bool {
+</code></pre>
+
+<p>A: 删除的时候，会首先检查并发job的并发策略，如果不为0,会设置为0,并更新这个job的状态,然后找到对应的pod,删除完pod后再删除job本身,如果有一个pod删除失败，会直接退出而不会job。删除完job后，再从cronjob的Active列表中移除job(通过上文我们提到的UID)。</p>
+
+<p>对于删除cronjob,可能没有立即删除job和pod，是因为删除的时候会有三种策略，即：</p>
+
+<pre><code>DeletionPropagation string=&quot;Orphan&quot;,&quot;Foreground&quot;(默认),&quot;Background&quot;
+</code></pre>
+
+<p>Orphan:GC自动触发；
+Background:垃圾回收器会在后台执行删除（手动触发，立即后台处理）。
+Foreground:API调用后会设置删除的过期时间，并把他放入到要删除的队列，在没删除之前，前台一直可见（手动触发，可能不立即处理）。</p>
+
+<p>两种数据结构:</p>
+
+<pre><code>//立即执行的数据结构
+type realJobControl struct {
+	KubeClient clientset.Interface
+	Recorder   record.EventRecorder
+}
+
+func (r realJobControl) DeleteJob(namespace string, name string) error {
+	return r.KubeClient.BatchV1().Jobs(namespace).Delete(name, nil)
+}
+
+// 假执行的数据结构,把要操作的数据放入到列表就算完成执行了，而正在的执行操作并不它。
+type fakeJobControl struct {
+	sync.Mutex
+	Job           *batchv1.Job
+	Jobs          []batchv1.Job
+	DeleteJobName []string
+	Err           error
+	UpdateJobName []string
+	PatchJobName  []string
+	Patches       [][]byte
+}
+
+func (f *fakeJobControl) DeleteJob(namespace string, name string) error {
+	f.Lock()
+	defer f.Unlock()
+	if f.Err != nil {
+		return f.Err
+	}
+	f.DeleteJobName = append(f.DeleteJobName, name)
+	return nil
+}
+</code></pre>
+
+<p>当真正执执行Delete的时候</p>
+
+<pre><code>源代码：github.com/kubernetes/kubernetes/pkg/controller/garbagecollector/operations.go
+
+func (gc *GarbageCollector) deleteObject(item objectReference, policy *metav1.DeletionPropagation) error {
+	resource, namespaced, err := gc.apiResource(item.APIVersion, item.Kind)
+	if err != nil {
+		return err
+	}
+	uid := item.UID
+	preconditions := metav1.Preconditions{UID: &amp;uid}
+	deleteOptions := metav1.DeleteOptions{Preconditions: &amp;preconditions, PropagationPolicy: policy}
+	return gc.dynamicClient.Resource(resource).Namespace(resourceDefaultNamespace(namespaced, item.Namespace)).Delete(item.Name, &amp;deleteOptions)
+}
+</code></pre>
+
+<p>根据资源获取获取resource,然后重新组装deleteOptions策略，然后删除。</p>
+
+<p>本次cronjob原理和源码分析结束。</p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/kubernetes">kubernetes</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>550 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2019-04-21 20:35 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/go/tools/2019-07-12-go-tool-trace/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>Go 大杀器之跟踪剖析 trace</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/go/knowledge/2018-09-24-go-and-json/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>Golang json 的进阶用法</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

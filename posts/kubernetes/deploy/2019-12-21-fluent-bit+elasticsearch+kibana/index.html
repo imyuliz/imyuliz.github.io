@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="收集kubernetes控制台日志及元数据(fluent-bit&#43;elasticsearch&#43;kibana搭建)">
+<meta itemprop="description" content="#### 前要   kubectl version
+ Client Version: version.Info{Major:&quot;1&quot;, Minor:&quot;9&quot;, GitVersion:&quot;v1.9.3&quot;, GitCommit:&quot;d2835416544f298c919e2ead3be3d0864b52323b&quot;, GitTreeState:&quot;clean&quot;, BuildDate:&quot;2018-02-07T12:22:21Z&quot;, GoVersion:&quot;go1.9.2&quot;, Compiler:&quot;gc&quot;, Platform:&quot;linux/amd64&quot;} Server Version: version.Info{Major:&quot;1&quot;, Minor:&quot;9&quot;, GitVersion:&quot;v1.9.3&quot;, GitCommit:&quot;d2835416544f298c919e2ead3be3d0864b52323b&quot;, GitTreeState:&quot;clean&quot;, BuildDate:&quot;2018-02-07T11:55:20Z&quot;, GoVersion:&quot;go1.9.2&quot;, Compiler:&quot;gc&quot;, Platform:&quot;linux/amd64&quot;}   namespace
+ 如果需要部署在非kube-system命令下,需要该所有yaml的namespace,例如:我所有的资源部署在logging这个namespace下。
+ 下载相关代码(主要是yaml文件)
+ 《elasticsearch、kibana》 https://github.com/kubernetes/kubernetes.git
+《fluent-bit》 https://github.com/fluent/fluent-bit-kubernetes-logging.git
+首先部署elasticsearch yaml目录:cluster/addons/fluentd-elasticsearch
+ 部署statefulset
+kubectl create -f es-statefulset.yaml  我部署的时候镜像版本是:k8s.gcr.io/elasticsearch:v6.2.4
+  初始化镜像: alpine:3.6
+ 部署configmap
+kubectl create -f fluentd-es-configmap.yaml  部署Service
+kubectl create -f es-service.yaml  查看service的信息并记下来,下面要用">
+
+
+<meta itemprop="datePublished" content="2019-12-21T20:29:20&#43;08:00" />
+<meta itemprop="dateModified" content="2019-12-21T20:29:20&#43;08:00" />
+<meta itemprop="wordCount" content="166">
+
+
+
+<meta itemprop="keywords" content="kubernetes," />
+<meta property="og:title" content="收集kubernetes控制台日志及元数据(fluent-bit&#43;elasticsearch&#43;kibana搭建)" />
+<meta property="og:description" content="#### 前要   kubectl version
+ Client Version: version.Info{Major:&quot;1&quot;, Minor:&quot;9&quot;, GitVersion:&quot;v1.9.3&quot;, GitCommit:&quot;d2835416544f298c919e2ead3be3d0864b52323b&quot;, GitTreeState:&quot;clean&quot;, BuildDate:&quot;2018-02-07T12:22:21Z&quot;, GoVersion:&quot;go1.9.2&quot;, Compiler:&quot;gc&quot;, Platform:&quot;linux/amd64&quot;} Server Version: version.Info{Major:&quot;1&quot;, Minor:&quot;9&quot;, GitVersion:&quot;v1.9.3&quot;, GitCommit:&quot;d2835416544f298c919e2ead3be3d0864b52323b&quot;, GitTreeState:&quot;clean&quot;, BuildDate:&quot;2018-02-07T11:55:20Z&quot;, GoVersion:&quot;go1.9.2&quot;, Compiler:&quot;gc&quot;, Platform:&quot;linux/amd64&quot;}   namespace
+ 如果需要部署在非kube-system命令下,需要该所有yaml的namespace,例如:我所有的资源部署在logging这个namespace下。
+ 下载相关代码(主要是yaml文件)
+ 《elasticsearch、kibana》 https://github.com/kubernetes/kubernetes.git
+《fluent-bit》 https://github.com/fluent/fluent-bit-kubernetes-logging.git
+首先部署elasticsearch yaml目录:cluster/addons/fluentd-elasticsearch
+ 部署statefulset
+kubectl create -f es-statefulset.yaml  我部署的时候镜像版本是:k8s.gcr.io/elasticsearch:v6.2.4
+  初始化镜像: alpine:3.6
+ 部署configmap
+kubectl create -f fluentd-es-configmap.yaml  部署Service
+kubectl create -f es-service.yaml  查看service的信息并记下来,下面要用" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/kubernetes/deploy/2019-12-21-fluent-bit&#43;elasticsearch&#43;kibana/" />
+<meta property="article:published_time" content="2019-12-21T20:29:20&#43;08:00"/>
+<meta property="article:modified_time" content="2019-12-21T20:29:20&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="收集kubernetes控制台日志及元数据(fluent-bit&#43;elasticsearch&#43;kibana搭建)"/>
+<meta name="twitter:description" content="#### 前要   kubectl version
+ Client Version: version.Info{Major:&quot;1&quot;, Minor:&quot;9&quot;, GitVersion:&quot;v1.9.3&quot;, GitCommit:&quot;d2835416544f298c919e2ead3be3d0864b52323b&quot;, GitTreeState:&quot;clean&quot;, BuildDate:&quot;2018-02-07T12:22:21Z&quot;, GoVersion:&quot;go1.9.2&quot;, Compiler:&quot;gc&quot;, Platform:&quot;linux/amd64&quot;} Server Version: version.Info{Major:&quot;1&quot;, Minor:&quot;9&quot;, GitVersion:&quot;v1.9.3&quot;, GitCommit:&quot;d2835416544f298c919e2ead3be3d0864b52323b&quot;, GitTreeState:&quot;clean&quot;, BuildDate:&quot;2018-02-07T11:55:20Z&quot;, GoVersion:&quot;go1.9.2&quot;, Compiler:&quot;gc&quot;, Platform:&quot;linux/amd64&quot;}   namespace
+ 如果需要部署在非kube-system命令下,需要该所有yaml的namespace,例如:我所有的资源部署在logging这个namespace下。
+ 下载相关代码(主要是yaml文件)
+ 《elasticsearch、kibana》 https://github.com/kubernetes/kubernetes.git
+《fluent-bit》 https://github.com/fluent/fluent-bit-kubernetes-logging.git
+首先部署elasticsearch yaml目录:cluster/addons/fluentd-elasticsearch
+ 部署statefulset
+kubectl create -f es-statefulset.yaml  我部署的时候镜像版本是:k8s.gcr.io/elasticsearch:v6.2.4
+  初始化镜像: alpine:3.6
+ 部署configmap
+kubectl create -f fluentd-es-configmap.yaml  部署Service
+kubectl create -f es-service.yaml  查看service的信息并记下来,下面要用"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>收集kubernetes控制台日志及元数据(fluent-bit&#43;elasticsearch&#43;kibana搭建)</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Dec 21, 2019</span></div>
+				<h1>收集kubernetes控制台日志及元数据(fluent-bit&#43;elasticsearch&#43;kibana搭建)</h1>
+			</header>
+			<div class="content">
+				
+
+<pre><code>#### 前要
+</code></pre>
+
+<blockquote>
+<p>kubectl version</p>
+</blockquote>
+
+<pre><code>Client Version: version.Info{Major:&quot;1&quot;, Minor:&quot;9&quot;, GitVersion:&quot;v1.9.3&quot;, GitCommit:&quot;d2835416544f298c919e2ead3be3d0864b52323b&quot;, GitTreeState:&quot;clean&quot;, BuildDate:&quot;2018-02-07T12:22:21Z&quot;, GoVersion:&quot;go1.9.2&quot;, Compiler:&quot;gc&quot;, Platform:&quot;linux/amd64&quot;}
+Server Version: version.Info{Major:&quot;1&quot;, Minor:&quot;9&quot;, GitVersion:&quot;v1.9.3&quot;, GitCommit:&quot;d2835416544f298c919e2ead3be3d0864b52323b&quot;, GitTreeState:&quot;clean&quot;, BuildDate:&quot;2018-02-07T11:55:20Z&quot;, GoVersion:&quot;go1.9.2&quot;, Compiler:&quot;gc&quot;, Platform:&quot;linux/amd64&quot;}
+</code></pre>
+
+<blockquote>
+<p>namespace</p>
+</blockquote>
+
+<p>如果需要部署在非kube-system命令下,需要该所有yaml的namespace,例如:我所有的资源部署在logging这个namespace下。</p>
+
+<blockquote>
+<p>下载相关代码(主要是yaml文件)</p>
+</blockquote>
+
+<p>《elasticsearch、kibana》 <a href="https://github.com/kubernetes/kubernetes.git">https://github.com/kubernetes/kubernetes.git</a></p>
+
+<p>《fluent-bit》 <a href="https://github.com/fluent/fluent-bit-kubernetes-logging.git">https://github.com/fluent/fluent-bit-kubernetes-logging.git</a></p>
+
+<h3 id="首先部署elasticsearch">首先部署elasticsearch<a href="#首先部署elasticsearch" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p><strong>yaml目录:cluster/addons/fluentd-elasticsearch</strong></p>
+
+<ol>
+<li><p>部署statefulset</p>
+
+<pre><code>kubectl create -f es-statefulset.yaml
+</code></pre>
+
+<p>我部署的时候镜像版本是:<strong>k8s.gcr.io/elasticsearch:v6.2.4</strong></p></li>
+</ol>
+
+<p>初始化镜像: <strong>alpine:3.6</strong></p>
+
+<ol>
+<li><p>部署configmap</p>
+
+<pre><code>kubectl create -f fluentd-es-configmap.yaml
+</code></pre></li>
+
+<li><p>部署Service</p>
+
+<pre><code>kubectl create -f es-service.yaml
+</code></pre></li>
+
+<li><p>查看service的信息并记下来,下面要用</p>
+
+<pre><code>[root@cicd-node01 es]# kubectl get svc -o wide  -n logging
+NAME                    TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE       SELECTOR
+elasticsearch-logging   NodePort   172.29.233.30   &lt;none&gt;        9200:30565/TCP   9h        k8s-app=elasticsearch-logging
+</code></pre></li>
+</ol>
+
+<h3 id="再部署fluent-bit">再部署fluent-bit<a href="#再部署fluent-bit" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p><strong>yaml文件所在地址:fluent/fluent-bit-kubernetes-logging</strong></p>
+
+<ol>
+<li><p>创建相关资源</p>
+
+<pre><code>kubectl create -f fluent-bit-role-binding.yaml
+kubectl create -f fluent-bit-service-account.yaml 
+kubectl create -f fluent-bit-role.yaml
+</code></pre></li>
+
+<li><p>创建DaemonSet</p></li>
+</ol>
+
+<p>进入output/elasticsearch目录</p>
+
+<pre><code>kubectl create -f cluent-bit-configmap.yaml
+
+</code></pre>
+
+<p>修改fluent-bit-ds.yaml文件的这部分配置</p>
+
+<pre><code>- name: FLUENT_ELASTICSEARCH_HOST
+  value: &quot;10.151.33.87&quot;
+- name: FLUENT_ELASTICSEARCH_PORT
+  value: &quot;30565&quot;
+</code></pre>
+
+<p>这个地方修改elasticsearch的Host和Port的值(就是上面提到的)</p>
+
+<pre><code>kubectl create -f fluent-bit-ds.yaml
+</code></pre>
+
+<p>我在使用的时候镜像版本是:<strong>fluent/fluent-bit:0.13.5</strong></p>
+
+<h3 id="最后部署kibana">最后部署Kibana<a href="#最后部署kibana" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>yaml所在目录: <a href="https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch">https://github.com/kubernetes/kubernetes/tree/master/cluster/addons/fluentd-elasticsearch</a></p>
+
+<p>修改kibana-deployment.yaml的配置信息</p>
+
+<pre><code>env:
+  - name: ELASTICSEARCH_URL
+    value: http://10.151.33.87:30565
+    #  - name: SERVER_BASEPATH
+    #value: /api/v1/namespaces/logging/services/kibana-logging/proxy
+    
+    ELASTICSEARCH_URL是elasticsearch的地址.
+</code></pre>
+
+<ol>
+<li><p>创建deployment</p>
+
+<pre><code>kubectl create -f kibana-deployment.yaml
+</code></pre></li>
+
+<li><p>创建kibana-service</p>
+
+<pre><code>kubectl create -f kibana-service.yaml
+</code></pre>
+
+<p>我在创建的时候镜像版本是:<strong>docker.elastic.co/kibana/kibana-oss:6.2.4</strong></p></li>
+
+<li><p>获取访问信息</p>
+
+<pre><code>[root@cicd-node01 es]# kubectl get svc -n logging
+NAME                    TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)          AGE
+kibana-logging          NodePort   172.29.16.48    &lt;none&gt;        5601:31295/TCP   7h
+</code></pre>
+
+<p>然后以nodeIP+nodePort就能访问。</p></li>
+</ol>
+
+<h3 id="最后-需要的yaml文件">最后,需要的yaml文件<a href="#最后-需要的yaml文件" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p><a href="http://index.yulibaozi.com/b4e3c070-2fc5-4b90-977c-6dd69d07fee0deploy-FEK.zip.gz">http://index.yulibaozi.com/b4e3c070-2fc5-4b90-977c-6dd69d07fee0deploy-FEK.zip.gz</a></p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/kubernetes">kubernetes</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>166 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2019-12-21 20:29 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/kubernetes/extend/2018-12-03-beku/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>[Beku] 如何使用三行代码发布你的应用到Kubernetes</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/go/tools/2019-09-02-godebug-gc/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>用 GODEBUG 看 GC</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

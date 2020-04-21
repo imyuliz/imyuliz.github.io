@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="Golang两种方式反转二叉树（镜像二叉树）">
+<meta itemprop="description" content="递归的方式 // Mirror 反转(镜像)二叉树--递归的方式 func (t *TNode) Mirror(root *TNode) { if root == nil { return } if root.left == nil &amp;&amp; root.right == nil { return } tem := root.left root.left = root.right root.right = tem t.Mirror(root.left) t.Mirror(root.right) }  队列的方式 func (t *TNode) MirrorByQue(root *TNode) { if root == nil { return } list := list.New() list.PushBack(root) for list.Len() != 0 { // 删除队列中的第一个变量 // delnode:= list.Remove(list.Front()) delnode := (list.">
+
+
+<meta itemprop="datePublished" content="2018-02-24T22:08:27&#43;08:00" />
+<meta itemprop="dateModified" content="2018-02-24T22:08:27&#43;08:00" />
+<meta itemprop="wordCount" content="388">
+
+
+
+<meta itemprop="keywords" content="algorithm," />
+<meta property="og:title" content="Golang两种方式反转二叉树（镜像二叉树）" />
+<meta property="og:description" content="递归的方式 // Mirror 反转(镜像)二叉树--递归的方式 func (t *TNode) Mirror(root *TNode) { if root == nil { return } if root.left == nil &amp;&amp; root.right == nil { return } tem := root.left root.left = root.right root.right = tem t.Mirror(root.left) t.Mirror(root.right) }  队列的方式 func (t *TNode) MirrorByQue(root *TNode) { if root == nil { return } list := list.New() list.PushBack(root) for list.Len() != 0 { // 删除队列中的第一个变量 // delnode:= list.Remove(list.Front()) delnode := (list." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/go/algorithm/2018-02-24-mirror-binary-tree/" />
+<meta property="article:published_time" content="2018-02-24T22:08:27&#43;08:00"/>
+<meta property="article:modified_time" content="2018-02-24T22:08:27&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Golang两种方式反转二叉树（镜像二叉树）"/>
+<meta name="twitter:description" content="递归的方式 // Mirror 反转(镜像)二叉树--递归的方式 func (t *TNode) Mirror(root *TNode) { if root == nil { return } if root.left == nil &amp;&amp; root.right == nil { return } tem := root.left root.left = root.right root.right = tem t.Mirror(root.left) t.Mirror(root.right) }  队列的方式 func (t *TNode) MirrorByQue(root *TNode) { if root == nil { return } list := list.New() list.PushBack(root) for list.Len() != 0 { // 删除队列中的第一个变量 // delnode:= list.Remove(list.Front()) delnode := (list."/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Golang两种方式反转二叉树（镜像二叉树）</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Feb 24, 2018</span></div>
+				<h1>Golang两种方式反转二叉树（镜像二叉树）</h1>
+			</header>
+			<div class="content">
+				
+
+<h3 id="递归的方式">递归的方式<a href="#递归的方式" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<pre><code>// Mirror 反转(镜像)二叉树--递归的方式
+func (t *TNode) Mirror(root *TNode) {
+	if root == nil {
+		return
+	}
+	if root.left == nil &amp;&amp; root.right == nil {
+		return
+	}
+	tem := root.left
+	root.left = root.right
+	root.right = tem
+	t.Mirror(root.left)
+	t.Mirror(root.right)
+}
+</code></pre>
+
+<h3 id="队列的方式">队列的方式<a href="#队列的方式" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<pre><code>func (t *TNode) MirrorByQue(root *TNode) {
+	if root == nil {
+		return
+	}
+	list := list.New()
+	list.PushBack(root)
+	for list.Len() != 0 {
+		// 删除队列中的第一个变量 
+		// delnode:= list.Remove(list.Front())
+		delnode := (list.Remove(list.Front())).(*TNode)
+		if delnode == nil {
+			fmt.Println(&quot;断言并转换失败&quot;)
+		}
+		tem := delnode.left
+		delnode.left = delnode.right
+		delnode.right = tem
+		if delnode.right != nil {
+			list.PushBack(delnode.right)
+		}
+		if delnode.left != nil {
+			list.PushBack(delnode.left)
+		}
+	}
+}
+</code></pre>
+
+<h3 id="完整代码">完整代码<a href="#完整代码" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<pre><code>
+type TNode struct {
+	//节点的值
+	val int
+	//左节点
+	left *TNode
+	//由节点
+	right *TNode
+	//根节点
+	root *TNode
+}
+
+func main() {
+	var tree = TNode{}
+	val := []int{10, 6, 15, 4, 8, 11, 16, 3, 5}
+	for _, v := range val {
+
+		tree.CreateTree(v)
+
+	}
+	fmt.Println(&quot;反转前遍历：&quot;)
+	fmt.Println()
+	tree.ListTree(tree.root)
+	fmt.Println()
+	fmt.Println(&quot;反转后遍历&quot;)
+
+	tree.Mirror(tree.root)
+	tree.ListTree(tree.root)
+	fmt.Println()
+	fmt.Println(&quot;再次反转后遍历:&quot;)
+
+	tree.MirrorByQue(tree.root)
+	tree.ListTree(tree.root)
+
+}
+
+//CreateTree 创建二叉树
+func (t *TNode) CreateTree(val int) {
+	node := &amp;TNode{}
+	node.val = val
+	if t.root == nil {
+		t.root = node
+	} else {
+		backNode := &amp;TNode{}
+		currentNode := t.root
+		for currentNode != nil {
+			backNode = currentNode
+			if currentNode.val &gt; val {
+				currentNode = currentNode.left
+			} else {
+				currentNode = currentNode.right
+			}
+		}
+		if backNode.val &gt; val {
+			backNode.left = node
+		} else {
+			backNode.right = node
+		}
+	}
+}
+
+// ListTree 递归版前中后序遍历二叉树
+func (t *TNode) ListTree(root *TNode) {
+	if root != nil {
+		fmt.Print(&quot; &quot;, root.val)
+		t.ListTree(root.left)
+		t.ListTree(root.right)
+	}
+}
+
+// Mirror 反转(镜像)二叉树--递归的方式
+func (t *TNode) Mirror(root *TNode) {
+	if root == nil {
+		return
+	}
+	if root.left == nil &amp;&amp; root.right == nil {
+		return
+	}
+	tem := root.left
+	root.left = root.right
+	root.right = tem
+	t.Mirror(root.left)
+	t.Mirror(root.right)
+}
+
+// MirrorByQue 反转(镜像)二叉树--队列的方式
+func (t *TNode) MirrorByQue(root *TNode) {
+	if root == nil {
+		return
+	}
+	list := list.New()
+	list.PushBack(root)
+	for list.Len() != 0 {
+		// 删除队列中的第一个变量
+		// delnode:= list.Remove(list.Front())
+		delnode := (list.Remove(list.Front())).(*TNode)
+		if delnode == nil {
+			fmt.Println(&quot;断言并转换失败&quot;)
+		}
+		tem := delnode.left
+		delnode.left = delnode.right
+		delnode.right = tem
+		if delnode.right != nil {
+			list.PushBack(delnode.right)
+		}
+		if delnode.left != nil {
+			list.PushBack(delnode.left)
+		}
+	}
+}
+
+</code></pre>
+
+<h3 id="结果">结果<a href="#结果" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<pre><code>反转前遍历：
+10 6 4 3 5 8 15 11 16
+反转后遍历
+10 15 16 11 6 8 4 5 3
+再次反转后遍历:
+10 6 4 3 5 8 15 11 16
+</code></pre>
+
+<p><img src="http://index.yulibaozi.com/a6fa6ddf-ee00-420a-8d1d-8d8a479b6af5erchash.jpg" alt="image" /></p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/algorithm">algorithm</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>388 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-02-24 22:08 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/go/knowledge/2018-02-24-go-and-jwt/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>Golang使用jwt做用户身份验证</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/go/knowledge/2018-02-24-panic-by-return-funcs/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>invalid memory address or nil pointer dereference</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

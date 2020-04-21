@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="自研程序如何快速对接kubernetes">
+<meta itemprop="description" content="实践kubernetes版本:v1.11.3
+伟大之路 伟大的程序想要跑起来都是要经过磨难的，像我这个伟大的程序想在kubernetes集群内(Pod内)访问kube-apiserver接口,出现错误:
+Get Enpoints err:endpoints &quot;kubernetes&quot; is forbidden: User &quot;system:serviceaccount:yulibaozi:default&quot; cannot get endpoints in the namespace &quot;default&quot;  而我伟大的程序是这样:
+func main() { conf, err := rest.InClusterConfig() if err != nil { log.Fatalf(&quot;InClusterConfig err:%v&quot;, err) } client, err := kubernetes.NewForConfig(conf) if err != nil { log.Fatalf(&quot;NewForConfig err:%v&quot;, err) } for { ep, err := client.CoreV1().Endpoints(&quot;default&quot;).Get(&quot;kubernetes&quot;, metav1.GetOptions{}) if err != nil { log.Printf(&quot;Get Enpoints err:%v&quot;, err) } else { log.Printf(&quot;%&#43;v&quot;, ep) } time.">
+
+
+<meta itemprop="datePublished" content="2019-08-21T20:33:22&#43;08:00" />
+<meta itemprop="dateModified" content="2019-08-21T20:33:22&#43;08:00" />
+<meta itemprop="wordCount" content="191">
+
+
+
+<meta itemprop="keywords" content="kubernetes," />
+<meta property="og:title" content="自研程序如何快速对接kubernetes" />
+<meta property="og:description" content="实践kubernetes版本:v1.11.3
+伟大之路 伟大的程序想要跑起来都是要经过磨难的，像我这个伟大的程序想在kubernetes集群内(Pod内)访问kube-apiserver接口,出现错误:
+Get Enpoints err:endpoints &quot;kubernetes&quot; is forbidden: User &quot;system:serviceaccount:yulibaozi:default&quot; cannot get endpoints in the namespace &quot;default&quot;  而我伟大的程序是这样:
+func main() { conf, err := rest.InClusterConfig() if err != nil { log.Fatalf(&quot;InClusterConfig err:%v&quot;, err) } client, err := kubernetes.NewForConfig(conf) if err != nil { log.Fatalf(&quot;NewForConfig err:%v&quot;, err) } for { ep, err := client.CoreV1().Endpoints(&quot;default&quot;).Get(&quot;kubernetes&quot;, metav1.GetOptions{}) if err != nil { log.Printf(&quot;Get Enpoints err:%v&quot;, err) } else { log.Printf(&quot;%&#43;v&quot;, ep) } time." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/kubernetes/extend/2019-01-11-incluster-use-kubernetes/" />
+<meta property="article:published_time" content="2019-08-21T20:33:22&#43;08:00"/>
+<meta property="article:modified_time" content="2019-08-21T20:33:22&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="自研程序如何快速对接kubernetes"/>
+<meta name="twitter:description" content="实践kubernetes版本:v1.11.3
+伟大之路 伟大的程序想要跑起来都是要经过磨难的，像我这个伟大的程序想在kubernetes集群内(Pod内)访问kube-apiserver接口,出现错误:
+Get Enpoints err:endpoints &quot;kubernetes&quot; is forbidden: User &quot;system:serviceaccount:yulibaozi:default&quot; cannot get endpoints in the namespace &quot;default&quot;  而我伟大的程序是这样:
+func main() { conf, err := rest.InClusterConfig() if err != nil { log.Fatalf(&quot;InClusterConfig err:%v&quot;, err) } client, err := kubernetes.NewForConfig(conf) if err != nil { log.Fatalf(&quot;NewForConfig err:%v&quot;, err) } for { ep, err := client.CoreV1().Endpoints(&quot;default&quot;).Get(&quot;kubernetes&quot;, metav1.GetOptions{}) if err != nil { log.Printf(&quot;Get Enpoints err:%v&quot;, err) } else { log.Printf(&quot;%&#43;v&quot;, ep) } time."/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>自研程序如何快速对接kubernetes</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Aug 21, 2019</span></div>
+				<h1>自研程序如何快速对接kubernetes</h1>
+			</header>
+			<div class="content">
+				
+
+<p><strong>实践kubernetes版本:v1.11.3</strong></p>
+
+<h4 id="伟大之路">伟大之路<a href="#伟大之路" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>伟大的程序想要跑起来都是要经过磨难的，像我这个伟大的程序想在kubernetes集群内(Pod内)访问kube-apiserver接口,出现错误:</p>
+
+<pre><code>Get Enpoints err:endpoints &quot;kubernetes&quot; is forbidden: User &quot;system:serviceaccount:yulibaozi:default&quot; cannot get endpoints in the namespace &quot;default&quot;
+</code></pre>
+
+<p>而我伟大的程序是这样:</p>
+
+<pre><code>func main() {
+	conf, err := rest.InClusterConfig()
+	if err != nil {
+		log.Fatalf(&quot;InClusterConfig err:%v&quot;, err)
+	}
+	client, err := kubernetes.NewForConfig(conf)
+	if err != nil {
+		log.Fatalf(&quot;NewForConfig err:%v&quot;, err)
+	}
+	for {
+		ep, err := client.CoreV1().Endpoints(&quot;default&quot;).Get(&quot;kubernetes&quot;, metav1.GetOptions{})
+		if err != nil {
+			log.Printf(&quot;Get Enpoints err:%v&quot;, err)
+		} else {
+			log.Printf(&quot;%+v&quot;, ep)
+		}
+		time.Sleep(5 * time.Second)
+	}
+}
+</code></pre>
+
+<h4 id="幡然醒悟">幡然醒悟<a href="#幡然醒悟" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>看吧，伟大的程序想要运行起来总是饱经风霜，kube-apiserver访问控制导致的权限不足的问题自然而然的就呈现出来。这个时候，不！要！慌！咱们需要理清kubernetes的RBAC访问控制规则和使用关系:
+<img src="http://note.youdao.com/yws/res/7795/8D32B4094BB74677AFDE731726DA0812" alt="image" /></p>
+
+<p>如上图所示，大体分成两部分，左边椭圆是角色，右边椭圆是用户和用户组，统称为使用者。中间的两条连接线作为绑定关系。为什么上图会画成这样，是因为RBAC本质就是角色赋权，然后使用者绑定角色，进而让使用者具有相应的权限，上图的大体分析到此。</p>
+
+<p>接下来，我们就聊细节:
+&gt; 左椭圆&mdash;角色:</p>
+
+<p>在kubernetes中，角色分为两大类，Role和ClusterRole，它们两的访问规则配置是一样的，但有个巨大或者决定因素的不同是:
+1. Role天然具有namespace的限制,也就说，Role的访问规则天然只能在同一namespace下生效，不能跨namespace
+2. ClusterRole没有namespace的限制，他的访问规则是对整个集群生效，对，集群就是他的天下，但它不能跨集群。
+3. 在yaml/json配置上的区别就是:Role需要配置namespace，而ClusterRole是不需要配置namespace的。</p>
+
+<blockquote>
+<p>右椭圆&mdash;使用者</p>
+</blockquote>
+
+<p>在kubernetes中，使用者分为3中，User，ServiceAccount(sa)，Group。
+1. User是指用户，像我们的kubelet使用的就是kubelet-bootstrap这一用户名
+2. Group是指用户组，这个没的说，同一用户组的所有用户拥有一致的访问权限。
+3. ServiceAccount(sa)，也是一种账号，运行在Pod内的进程需要访问kube-apiserver的身份证明
+4. 通常，好多伙计都会分不清楚User和ServiceAccount，User通常指kubernetes集群的用户(例如:系统管理员，运维人员，客户用户等)，不管他们在集群内还是集群外访问kube-apiserver都可以用到，也就是说个体是人，使用场景不限；而ServiceAccount是给运行在Pod上的程序用的，也就是说ServiceAccount的使用个体是程序，使用场景是集群内的Pod里。程序和人的差异还是很大的，相信一定能分得清。</p>
+
+<blockquote>
+<p>中间连线&mdash;绑定关系</p>
+</blockquote>
+
+<p>由于左边有两种角色，所以，Role使用RoleBinding来和右边的使用者绑定，而ClusterRole使用ClusterRoleBinding与右边使用者绑定，两种角色你走你的独木桥，我走我的阳关道但是最终都能达成目的。</p>
+
+<h4 id="动手实践">动手实践<a href="#动手实践" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>由于Pod内的程序使用的是ServiceAccount(sa), 这个时候需要配置ServiceAccount(sa):</p>
+
+<pre><code>apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kuclu
+  namespace: yulibaozi
+</code></pre>
+
+<p>配置了sa后，一般情况下是管用的，但是你如果是跨namespace调用就会报错:</p>
+
+<pre><code>Get Enpoints err:endpoints &quot;kubernetes&quot; is forbidden: User &quot;system:serviceaccount:yulibaozi:kuclu&quot; cannot get endpoints in the namespace &quot;default&quot;
+</code></pre>
+
+<p>上文的报错的意思是kuclu这个sa权限不注意访问default这个namespace下的endpoints资源。</p>
+
+<p>可以看出，我们的权限不太够，进而导致我们的pod内的进程有力使不出。所以，</p>
+
+<p>它急呀，</p>
+
+<p>它一急就使劲报错，</p>
+
+<p>不解决，</p>
+
+<p>它就卯足劲报错，</p>
+
+<p>受不了，得解决。</p>
+
+<p>根据第二步的分析，我们得先配置一个角色,这个角色应该创建Role还是ClusterRole呢，程序所在的namespace在yulibaozi下，而我需要访问default这个namespace的资源对象，所以需要跨namespace访问，自然而然的选择了ClusterRole:</p>
+
+<pre><code>kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  # &quot;namespace&quot; omitted since ClusterRoles are not namespaced
+  name: root
+rules:
+- apiGroups: [&quot;*&quot;]
+  resources: [&quot;*&quot;]
+  verbs: [&quot;*&quot;]
+</code></pre>
+
+<p>对，这个名为root的角色能干任何事情，从测试的角度，我让这个角色能搞任何事情，但是，在生产环境，你可就悠着点。别出锅了。</p>
+
+<p>根据第二步的分析，需要把ServiceAccount和ClusterRole绑定，由于我们使用的是ClusterRole这种角色，所以，我们得使用ClusterRoleBinding来绑定，自然而然的选择了ClusterRoleBinding，配置依然清秀简单:</p>
+
+<pre><code>kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: root-to-kuclu
+subjects:
+- kind: ServiceAccount
+  name: kuclu
+  namespace: yulibaozi
+ # apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: root
+  apiGroup: rbac.authorization.k8s.io
+</code></pre>
+
+<p>配置完成后，程序也不用杀掉重启就能正常访问。</p>
+
+<h4 id="这边的风景也很精彩">这边的风景也很精彩<a href="#这边的风景也很精彩" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p><a href="https://jimmysong.io/kubernetes-handbook/guide/rbac.html">jimmysong-RBAC——基于角色的访问控制</a></p>
+
+<p><a href="https://mritd.me/2017/07/17/kubernetes-rbac-chinese-translation/">默然&ndash;Kubernetes RBAC</a></p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/kubernetes">kubernetes</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>191 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2019-08-21 20:33 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/go/tools/2019-09-02-godebug-gc/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>用 GODEBUG 看 GC</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/go/tools/2019-08-19-godebug-sched/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>用 GODEBUG 看调度跟踪</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

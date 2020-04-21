@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>redis on yulibaozi</title>
+    <link>https://yulibaozi.com/tags/redis/</link>
+    <description>Recent content in redis on yulibaozi</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>zh-hans</language>
+    <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
+    <lastBuildDate>Mon, 19 Mar 2018 20:40:09 +0800</lastBuildDate>
+    
+	<atom:link href="https://yulibaozi.com/tags/redis/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Redis开发与优化总结</title>
+      <link>https://yulibaozi.com/posts/redis/know/2018-03-19-redis/</link>
+      <pubDate>Mon, 19 Mar 2018 20:40:09 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/redis/know/2018-03-19-redis/</guid>
+      <description>Redis中常用类型的数据结构优化：  string string内部有三种数据结构： 1. raw 2. int 3. embstr
+ 当值大于39个字节时使用raw;当值小于等于39个字节时使用embstr;当是长整型时使用int,可以是整数,浮点数（实际是字符串）,简单或复杂的字符串,也可以是二进制。但是值的最大值不超过512MB。 4. 如何判断某值所占字节数和查看编码.
+redis&amp;gt; set yulibaozi 一个阳光的男孩 OK redis&amp;gt; strlen yulibaozi 21 （因为一个汉字占三个字节） redis&amp;gt; object encoding yulibaozi embstr  字符串如何优化: 1. 如果是整数,直接存储数据。如果是个字符串且长度&amp;gt;39个字节的数据,那么可以考虑其他的数据额结构或者将长度控制在39个字节以内。 原因:因为redisObject 对象的*ptr字段:与对象的数据内容有关,如果是整数它就直接存了数据,否则表示指向数据的指针。同样对值对象是字符串且长度&amp;lt;=39个字节的数据,内部编码是embstr类型的,字符串sds和redisObject一起分配,从而值需要一次内存操作。 2.缩减键值长度:可以去掉一些业务对象中不必要的属性来缩小数据大小。比如User对象有个注册时间。但是在我们的业务中并没有用到这个属性。那我们可以在Redis中舍弃这个属性。 3. 选择一些压缩工具来降低内存占用。比如把使用GZIP压缩JSON后可以节约约60%的空间。当然,你也需要考虑压缩/解压的速度和计算效率,因为这个他注定是频繁的。
+ Hash hash内部有两种数据结构: 1. hashtable(散列表) 2. ziplist(压缩列表,双向列表)
+ 当值最大字节数&amp;lt;=hash-max-ziplist-value（默认是64个）且field个数&amp;lt;=hash-max-ziplist-entries(默认512个)时使用ziplist;否则使用hashtable
+ziplist相比于hashtable更节约内存,但是ziplist的读写效率相对于hashtable有所降低。同样hashtable会消耗更对的内存。 ziplist（压缩链表）,他是一个连续的内存空间的压缩链表,他比较节约内存,压缩双链表节省前驱和后驱指针的空间（8b）
+ziplist使用连续的内存;删除操作会导致内存重新分配和释放,加大了操作的复杂性;读写操作设计复杂的指针移动,最坏达到O(N2)的时间复杂度。所以ziplist适合存储小对象和长度有限的数据。
+优化建议: 在针对性能较高的场景下时,保持使用ziplist数据结构,建议长度不要超过1000,每个元素大小控制在512个字节以内。
+ list list内部有三种数据结构: 1. ziplist(压缩列表) 2. linkedlist(双向列表) 3. quicklist（快速列表）
+ 当值最大字节数&amp;lt;=list-max-ziplist-value（默认是64个）且field个数&amp;lt;=list-max-ziplist-entries(默认512个)时使用ziplist;不满足上述任意一个条件使用linkedlist;
+ set set内部有两种数据结构: 1. hashtable 2. intset</description>
+    </item>
+    
+  </channel>
+</rss>

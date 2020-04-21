@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="安装Weave Scope">
+<meta itemprop="description" content="#### 获取k8s版本并使用base64编码   kubectl apply &ndash;namespace kube-system -f &ldquo;https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 |tr -d &lsquo;\n&rsquo;)&rdquo;
+ 如果出现
+error: the namespace from the provided object &quot;weave&quot; does not match the namespace &quot;kube-system&quot;. You must pass &#39;--namespace=weave&#39; to perform this operation.  执行 &gt; kubectl apply &ndash;namespace=weave -f &ldquo;https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 |tr -d &lsquo;\n&rsquo;)&rdquo;
+查看是否部署成功  kubectl get &ndash;namespace=weave daemonset weave-scope-agent
+ NAME DESIRED CURRENT READY UP-TO-DATE AVAILABLE NODE SELECTOR AGE weave-scope-agent 3 3 2 3 0 &lt;none&gt; 4m   kubectl get &ndash;namespace=weave deployment weave-scope-app">
+
+
+<meta itemprop="datePublished" content="2018-05-16T19:58:52&#43;08:00" />
+<meta itemprop="dateModified" content="2018-05-16T19:58:52&#43;08:00" />
+<meta itemprop="wordCount" content="148">
+
+
+
+<meta itemprop="keywords" content="kubernetes," />
+<meta property="og:title" content="安装Weave Scope" />
+<meta property="og:description" content="#### 获取k8s版本并使用base64编码   kubectl apply &ndash;namespace kube-system -f &ldquo;https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 |tr -d &lsquo;\n&rsquo;)&rdquo;
+ 如果出现
+error: the namespace from the provided object &quot;weave&quot; does not match the namespace &quot;kube-system&quot;. You must pass &#39;--namespace=weave&#39; to perform this operation.  执行 &gt; kubectl apply &ndash;namespace=weave -f &ldquo;https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 |tr -d &lsquo;\n&rsquo;)&rdquo;
+查看是否部署成功  kubectl get &ndash;namespace=weave daemonset weave-scope-agent
+ NAME DESIRED CURRENT READY UP-TO-DATE AVAILABLE NODE SELECTOR AGE weave-scope-agent 3 3 2 3 0 &lt;none&gt; 4m   kubectl get &ndash;namespace=weave deployment weave-scope-app" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/kubernetes/deploy/2018-05-16-deploy-weavescope/" />
+<meta property="article:published_time" content="2018-05-16T19:58:52&#43;08:00"/>
+<meta property="article:modified_time" content="2018-05-16T19:58:52&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="安装Weave Scope"/>
+<meta name="twitter:description" content="#### 获取k8s版本并使用base64编码   kubectl apply &ndash;namespace kube-system -f &ldquo;https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 |tr -d &lsquo;\n&rsquo;)&rdquo;
+ 如果出现
+error: the namespace from the provided object &quot;weave&quot; does not match the namespace &quot;kube-system&quot;. You must pass &#39;--namespace=weave&#39; to perform this operation.  执行 &gt; kubectl apply &ndash;namespace=weave -f &ldquo;https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 |tr -d &lsquo;\n&rsquo;)&rdquo;
+查看是否部署成功  kubectl get &ndash;namespace=weave daemonset weave-scope-agent
+ NAME DESIRED CURRENT READY UP-TO-DATE AVAILABLE NODE SELECTOR AGE weave-scope-agent 3 3 2 3 0 &lt;none&gt; 4m   kubectl get &ndash;namespace=weave deployment weave-scope-app"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>安装Weave Scope</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>May 16, 2018</span></div>
+				<h1>安装Weave Scope</h1>
+			</header>
+			<div class="content">
+				
+
+<pre><code>#### 获取k8s版本并使用base64编码
+</code></pre>
+
+<blockquote>
+<p>kubectl apply &ndash;namespace kube-system -f &ldquo;<a href="https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl">https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl</a> version | base64 |tr -d &lsquo;\n&rsquo;)&rdquo;</p>
+</blockquote>
+
+<p>如果出现</p>
+
+<pre><code>error: the namespace from the provided object &quot;weave&quot; does not match the namespace &quot;kube-system&quot;. You must pass '--namespace=weave' to perform this operation.
+</code></pre>
+
+<p>执行
+&gt; kubectl apply &ndash;namespace=weave -f &ldquo;<a href="https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl">https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl</a> version | base64 |tr -d &lsquo;\n&rsquo;)&rdquo;</p>
+
+<h4 id="查看是否部署成功">查看是否部署成功<a href="#查看是否部署成功" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<blockquote>
+<p>kubectl get &ndash;namespace=weave daemonset weave-scope-agent</p>
+</blockquote>
+
+<pre><code>NAME                DESIRED   CURRENT   READY     UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE
+weave-scope-agent   3         3         2         3            0           &lt;none&gt;          4m
+</code></pre>
+
+<blockquote>
+<p>kubectl  get &ndash;namespace=weave deployment weave-scope-app</p>
+</blockquote>
+
+<pre><code>NAME              DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+weave-scope-app   1         1         1            1           1m
+
+</code></pre>
+
+<blockquote>
+<p>kubectl get &ndash;namespace=weave svc weave-scope-app</p>
+</blockquote>
+
+<pre><code>NAME              TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+weave-scope-app   ClusterIP   xxxx   &lt;none&gt;        80/TCP    7m
+</code></pre>
+
+<blockquote>
+<p>kubectl get &ndash;namespace=weave pod | grep weave</p>
+</blockquote>
+
+<pre><code>weave-scope-agent-brltx            1/1       Running   0          5m
+weave-scope-agent-cdxn7            1/1       Running   0          5m
+weave-scope-agent-rw5hg            0/1       Pending   0          5m
+weave-scope-app-57566f67f6-2dnzf   1/1       Running   0          5m
+</code></pre>
+
+<h4 id="然后修改为外部可以访问并暴露端口">然后修改为外部可以访问并暴露端口<a href="#然后修改为外部可以访问并暴露端口" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<blockquote>
+<p>kubectl &ndash;namespace=weave edit svc weave-scope-app</p>
+</blockquote>
+
+<pre><code>type:NodePort
+</code></pre>
+
+<h4 id="查看暴露的端口">查看暴露的端口<a href="#查看暴露的端口" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<blockquote>
+<p>kubectl &ndash;namespace=weave get svc weave-scope-app</p>
+</blockquote>
+
+<h4 id="打开浏览器你会看到精美的界面">打开浏览器你会看到精美的界面<a href="#打开浏览器你会看到精美的界面" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p><img src="http://index.yulibaozi.com/1d55eb89-780b-43d2-9bdc-8761ddcaac17weave.png" alt="image" /></p>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/kubernetes">kubernetes</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>148 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-05-16 19:58 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/kubernetes/knowledge/2018-06-26-kubernetes-up-to-1.11/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>Kubernetes 1.11新特性,欢呼！</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/system/2018-02-24-interprocess-communication/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>进程间通信的6种方式</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>

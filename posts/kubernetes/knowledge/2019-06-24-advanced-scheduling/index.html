@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="Kubernetes高级调度- Taint和Toleration、Node Affinity分析">
+<meta itemprop="description" content="Kubernetes高级调度- Taint和Toleration、Node Affinity分析 节点即Node
+一、Taint和Toleration 污点的理论支撑 1.污点设置有哪些影响效果 使用效果(Effect):
+ PreferNoSchedule:调度器尽量避免把Pod调度到具有该污点效果的节点上,如果不能避免(如其他节点资源不足),Pod也能调度到这个污点节点上。 NoSchedule:不容忍该污点效果的Pod永不会被调度到该节点上，通过kubelet管理的Pod(static Pod)不受限制;之前没有设置污点的Pod如果已运行在此节点(有污点的节点)上，可以继续运行。 NoExecute: 调度器不会把Pod调度到具有该污点效果的节点上，同时会将节点上已存在的Pod驱逐出去。  污点设置的第一前提是: 节点上的污点key和Pod上的污点容忍key相匹配。
+2. 设置污点的效果实测 当Pod未设置污点容忍而节点设置了污点时  当节点的污点影响效果被设置为:PreferNoSchedule时,已存在于此节点上的Pod不会被驱逐；新增但未设置污点容忍的Pod仍然可以被调度到此节点上。 当节点的污点影响效果被设置为:NoSchedule时,已存在于此节点上的Pod不会被驱逐;同时,新增的Pod不会被调度此节点上. 当节点的污点影响效果被设置为:NoExecute时,已存在于此节点上的Pod会发生驱逐(驱逐时间由tolerationSeconds字段确定,小于等于0会立即驱逐);新增的Pod不会调度到此节点上。  以上所说的Pod未设置任何的污点容忍时
+当Node设置了污点且Pod设置了对应的污点容忍时    Pod容忍效果 Node污点效果 是否会调度到此Node上 原因     PreferNoSchedule PreferNoSchedule √ Node的污点效果和Pod的容忍效果相匹配   PreferNoSchedule NoSchedule x Node的污点效果高于Pod的容忍效果   PreferNoSchedule NoExecute x Node的污点效果高于Pod的容忍效果   NoSchedule PreferNoSchedule √ Node的污点效果低于Pod的容忍效果   NoSchedule NoSchedule √ Node的污点效果和Pod的容忍效果相匹配   NoSchedule NoExecute x Node的污点效果高于Pod设置的容忍效果   NoExecute PreferNoSchedule √ Node的污点效果低于Pod的容忍效果   NoExecute NoSchedule x Node的污点效果和Pod的容忍程度互斥   NoExecute NoExecute x Pod在Node上不断重建和杀掉。    污点容忍设置, Exists和Equal这两个操作符之间的区别是什么?">
+
+
+<meta itemprop="datePublished" content="2020-04-21T20:47:34&#43;08:00" />
+<meta itemprop="dateModified" content="2020-04-21T20:47:34&#43;08:00" />
+<meta itemprop="wordCount" content="373">
+
+
+
+<meta itemprop="keywords" content="kubernetes," />
+<meta property="og:title" content="Kubernetes高级调度- Taint和Toleration、Node Affinity分析" />
+<meta property="og:description" content="Kubernetes高级调度- Taint和Toleration、Node Affinity分析 节点即Node
+一、Taint和Toleration 污点的理论支撑 1.污点设置有哪些影响效果 使用效果(Effect):
+ PreferNoSchedule:调度器尽量避免把Pod调度到具有该污点效果的节点上,如果不能避免(如其他节点资源不足),Pod也能调度到这个污点节点上。 NoSchedule:不容忍该污点效果的Pod永不会被调度到该节点上，通过kubelet管理的Pod(static Pod)不受限制;之前没有设置污点的Pod如果已运行在此节点(有污点的节点)上，可以继续运行。 NoExecute: 调度器不会把Pod调度到具有该污点效果的节点上，同时会将节点上已存在的Pod驱逐出去。  污点设置的第一前提是: 节点上的污点key和Pod上的污点容忍key相匹配。
+2. 设置污点的效果实测 当Pod未设置污点容忍而节点设置了污点时  当节点的污点影响效果被设置为:PreferNoSchedule时,已存在于此节点上的Pod不会被驱逐；新增但未设置污点容忍的Pod仍然可以被调度到此节点上。 当节点的污点影响效果被设置为:NoSchedule时,已存在于此节点上的Pod不会被驱逐;同时,新增的Pod不会被调度此节点上. 当节点的污点影响效果被设置为:NoExecute时,已存在于此节点上的Pod会发生驱逐(驱逐时间由tolerationSeconds字段确定,小于等于0会立即驱逐);新增的Pod不会调度到此节点上。  以上所说的Pod未设置任何的污点容忍时
+当Node设置了污点且Pod设置了对应的污点容忍时    Pod容忍效果 Node污点效果 是否会调度到此Node上 原因     PreferNoSchedule PreferNoSchedule √ Node的污点效果和Pod的容忍效果相匹配   PreferNoSchedule NoSchedule x Node的污点效果高于Pod的容忍效果   PreferNoSchedule NoExecute x Node的污点效果高于Pod的容忍效果   NoSchedule PreferNoSchedule √ Node的污点效果低于Pod的容忍效果   NoSchedule NoSchedule √ Node的污点效果和Pod的容忍效果相匹配   NoSchedule NoExecute x Node的污点效果高于Pod设置的容忍效果   NoExecute PreferNoSchedule √ Node的污点效果低于Pod的容忍效果   NoExecute NoSchedule x Node的污点效果和Pod的容忍程度互斥   NoExecute NoExecute x Pod在Node上不断重建和杀掉。    污点容忍设置, Exists和Equal这两个操作符之间的区别是什么?" />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/kubernetes/knowledge/2019-06-24-advanced-scheduling/" />
+<meta property="article:published_time" content="2020-04-21T20:47:34&#43;08:00"/>
+<meta property="article:modified_time" content="2020-04-21T20:47:34&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Kubernetes高级调度- Taint和Toleration、Node Affinity分析"/>
+<meta name="twitter:description" content="Kubernetes高级调度- Taint和Toleration、Node Affinity分析 节点即Node
+一、Taint和Toleration 污点的理论支撑 1.污点设置有哪些影响效果 使用效果(Effect):
+ PreferNoSchedule:调度器尽量避免把Pod调度到具有该污点效果的节点上,如果不能避免(如其他节点资源不足),Pod也能调度到这个污点节点上。 NoSchedule:不容忍该污点效果的Pod永不会被调度到该节点上，通过kubelet管理的Pod(static Pod)不受限制;之前没有设置污点的Pod如果已运行在此节点(有污点的节点)上，可以继续运行。 NoExecute: 调度器不会把Pod调度到具有该污点效果的节点上，同时会将节点上已存在的Pod驱逐出去。  污点设置的第一前提是: 节点上的污点key和Pod上的污点容忍key相匹配。
+2. 设置污点的效果实测 当Pod未设置污点容忍而节点设置了污点时  当节点的污点影响效果被设置为:PreferNoSchedule时,已存在于此节点上的Pod不会被驱逐；新增但未设置污点容忍的Pod仍然可以被调度到此节点上。 当节点的污点影响效果被设置为:NoSchedule时,已存在于此节点上的Pod不会被驱逐;同时,新增的Pod不会被调度此节点上. 当节点的污点影响效果被设置为:NoExecute时,已存在于此节点上的Pod会发生驱逐(驱逐时间由tolerationSeconds字段确定,小于等于0会立即驱逐);新增的Pod不会调度到此节点上。  以上所说的Pod未设置任何的污点容忍时
+当Node设置了污点且Pod设置了对应的污点容忍时    Pod容忍效果 Node污点效果 是否会调度到此Node上 原因     PreferNoSchedule PreferNoSchedule √ Node的污点效果和Pod的容忍效果相匹配   PreferNoSchedule NoSchedule x Node的污点效果高于Pod的容忍效果   PreferNoSchedule NoExecute x Node的污点效果高于Pod的容忍效果   NoSchedule PreferNoSchedule √ Node的污点效果低于Pod的容忍效果   NoSchedule NoSchedule √ Node的污点效果和Pod的容忍效果相匹配   NoSchedule NoExecute x Node的污点效果高于Pod设置的容忍效果   NoExecute PreferNoSchedule √ Node的污点效果低于Pod的容忍效果   NoExecute NoSchedule x Node的污点效果和Pod的容忍程度互斥   NoExecute NoExecute x Pod在Node上不断重建和杀掉。    污点容忍设置, Exists和Equal这两个操作符之间的区别是什么?"/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Kubernetes高级调度- Taint和Toleration、Node Affinity分析</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/links/">Links</a>
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/links/">Links</a></li>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Apr 21, 2020</span></div>
+				<h1>Kubernetes高级调度- Taint和Toleration、Node Affinity分析</h1>
+			</header>
+			<div class="content">
+				
+
+<h2 id="kubernetes高级调度-taint和toleration-node-affinity分析">Kubernetes高级调度- Taint和Toleration、Node Affinity分析<a href="#kubernetes高级调度-taint和toleration-node-affinity分析" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<p>节点即Node</p>
+
+<h2 id="一-taint和toleration">一、Taint和Toleration<a href="#一-taint和toleration" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<h3 id="污点的理论支撑">污点的理论支撑<a href="#污点的理论支撑" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<h4 id="1-污点设置有哪些影响效果">1.污点设置有哪些影响效果<a href="#1-污点设置有哪些影响效果" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>使用效果(Effect):</p>
+
+<ol>
+<li>PreferNoSchedule:调度器尽量避免把Pod调度到具有该污点效果的节点上,如果不能避免(如其他节点资源不足),Pod也能调度到这个污点节点上。</li>
+<li>NoSchedule:不容忍该污点效果的Pod永不会被调度到该节点上，通过kubelet管理的Pod(static Pod)不受限制;之前没有设置污点的Pod如果已运行在此节点(有污点的节点)上，可以继续运行。</li>
+<li>NoExecute: 调度器不会把Pod调度到具有该污点效果的节点上，同时会将节点上已存在的Pod驱逐出去。</li>
+</ol>
+
+<p>污点设置的第一前提是: 节点上的污点key和Pod上的污点容忍key相匹配。</p>
+
+<h3 id="2-设置污点的效果实测">2. 设置污点的效果实测<a href="#2-设置污点的效果实测" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<h4 id="当pod未设置污点容忍而节点设置了污点时">当Pod未设置污点容忍而节点设置了污点时<a href="#当pod未设置污点容忍而节点设置了污点时" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<ol>
+<li>当节点的污点影响效果被设置为:PreferNoSchedule时,已存在于此节点上的Pod不会被驱逐；新增但未设置污点容忍的Pod仍然可以被调度到此节点上。</li>
+<li>当节点的污点影响效果被设置为:NoSchedule时,已存在于此节点上的Pod不会被驱逐;同时,新增的Pod不会被调度此节点上.</li>
+<li>当节点的污点影响效果被设置为:NoExecute时,已存在于此节点上的Pod会发生驱逐(驱逐时间由tolerationSeconds字段确定,小于等于0会立即驱逐);新增的Pod不会调度到此节点上。</li>
+</ol>
+
+<p><strong>以上所说的Pod未设置任何的污点容忍时</strong></p>
+
+<h4 id="当node设置了污点且pod设置了对应的污点容忍时">当Node设置了污点且Pod设置了对应的污点容忍时<a href="#当node设置了污点且pod设置了对应的污点容忍时" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<table>
+<thead>
+<tr>
+<th>Pod容忍效果</th>
+<th>Node污点效果</th>
+<th>是否会调度到此Node上</th>
+<th>原因</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>PreferNoSchedule</td>
+<td>PreferNoSchedule</td>
+<td>√</td>
+<td>Node的污点效果和Pod的容忍效果相匹配</td>
+</tr>
+
+<tr>
+<td>PreferNoSchedule</td>
+<td>NoSchedule</td>
+<td>x</td>
+<td>Node的污点效果高于Pod的容忍效果</td>
+</tr>
+
+<tr>
+<td>PreferNoSchedule</td>
+<td>NoExecute</td>
+<td>x</td>
+<td>Node的污点效果高于Pod的容忍效果</td>
+</tr>
+
+<tr>
+<td>NoSchedule</td>
+<td>PreferNoSchedule</td>
+<td>√</td>
+<td>Node的污点效果低于Pod的容忍效果</td>
+</tr>
+
+<tr>
+<td>NoSchedule</td>
+<td>NoSchedule</td>
+<td>√</td>
+<td>Node的污点效果和Pod的容忍效果相匹配</td>
+</tr>
+
+<tr>
+<td>NoSchedule</td>
+<td>NoExecute</td>
+<td>x</td>
+<td>Node的污点效果高于Pod设置的容忍效果</td>
+</tr>
+
+<tr>
+<td>NoExecute</td>
+<td>PreferNoSchedule</td>
+<td>√</td>
+<td>Node的污点效果低于Pod的容忍效果</td>
+</tr>
+
+<tr>
+<td>NoExecute</td>
+<td>NoSchedule</td>
+<td>x</td>
+<td>Node的污点效果和Pod的容忍程度互斥</td>
+</tr>
+
+<tr>
+<td>NoExecute</td>
+<td>NoExecute</td>
+<td>x</td>
+<td>Pod在Node上不断重建和杀掉。</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="污点容忍设置-exists和equal这两个操作符之间的区别是什么">污点容忍设置, Exists和Equal这两个操作符之间的区别是什么?<a href="#污点容忍设置-exists和equal这两个操作符之间的区别是什么" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>在配置上:</p>
+
+<p>Exists必须把值设置为空字符串，而只关心key与节点的污点key是否匹配。</p>
+
+<p>Equal需要同时设置key和value来匹配污点节点的Key和value。</p>
+
+<p>两者之间的理解加深:
+1. 若一个节点存在多个污点, Pod使用Exists只容忍了其中一个污点, 仍然不能调度此节点, 原因在于Pod不容忍此节点的其他污点。
+2. 若一个节点存在多个污点, Pod使用Equal只容忍了其中一个污点, 仍然不能调度此节点, 原因在于Pod还是不容忍此节点的其他污点。
+3. 若想要一个Pod能够调度到含有多个污点的节点上, 那么此Pod需要容忍此节点的所有污点。</p>
+
+<h3 id="3-污点容忍里的一些小窍门">3.污点容忍里的一些小窍门:<a href="#3-污点容忍里的一些小窍门" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li><p>在污点容忍设置时,若key,value是空字符且操作符是Exists 那么能Pod容忍节点的所有污点。(注意:仍然遵从于容忍效果的等级设置)。</p>
+
+<pre><code>例如:一个Pod在设置污点容忍时，key,value为空且操作符是Exists,容忍效果为:NoExecute,那么该Pod不会调度到污点效果为:NoSchedule的节点上。
+</code></pre></li>
+
+<li><p>在设置污点容忍时, 若Pod的容忍效果(effect)被设置为空字符,那么Pod能匹配所有的容忍效果。</p></li>
+
+<li><p>在设置污点容忍时, 若key,value是空字符、操作符是Exists且容忍效果(effect)也为空时，则等于没有设置。</p></li>
+
+<li><p>默认情况下，操作符是Equal。</p></li>
+
+<li><p>如果节点的影响效果是NoExecute,且不想Pod被<strong>立即</strong>驱逐,那么可以设置TolerationSeconds(延迟驱逐时间),若值是0或者负数会立即驱逐,若值大于0,则在此时间后开始驱逐。</p></li>
+
+<li><p>从测试结果来看，只要节点设置了污点且效果是:NoExecute,不管Pod是否容忍了该污点都不能在对应节点上正常运行(一直处于删除，重建的过程),原因是能被调度到节点上是调度器选择的结果，Pod被杀掉是本地kubelet的结果，这是两个组件分管不同工作产生的效果,下面这种配置除外。</p>
+
+<pre><code>  tolerations:
+  - operator: Exists
+
+#此Pod的污点配置能够容忍所有的污点，所有的影响效果，所有能调度到所有的节点上(包括影响效果被设置为:NoExecute的Node).
+</code></pre></li>
+</ol>
+
+<h3 id="4-认知误区">4. 认知误区<a href="#4-认知误区" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ol>
+<li>当一个节点设置了污点，那么只要设置Pod对此污点容忍就能调度上去且能正常运行。</li>
+</ol>
+
+<p>错误。当节点的一个污点的影响效果被设置为:NoExecute,此时Pod对此污点的容忍效果也是NoExecute时, Pod能调度上去，但是也会被Terminating，不断的处于Terminating,ContainerCreating的过程。</p>
+
+<p>对Node设置污点:</p>
+
+<pre><code>kubectl taint nodes 1xx status=unavailable:NoExecute
+</code></pre>
+
+<p>Pod设置的污点容忍:</p>
+
+<pre><code>      tolerations:
+      - effect: NoExecute
+        key: status
+        operator: Equal
+        tolerationSeconds: 0
+        value: unavailable
+</code></pre>
+
+<p>效果:</p>
+
+<pre><code>Events:
+  Type     Reason            Age               From                    Message
+  ----     ------            ----              ----                    -------
+  Warning  FailedScheduling  1m (x25 over 1m)  default-scheduler       0/18 nodes are available: 1 node(s) had taints that the pod didn't tolerate, 17 Insufficient memory.
+</code></pre>
+
+<ol>
+<li>当一个节点设置了多个污点，只要使用Exists操作符匹配到其中一个污点，此Pod就能调度到对应的节点上。</li>
+</ol>
+
+<p>错误。原因在于Pod只能匹配到其中一个污点,但是还是不能匹配到其他污点。所以，不能调度上去。</p>
+
+<ol>
+<li>在设置Pod容忍时，只要匹配到key和value就行了,不用关心容忍效果的设置。</li>
+</ol>
+
+<p>错误。容忍效果的设置和key/value的设置一样重要，甚至更加重要。如果容忍效果不匹配。也会导致Pod调度不能到对应节点上。</p>
+
+<ol>
+<li>如果Pod没有设置任何的污点容忍,Pod就不能调度到有污点的节点上。</li>
+</ol>
+
+<p>错误。如果节点的污染效果是: PreferNoSchedule, 没有设置任何污点容忍的Pod也能调度到此节点上。原因在于:PreferNoSchedule的意思是优先不调度,但是当没有节点可用时,Pod仍然能调度到此节点。</p>
+
+<h2 id="二-node-affinity">二、Node Affinity<a href="#二-node-affinity" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<p>Node Affinity可以让指定应用调度到指定的节点,这有利于应用的稳定性,减少重要业务和不重要业务之间相互抢占资源的可能,同时也可以降低不重要业务对重要业务的影响,另一方面,也能够进行多租户之间的隔离。根据租户需求为租户提供特定的运行环境。</p>
+
+<h3 id="nodeaffinity配置要点">NodeAffinity配置要点:<a href="#nodeaffinity配置要点" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>NodeAffinity配置分类两大部分:</p>
+
+<ol>
+<li>requiredDuringSchedulingIgnoredDuringExecution (强亲和性)</li>
+<li>preferredDuringSchedulingIgnoredDuringExecution (首选亲和性)</li>
+</ol>
+
+<p>但是,在真实的配置环节时,又会犯迷糊:
+  1. 强亲和性到底多强算强?
+  2. 首选亲和性中的首选体现在那些方面?
+  3. 强亲和性配置时,有两种配置方式,两种的区别是什么?
+  4. 首选亲和性中的权重值到底是什么规则? 值越大权重值越高么？还是值越小越高(1最大)?
+  5. 首选亲和性配置中, 如果Pod能匹配A节点的多个Label,也能匹配B节点的一个Label(A的Label权重之和等于B单个Label的权重),这时Pod会优先调度到A节点么?
+  6. 缩容时,是先从低权重的节点上开始杀么？
+这些问题, 我们都不能全靠注释和理解去揣测答案,必须经过实测得到真实答案,否则一旦上了生产再想修改就需要付出更大的成本。
+7. 如果Pod是以强亲和性的方式绑定在节点上且Pod已经正常运行在此节点上,此时删除节点的标签是否会导致Pod重启发生漂移。</p>
+
+<h4 id="1-强亲和性-requiredduringschedulingignoredduringexecution">1、强亲和性:requiredDuringSchedulingIgnoredDuringExecution<a href="#1-强亲和性-requiredduringschedulingignoredduringexecution" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<blockquote>
+<p>例子Node Labels设定:</p>
+</blockquote>
+
+<pre><code>level: important(重要)，general(一般),unimportant(不重要)
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Node</th>
+<th>中文解释</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>level=important</td>
+<td>10.x.x.78, 10.1.x.x.79, 10.x.x.80</td>
+<td>重要的</td>
+</tr>
+
+<tr>
+<td>level=general</td>
+<td>10.x.x.82, 10.x.x.82, 10.x.x.84</td>
+<td>一般的</td>
+</tr>
+
+<tr>
+<td>level=unimportant</td>
+<td>10.x.x.86, 10.x.x.87, 10.x.x.88</td>
+<td>不重要的</td>
+</tr>
+
+<tr>
+<td>app=1</td>
+<td>10.x.x.80</td>
+<td></td>
+</tr>
+
+<tr>
+<td>master=1</td>
+<td>10.x.x.85</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<h5 id="pod与运算的配置">Pod与运算的配置:<a href="#pod与运算的配置" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h5>
+
+<p>注意: 强亲和性的配置分为: 与运算、或运算两部分</p>
+
+<pre><code>          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: level
+                operator: In
+                values:
+                - important
+              - key: app
+                operator: In
+                values:
+                - 1
+</code></pre>
+
+<p>在与运算的配置中,我们发现,在同一个matchExpressions中既需要匹配level=important的标签也需要匹配app=1的标签。也就是说:Pod只会选择同时匹配这两个Label的节点.</p>
+
+<p>根据上面Pod的Node亲和性设置,两个Label求一个交集,只有同时满足两个Label的节点才会纳入这个Pod的调度池,显而易见,只有10.x.x.80这个节点。所以,此Pod只能调度到这个节点,如果这个节点资源不足,那么此Pod调度失败。</p>
+
+<h5 id="pod或运算配置">Pod或运算配置:<a href="#pod或运算配置" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h5>
+
+<pre><code>          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: level
+                operator: In
+                values:
+                - important
+            - matchExpressions:
+              - key: level
+                operator: In
+                values:
+                - unimportant
+</code></pre>
+
+<p>在或运算的配置中,我们发现有一个matchExpressions数组,里面的Label列表求并集。也就是说:Pod可以选择只要匹配其中一个Label的节点就行,不用全匹配。</p>
+
+<p>举个例子:</p>
+
+<p>节点的Label设置沿用上一个例子的。 节点的标签只要能满足Pod的其中一个标签, 节点就能纳入这个Pod的调度池,显而易见,这个Pod可选的节点有:10.x.x.78, 10.x.x.79,10.x.x.80, 10.x.x.86, 10.x.x.87, 10.x.x.88。</p>
+
+<h4 id="首选亲和性-preferredduringschedulingignoredduringexecution">首选亲和性: preferredDuringSchedulingIgnoredDuringExecution<a href="#首选亲和性-preferredduringschedulingignoredduringexecution" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>它的使用风格应该是:如果Pod能调度到指定Label的节点最好,如果不能,也不强求,Pod选择其他的节点也行,即使这个节点根本没有Label或者节点的Label和我完全不匹配。</p>
+
+<p>Pod首选亲和性设置:</p>
+
+<pre><code>          preferredDuringSchedulingIgnoredDuringExecution:
+          - preference:
+              matchExpressions:
+              - key: level
+                operator: In
+                values:
+                - important
+            weight: 5
+          - preference:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - &quot;1&quot;
+            weight: 4
+          - preference:
+              matchExpressions:
+              - key: master
+                operator: In
+                values:
+                - &quot;1&quot;
+            weight: 10
+</code></pre>
+
+<p>示例:
+Node的Label设置沿用上一个例子的,
+根据上面的配置,我们会看到:</p>
+
+<table>
+<thead>
+<tr>
+<th>Label</th>
+<th>Pod设置的标签权重</th>
+<th>Label对应的节点</th>
+<th>首选</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>master=1</td>
+<td>10</td>
+<td>10.x.x.85</td>
+<td>√</td>
+</tr>
+
+<tr>
+<td>app=1</td>
+<td>4</td>
+<td>10.x.x.80</td>
+<td></td>
+</tr>
+
+<tr>
+<td>level=important</td>
+<td>5</td>
+<td>10.x.x.78,10.x.x.79,10.x.x.80</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<p>如表所示, 最终Pod优先调度到10.x.x.85, 原因在于app=1的权重是4, level=important的权重是5, 所以:节点 10.x.x.80的权重是:9,但是仍然小于节点:10.x.x.85的权重。</p>
+
+<h4 id="问题总结">问题总结:<a href="#问题总结" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<ol>
+<li>其实强亲和性和首选亲和性区别体现在:Pod对节点的选择上。就强亲和性而言,如果节点不能匹配Pod对Label的要求, Pod永远不会调度到这类节点上,即使是Pod调度失败(没错,就是头铁),就首选亲和性来说,能调度到最优节点是一件非常值得开心的事情,如果不能调度到最优节点可以退而求其次,总有适合自己的。 (回答问题1)</li>
+<li>首选亲和性体现在PodLabel的权重值上,而与节点Label的匹配个数无关。(回答问题2)</li>
+<li>在首选亲和性配置中会多一个权重值的字段(weight),这个值越大,权重越大,Pod调度到对应此Label的节点的概率越高。(回答问题4)</li>
+<li>一个节点有多个Label且节点能满足Pod所要求的所有Label,如果多个Label的权重值相加仍然小于某单个Label的节点,那么Pod首选是权重值高的节点;如果Pod能匹配到A 节点的所有Label,同时也能匹配到B 节点某一个Label.但是,A节点 Label的权重之和刚好等于B 节点的单个Label的权重，这时,Pod优先选择的A还是B这是随机的(只针对亲和性来说是随机的,实际情况还要考虑其他情况)。而不会管Label的匹配个数。(回答问题5)</li>
+<li>创建或扩容Pod时,优先选择Label匹配权重值大的节点,若此节点的其他条件不满足(比如内存不足),选择次权重的,最后选择Label不匹配或者根本没有Label的节点。</li>
+<li>(回答问题6)缩容时,随机选择Pod杀掉,而不是我们预想的从低权重的节点开始杀,这点值得注意。</li>
+<li>(回答问题7)答案是不会,正在运行的Pod不会被调度到新的节点去, 当Pod因为某种原因重启(指Pod名字改变,触发重调度,名字不改变,意味着不触发调度器调度,只是原地重启)后,会自动调度到符合亲和性选择的节点上。</li>
+</ol>
+
+<h2 id="三-污点和node-affinity的使用总结">三、污点和Node Affinity的使用总结<a href="#三-污点和node-affinity的使用总结" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<ol>
+<li>就污点而言,它的使用通常是负向的, 也就说, 污点常用在某Node不让大多数Pod调度只让少部分Pod调度时,又或者节点根本不参加工作负载时。比如:我们常见的master节点上不调度负载pod,保证master组件的稳定性；节点有特殊资源，大部分应用不需要而少部分应用需要,如GPU。</li>
+<li>就Node Affinity来说,他的使用可以正向的,也就是说,我们想让某个应用的Pod部署在指定的一堆节点上。当然,也可以是负向的,比如说我们常说的Node 反亲和性,只需要把操作符设置为NotIn就能达成预期目标。</li>
+<li>就污点而言，如果节点设置的污点效果是NoSchedule或者NoExecute,意味着没有设置污点容忍的Pod绝不可能调度到这些节点上。</li>
+<li>就Node Affinity而言,如果节点设置了Label,但是Pod没有任何的Node Affinity设置,那么Pod是可以调度到这些节点上的。
+<br /></li>
+</ol>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/kubernetes">kubernetes</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>373 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-04-21 20:47 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="prev-post" href="https://yulibaozi.com/posts/kubernetes/extend/2020-04-22-use-kubebuilder-to-operator/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>[译]使用 Kubebuilder 开发 Operator</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>
