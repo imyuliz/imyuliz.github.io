@@ -3,14 +3,47 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
+    <loc>https://yulibaozi.com/posts/kubernetes/knowledge/2019-06-24-advanced-scheduling/</loc>
+    <lastmod>2020-04-21T20:47:34+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/</loc>
+    <lastmod>2020-04-21T20:47:34+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/tags/</loc>
+    <lastmod>2020-04-21T20:47:34+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/tags/kubernetes/</loc>
+    <lastmod>2020-04-21T20:47:34+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/</loc>
+    <lastmod>2020-04-21T20:47:34+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/kubernetes/extend/2020-04-22-use-kubebuilder-to-operator/</loc>
+    <lastmod>2020-04-21T01:10:50+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://yulibaozi.com/link/</loc>
     <lastmod>2020-04-16T00:00:00+00:00</lastmod>
   </url>
   
   <url>
-    <loc>https://yulibaozi.com/</loc>
-    <lastmod>2020-04-16T00:00:00+00:00</lastmod>
-    <priority>0</priority>
+    <loc>https://yulibaozi.com/posts/kubernetes/extend/2018-12-03-beku/</loc>
+    <lastmod>2020-03-21T20:15:22+08:00</lastmod>
   </url>
   
   <url>
@@ -19,15 +52,8 @@
   </url>
   
   <url>
-    <loc>https://yulibaozi.com/posts/</loc>
-    <lastmod>2019-09-02T12:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://yulibaozi.com/tags/</loc>
-    <lastmod>2019-09-02T12:00:00+00:00</lastmod>
-    <priority>0</priority>
+    <loc>https://yulibaozi.com/posts/kubernetes/deploy/2019-12-21-fluent-bit&#43;elasticsearch&#43;kibana/</loc>
+    <lastmod>2019-12-21T20:29:20+08:00</lastmod>
   </url>
   
   <url>
@@ -42,8 +68,18 @@
   </url>
   
   <url>
+    <loc>https://yulibaozi.com/posts/kubernetes/extend/2019-01-11-incluster-use-kubernetes/</loc>
+    <lastmod>2019-08-21T20:33:22+08:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://yulibaozi.com/posts/go/tools/2019-08-19-godebug-sched/</loc>
     <lastmod>2019-08-19T12:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/kubernetes/extend/2019-07-23-deployment-vs-statefulset/</loc>
+    <lastmod>2019-07-23T20:36:50+08:00</lastmod>
   </url>
   
   <url>
@@ -52,14 +88,13 @@
   </url>
   
   <url>
-    <loc>https://yulibaozi.com/posts/kubernetes/extend/2019-06-11-use-kubebuilder-to-operator/</loc>
-    <lastmod>2019-06-11T01:10:50+08:00</lastmod>
+    <loc>https://yulibaozi.com/posts/kubernetes/extend/2019-04-23-cronjob/</loc>
+    <lastmod>2019-04-21T20:35:24+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://yulibaozi.com/tags/kubernetes/</loc>
-    <lastmod>2019-06-11T01:10:50+08:00</lastmod>
-    <priority>0</priority>
+    <loc>https://yulibaozi.com/posts/go/knowledge/2018-09-24-go-and-json/</loc>
+    <lastmod>2018-09-24T22:19:50+08:00</lastmod>
   </url>
   
   <url>
@@ -70,6 +105,148 @@
   <url>
     <loc>https://yulibaozi.com/posts/go/tools/2018-09-15-go-tool-pprof/</loc>
     <lastmod>2018-09-15T12:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/go/knowledge/2018-08-20-go-funcs/</loc>
+    <lastmod>2018-08-20T22:25:59+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/kubernetes/knowledge/2018-07-22-proxy-network/</loc>
+    <lastmod>2018-07-22T20:54:11+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/kubernetes/knowledge/2018-06-26-kubernetes-up-to-1.11/</loc>
+    <lastmod>2018-06-26T20:52:40+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/kubernetes/deploy/2018-05-16-deploy-weavescope/</loc>
+    <lastmod>2018-05-16T19:58:52+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/tags/operating-system/</loc>
+    <lastmod>2018-04-21T20:11:21+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/system/2018-02-24-interprocess-communication/</loc>
+    <lastmod>2018-04-21T20:11:21+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/go/knowledge/2018-04-18-get-gid/</loc>
+    <lastmod>2018-04-18T22:11:01+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/go/knowledge/2018-04-12-go-pprof/</loc>
+    <lastmod>2018-04-12T22:23:36+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/go/knowledge/2018-03-26-go-and-websocket/</loc>
+    <lastmod>2018-03-26T22:16:12+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/go/algorithm/2018-02-23-binary-tree/</loc>
+    <lastmod>2018-03-23T21:00:47+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/tags/algorithm/</loc>
+    <lastmod>2018-03-23T21:00:47+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/redis/know/2018-03-19-redis/</loc>
+    <lastmod>2018-03-19T20:40:09+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/tags/redis/</loc>
+    <lastmod>2018-03-19T20:40:09+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/tags/design/</loc>
+    <lastmod>2018-03-09T22:35:52+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/design/knowledge/2018-03-09-microservices/</loc>
+    <lastmod>2018-03-09T22:35:52+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/design/knowledge/2018-03-09-single-to-many/</loc>
+    <lastmod>2018-02-24T22:37:47+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/go/knowledge/2018-02-24-go-and-jwt/</loc>
+    <lastmod>2018-02-24T22:18:08+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/go/algorithm/2018-02-24-mirror-binary-tree/</loc>
+    <lastmod>2018-02-24T22:08:27+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/go/knowledge/2018-02-24-panic-by-return-funcs/</loc>
+    <lastmod>2018-02-24T20:56:35+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/go/algorithm/2018-02-23-three-way-split-quick-sort/</loc>
+    <lastmod>2018-02-23T20:19:49+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/docker/knowledge/2018-01-24-docker-use/</loc>
+    <lastmod>2018-01-24T22:28:04+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/tags/docker/</loc>
+    <lastmod>2018-01-24T22:28:04+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/mysql/knowledge/2018-01-24-mysql/</loc>
+    <lastmod>2018-01-24T20:45:09+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/tags/mysql/</loc>
+    <lastmod>2018-01-24T20:45:09+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/nginx/2018-01-24-nginx/</loc>
+    <lastmod>2018-01-24T20:42:38+08:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/tags/nginx/</loc>
+    <lastmod>2018-01-24T20:42:38+08:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/design/knowledge/2018-01-24-limiting/</loc>
+    <lastmod>2018-01-24T20:08:01+08:00</lastmod>
   </url>
   
   <url>

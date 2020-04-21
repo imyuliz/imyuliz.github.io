@@ -52,6 +52,24 @@ $ go tool trace trace.out 2019/06/22 16:14:52 Parsing trace... 2019/06/22 16:14:
     </item>
     
     <item>
+      <title>Golang json 的进阶用法</title>
+      <link>https://yulibaozi.com/posts/go/knowledge/2018-09-24-go-and-json/</link>
+      <pubDate>Mon, 24 Sep 2018 22:19:50 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/go/knowledge/2018-09-24-go-and-json/</guid>
+      <description>Golang json 的进阶用法 痛点  你是否遇到过json中某个字段填入某种类型都适合而陷入两难境地? (例如：定义了一个port字段，你却不知道是填入8080,还是** &amp;ldquo;8080&amp;rdquo; **的尴尬局面) 你是否遇到过json反解析报错是因为填入字段的类型不匹配导致的？例如：
+json: cannot unmarshal number into Go struct field Host.port of type string  你是否有json某字段兼容2种或者多种的数据结构的需求?
+ 你是否想让程序更优雅，更具有适配性，而不在被这些小细节头痛？
+  如果你有或者你想，获取你可以看看这篇文章。
+重现问题 我们给了用户一个json如下：
+{ &amp;quot;name&amp;quot;:&amp;quot;yulibaozi&amp;quot;, &amp;quot;port&amp;quot;:8080 }  但是，业务方却误填了&amp;rdquo;8080&amp;rdquo;,结果我们程序反解析报错，导致业务失败。
+json: cannot unmarshal number into Go struct field Host2.port of type string  或许你认为这是业务方的问题，但我认为我们可以更优雅的解决这个问题。
+如何解决问题 我们先定义了一个结构体
+type Host struct { Name string `json:&amp;quot;name&amp;quot;` Port Port `json:&amp;quot;port&amp;quot;` }  心细的你会发现，Port既不是int也不是string类型，而是Port类型，而Port类型是：
+type Type int const ( Int Type = iota String ) type Port struct { Type Type IntVal int StrVal string }  在Port结构体中，我们发现了Type类型， 而Type类型包括了int,string两种类型。接下来就非常重要了，我们需要实现</description>
+    </item>
+    
+    <item>
       <title>Go 大杀器之性能剖析 PProf</title>
       <link>https://yulibaozi.com/posts/go/tools/2018-09-15-go-tool-pprof/</link>
       <pubDate>Sat, 15 Sep 2018 12:00:00 +0000</pubDate>
@@ -65,6 +83,75 @@ pprof 以 profile.proto 读取分析样本的集合，并生成报告以可视�
 profile.proto 是一个 Protocol Buffer v3 的描述文件，它描述了一组 callstack 和 symbolization 信息， 作用是表示统计分析的一组采样的调用栈，是很常见的 stacktrace 配置文件格式
 支持什么使用模式  Report generation：报告生成 Interactive terminal use：交互式终端使用 Web interface：Web 界面  可以做什么  CPU Profiling：CPU 分析，按照一定的频率采集所监听的应用程序 CPU（含寄存器）的使用情况，可确定应用程序在主动消耗 CPU 周期时花费时间的位置 Memory Profiling：内存分析，在应用程序进行堆分配时记录堆栈跟踪，用于监视当前和历史内存使用情况，以及检查内存泄漏 Block Profiling：阻塞分析，记录 goroutine 阻塞等待同步（包括定时器通道）的位置 Mutex Profiling：互斥锁分析，报告互斥锁的竞争情况  一个简单的例子 我们将编写一个简单且有点问题的例子，用于基本的程序初步分析
 编写 demo 文件 （1）demo.</description>
+    </item>
+    
+    <item>
+      <title>Go func作为类型妙用提高代码的抽象粒度</title>
+      <link>https://yulibaozi.com/posts/go/knowledge/2018-08-20-go-funcs/</link>
+      <pubDate>Mon, 20 Aug 2018 22:25:59 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/go/knowledge/2018-08-20-go-funcs/</guid>
+      <description>#### 前提  这种实现方式的前提是: 把对象的行为作为了字段传输，如果一个对象有一个操作那么就需要一个字段，有N个操作则有N个字段,例如下方的Div操作,通常是用于同方法需要不同的实现方式。
+优点: 1. 在设计上并不关心具体的实现方式，只是指明了具体的入参和出参。 2. 在具体实现上，我们把具体实现归还给了编码者,他做他需要做的操作以及错误处理，这样我们把实现的权利交还给了编码者，提高了系统的灵活性和扩展度。  和结构体方法实现的对比: 1. 更轻松实现统一的日志处理，校验参数，转换操作。  假定使用场景: 1. 需要自实现同一类操作类型(例如:节点优选策略）但有不同的侧重实现方式(例如有些要求cpu的权重高些，有些要求memory多些，有些要求GPU要求多些)  实现思路:  明确是做同一类操作,即是实现节点的优选策略,但是不同的场景有不同的侧重点或者他不满足当前的实现方式，他可以自实现 虽然他可以有不同的实现方式，但是我们需要规范的他的入参和出参。所以我们需要定义函数类型，即：
+// arithmetic 定义一个通用的计算模型 type arithmetic func(a, b int64) (int64, error)  定义统一的函数名字，并实现:
+// arithmetic 定义一个通用的计算模型 type arithmetic func(a, b int64) (int64, error) func (ar arithmetic) Div(a, b int64) (int64, error) { fmt.Println(&amp;quot;print div log&amp;quot;) return ar(a, b) } // Diver 集合 type Diver interface { Div(a, b int64) (int64, error) } var _ Diver = arithmetic(nil  定义不同的角色（当然也可以使用同一角色）</description>
+    </item>
+    
+    <item>
+      <title>[黑魔法] Go 获取 gid 源码详解</title>
+      <link>https://yulibaozi.com/posts/go/knowledge/2018-04-18-get-gid/</link>
+      <pubDate>Wed, 18 Apr 2018 22:11:01 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/go/knowledge/2018-04-18-get-gid/</guid>
+      <description>1. 应不应该拿到goroutine 怎么获取goid？  原则下是不能获取的。
+ 原因一:官方担心滥用GID实现goroutine local storage(类似java的&amp;rdquo;thread-local&amp;rdquo; storage)， 因为goroutine local storage很难进行垃圾回收。
+Please don&amp;rsquo;t use goroutine local storage. It&amp;rsquo;s highly discouraged. In fact, IIRC, we used to expose Goid, but it is hidden since we don&amp;rsquo;t want people to do this. Potential problems include:
+ when goroutine goes away, its goroutine local storage won&amp;rsquo;t be GCed. (you can get goid for the current goroutine, but you can&amp;rsquo;t get a list of all running goroutines)</description>
+    </item>
+    
+    <item>
+      <title>Go性能测试手册</title>
+      <link>https://yulibaozi.com/posts/go/knowledge/2018-04-12-go-pprof/</link>
+      <pubDate>Thu, 12 Apr 2018 22:23:36 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/go/knowledge/2018-04-12-go-pprof/</guid>
+      <description> Go性能测试总结 参考地址  go-torch Go代码调优利器-火焰图 不能使用的解决方案  使用命令 1. hey -n 50000 -c 1000 http://127.0.0.1:8003/v1/report/pc/hotreport   在1的同时使用:
+go-torch -u http://127.0.0.1:8003 -t 30  3.自动生成了火焰图,然后去$PATH找torch.svg文件，我的在 /usr/local/bin下面
+  4.使用beego的路由时，需要添加默认路由
+ beego.Handler(&amp;quot;/debug/pprof/&amp;quot;, http.HandlerFunc(pprof.Index)) beego.Handler(&amp;quot;/debug/pprof/cmdline&amp;quot;, http.HandlerFunc(pprof.Cmdline)) beego.Handler(&amp;quot;/debug/pprof/profile&amp;quot;, http.HandlerFunc(pprof.Profile)) beego.Handler(&amp;quot;/debug/pprof/symbol&amp;quot;, http.HandlerFunc(pprof.Symbol)) beego.Handler(&amp;quot;/debug/pprof/trace&amp;quot;, http.HandlerFunc(pprof.Trace))   接下来是分析   </description>
+    </item>
+    
+    <item>
+      <title>Golang的websocket开发与实践</title>
+      <link>https://yulibaozi.com/posts/go/knowledge/2018-03-26-go-and-websocket/</link>
+      <pubDate>Mon, 26 Mar 2018 22:16:12 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/go/knowledge/2018-03-26-go-and-websocket/</guid>
+      <description>进入正题(以一个聊天室入手,层层剖析):
+#### websocket核心要义： 浏览器通过js向服务器端发起建立websocket连接,连接建立以后，客户端和服务器端就可以通过 TCP 连接直接交换数据。因为WebSocket连接本质上就是一个 TCP 连接，也就是说首次建立链接后,后续就直接交换数据。
+#### 是如何建立websocket链接的呢? 请求的时候他仍然是个普通请求,比如GET,在服务端的接口中把这个请求升级成websocket; &amp;gt; 具体的代码:
+ var upgrader = websocket.Upgrader{ ReadBufferSize: 1024, WriteBufferSize: 1024, } 控制器中: conn, err := upgrader.Upgrade(base.Ctx.ResponseWriter, base.Ctx.Request, nil) if _, ok := err.(websocket.HandshakeError); ok { http.Error(base.Ctx.ResponseWriter, &amp;quot;不是合法的WebSocket请求&amp;quot;, 400) return }  这样就把这个链接升级成了websocket。这个就是websocket的核心代码之一。
+#### 聊天室的结构设计:聊天室结构详解:
+ Room:
+ 某一个单独的聊天室,也就是某一个房间,创建一个房间的时候,需要为这个房间开个go程监听这个房间的一切事情,比如某人进入了房间,某人离开了房间,某人说了些什么,我们称之为营业,这是必须的。
+ Client:
+ 相对于Room来说,Client就是用户的角色。当用户进入到某个房间称之为注册,当然用户得能说会道。所以,Client得有两个功能:监听房间里面的消息,能在房间里面说话,所以,我们考虑开两个Go程读取和发送消息是合理的。
+ 用户和Client的真实关系。
+ 相对于服务端来说,Client的角色就是用户,其实不然,真实用户和Client之间其实还有个中间介质,那就是websocket,真实用户通过websocket发送消息到Client,Client接收房间里面然后通过websocket发送给真实用户。Client是用户在服务端的一个代理身份,如果理清了这个关系,将极大的帮助你理解代码。
+ 聊天室的消息广播是怎么回事?
+ 其实,这个东西非常简单,不要想得那么复杂。 1. 如果是个演示项目的话: 其实是循环向每个客户端发送这条消息,也就是代码里面的for,看完你将哑然失笑。 2. 如果你想专业一点的话,你可以使用消息队列,把用户发送的这条消息写入到消息队列(比如nats等)中,然后所有订阅此topic的客户端都将收到这条消息。
+HTML5中Wesocket的使用有哪些?  onopen() 与服务端建立链接 onclose() 关闭与服务端的链接 onerror() 突发错误。 onmessage() 接收来自服务端的消息。 onsend() 向服务端发送消息。  展示聊天室代码和详细注释: yulibaozi/chatroom</description>
+    </item>
+    
+    <item>
+      <title>Golang使用jwt做用户身份验证</title>
+      <link>https://yulibaozi.com/posts/go/knowledge/2018-02-24-go-and-jwt/</link>
+      <pubDate>Sat, 24 Feb 2018 22:18:08 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/go/knowledge/2018-02-24-go-and-jwt/</guid>
+      <description>前要：在看本文前，请先看：什么是 JWT &amp;ndash; JSON WEB TOKEN 其中 StandardClaims的解释如下：
+type StandardClaims struct { // 接收jwt的一方 Audience string `json:&amp;quot;aud,omitempty&amp;quot;` // jwt的过期时间，这个过期时间必须要大于签发时间 ExpiresAt int64 `json:&amp;quot;exp,omitempty&amp;quot;` // jwt的唯一身份标识，主要用来作为一次性token,从而回避重放攻击。 Id string `json:&amp;quot;jti,omitempty&amp;quot;` // jwt的签发时间 IssuedAt int64 `json:&amp;quot;iat,omitempty&amp;quot;` //jwt签发者 Issuer string `json:&amp;quot;iss,omitempty&amp;quot;` // 定义在什么时间之前，该jwt都是不可用的. NotBefore int64 `json:&amp;quot;nbf,omitempty&amp;quot;` // jwt所面向的用户 Subject string `json:&amp;quot;sub,omitempty&amp;quot;` }  如果你要自己复制代码：请不要复制StandardClaims或者注释掉StandardClaims，以下才是完整代码：
+一、使用jwt的代码： // 创建自己的Claims type JwtClaims struct { *jwt.StandardClaims //用户编号 Uid int64 Username string } var ( //盐 secret []byte = []byte(&amp;quot;yulibaozi.</description>
     </item>
     
   </channel>

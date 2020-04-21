@@ -7,17 +7,30 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-hans</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Tue, 11 Jun 2019 01:10:50 +0800</lastBuildDate>
+    <lastBuildDate>Tue, 21 Apr 2020 20:47:34 +0800</lastBuildDate>
     
 	<atom:link href="https://yulibaozi.com/tags/kubernetes/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>[译]使用 Kubebuilder 开发 Operator</title>
-      <link>https://yulibaozi.com/posts/kubernetes/extend/2019-06-11-use-kubebuilder-to-operator/</link>
-      <pubDate>Tue, 11 Jun 2019 01:10:50 +0800</pubDate>
+      <title>Kubernetes高级调度- Taint和Toleration、Node Affinity分析</title>
+      <link>https://yulibaozi.com/posts/kubernetes/knowledge/2019-06-24-advanced-scheduling/</link>
+      <pubDate>Tue, 21 Apr 2020 20:47:34 +0800</pubDate>
       
-      <guid>https://yulibaozi.com/posts/kubernetes/extend/2019-06-11-use-kubebuilder-to-operator/</guid>
+      <guid>https://yulibaozi.com/posts/kubernetes/knowledge/2019-06-24-advanced-scheduling/</guid>
+      <description>Kubernetes高级调度- Taint和Toleration、Node Affinity分析 节点即Node
+一、Taint和Toleration 污点的理论支撑 1.污点设置有哪些影响效果 使用效果(Effect):
+ PreferNoSchedule:调度器尽量避免把Pod调度到具有该污点效果的节点上,如果不能避免(如其他节点资源不足),Pod也能调度到这个污点节点上。 NoSchedule:不容忍该污点效果的Pod永不会被调度到该节点上，通过kubelet管理的Pod(static Pod)不受限制;之前没有设置污点的Pod如果已运行在此节点(有污点的节点)上，可以继续运行。 NoExecute: 调度器不会把Pod调度到具有该污点效果的节点上，同时会将节点上已存在的Pod驱逐出去。  污点设置的第一前提是: 节点上的污点key和Pod上的污点容忍key相匹配。
+2. 设置污点的效果实测 当Pod未设置污点容忍而节点设置了污点时  当节点的污点影响效果被设置为:PreferNoSchedule时,已存在于此节点上的Pod不会被驱逐；新增但未设置污点容忍的Pod仍然可以被调度到此节点上。 当节点的污点影响效果被设置为:NoSchedule时,已存在于此节点上的Pod不会被驱逐;同时,新增的Pod不会被调度此节点上. 当节点的污点影响效果被设置为:NoExecute时,已存在于此节点上的Pod会发生驱逐(驱逐时间由tolerationSeconds字段确定,小于等于0会立即驱逐);新增的Pod不会调度到此节点上。  以上所说的Pod未设置任何的污点容忍时
+当Node设置了污点且Pod设置了对应的污点容忍时    Pod容忍效果 Node污点效果 是否会调度到此Node上 原因     PreferNoSchedule PreferNoSchedule √ Node的污点效果和Pod的容忍效果相匹配   PreferNoSchedule NoSchedule x Node的污点效果高于Pod的容忍效果   PreferNoSchedule NoExecute x Node的污点效果高于Pod的容忍效果   NoSchedule PreferNoSchedule √ Node的污点效果低于Pod的容忍效果   NoSchedule NoSchedule √ Node的污点效果和Pod的容忍效果相匹配   NoSchedule NoExecute x Node的污点效果高于Pod设置的容忍效果   NoExecute PreferNoSchedule √ Node的污点效果低于Pod的容忍效果   NoExecute NoSchedule x Node的污点效果和Pod的容忍程度互斥   NoExecute NoExecute x Pod在Node上不断重建和杀掉。    污点容忍设置, Exists和Equal这两个操作符之间的区别是什么?</description>
+    </item>
+    
+    <item>
+      <title>[译]使用 Kubebuilder 开发 Operator</title>
+      <link>https://yulibaozi.com/posts/kubernetes/extend/2020-04-22-use-kubebuilder-to-operator/</link>
+      <pubDate>Tue, 21 Apr 2020 01:10:50 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/extend/2020-04-22-use-kubebuilder-to-operator/</guid>
       <description>写给那些人 原文地址
 写给那些Kubernetes用户 Kubernetes用户将通过学习API的设计和实现背后的基本概念，更深入的理解Kubernetes。本书将教会读者怎样开发自己的Kubernetes APIs 和学习Kubernetes API核心的设计原则。
 包括:
@@ -25,6 +38,91 @@
 包括:
  如果将多个事件批处理为单次调用对比,(翻译疑问) 如何配置定期对比 即将有的 如何使用缓存和实时查找 垃圾收集和终结器 如何使用声明与Webhook验证 如何实现API版本控制  快速开始 安装 安装Kubebuilder:
 os=$(go env GOOS) arch=$(go env GOARCH) # download kubebuilder and extract it to tmp curl -sL https://go.kubebuilder.io/dl/2.0.0-alpha.2/${os}/${arch} | tar -xz -C /tmp/ # move to a long-term location and put it on your path # (you&#39;ll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else) sudo mv /tmp/kubebuilder_2.</description>
+    </item>
+    
+    <item>
+      <title>[Beku] 如何使用三行代码发布你的应用到Kubernetes</title>
+      <link>https://yulibaozi.com/posts/kubernetes/extend/2018-12-03-beku/</link>
+      <pubDate>Sat, 21 Mar 2020 20:15:22 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/extend/2018-12-03-beku/</guid>
+      <description>beku的概要 众所周知，Kubernetes主要分为两大部分:部署时和运行时,Beku的定位在部署时,无需任何额外的心智负担,快速编写Kubernetes资源对象然后发布到到Kubernetes集群，这对那些开发PaaS平台的公司来说显得尤其重要,尤其是在前后端人员接口对接时和资安全保障。beku就是这样, 一个Golang人性化Kubernetes资源对象创建库,极简，无额外心智负担。
+beku的初衷  部署应用时：
+ beku期望同僚们在发布应用的时候,
+ 不用担心某个字段应该放在yaml或者json的那个层级(比如:imagePullSecrets这个字段我应该填在Pod里面还是Containers里,还是Deployment里,可能你一会记得,过一段时间你又不记得了); 也不用顾虑这个字段名是否填写正确,字段所对应的值是否符合Kubernetes要求（比如:imagepullsecrets应该是imagePullSecrets还是imagePullSecret呢; 更不用忧虑重复填写某字段不一致导致发布失败(比如:我们在使用Deployment的时候，通常会填写Pod的Labels,然后填写Deployment的Selectors,如果你需要Service时，还需要填写Service的Selectors,这可能会因为某个很小的错误填写导致发布不符合预期,引发这样的错误其实是很没必要的)等一些这些没必要担心的问题。   Paas平台研发时:
+ beku期望同僚们在开发PaaS平台前后端对接时，后端开发者不用把Kubernetes资源对象的json和交给前端填写，由于在于Kubernetes资源对象的层级比较偏复杂，这需要时间成本沟通；在沟通层级的时候，还需要沟通相关的字段，这会分散前端开发者的精力和增加开发耗时；另一方面可能也会带来安全上面的问题，比如:某些存在不怀好意的人会尝试填写其他字段来试图攻击你的应用。如果使用beku，你可以很好的解决上面的问题，在解决和前端沟通成本和减少开发的时间成本时，安全也得到了保障，后端也增加了掌控能力,同时也达到了快速开发的目地,岂不美哉, 我们仍然举个示例来说明,假设我们在开发Deployment和Service的联合发布,前端可能只需要传入:
+ { &amp;quot;name&amp;quot;:&amp;quot;httpd&amp;quot;, &amp;quot;namespace&amp;quot;:&amp;quot;yulibaozi&amp;quot;, &amp;quot;serviceType&amp;quot;:&amp;quot;NodePort&amp;quot;, &amp;quot;port&amp;quot;:&amp;quot;8080&amp;quot;, &amp;quot;replics&amp;quot;:2 }  前端只需要传入这些必要的字段,然后调用beku就可以发布Deployment和Service两个Kubernetes资源对象到Kubernetes了,是不是很惊叹太过简单了，你可能还会忧虑高阶需求能否得到满足,beku当然能满足,比如环境变量，挂载ceph和NFS等，不过这些都是选填,你可以很轻松的找到对他们的支持。
+beku的特性  自动发布资源对象到Kubernetes 灵活的自定义开发 极简的JSON和YAML输入/输出 自动判断资源对象的必要字段 人性化的资源对象关联发布 严谨的QOS等级设置 准确的字段自动填充 写意的链式调用  使用示例 接下来,我们以一个示例来说明如何使用beku? 这次示例的的目标是Deployment和Service的关联发布?
+使用beku创建deployment资源:
+dp, err := beku.NewDeployment().SetNamespaceAndName(&amp;quot;yulibaozi&amp;quot;, &amp;quot;http&amp;quot;). SetPodLabels(map[string]string{&amp;quot;app&amp;quot;: &amp;quot;http&amp;quot;}).SetContainer(&amp;quot;http&amp;quot;, &amp;quot;wucong60/kube-node-demo1:v1&amp;quot;, 8081).Finish() if err != nil { panic(err) }  接下来使用已有的Deployment的创建Service:
+svc, err := beku.DeploymentToSvc(dp, beku.ServiceTypeNodePort, false) if err !</description>
+    </item>
+    
+    <item>
+      <title>收集kubernetes控制台日志及元数据(fluent-bit&#43;elasticsearch&#43;kibana搭建)</title>
+      <link>https://yulibaozi.com/posts/kubernetes/deploy/2019-12-21-fluent-bit&#43;elasticsearch&#43;kibana/</link>
+      <pubDate>Sat, 21 Dec 2019 20:29:20 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/deploy/2019-12-21-fluent-bit&#43;elasticsearch&#43;kibana/</guid>
+      <description>#### 前要   kubectl version
+ Client Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;9&amp;quot;, GitVersion:&amp;quot;v1.9.3&amp;quot;, GitCommit:&amp;quot;d2835416544f298c919e2ead3be3d0864b52323b&amp;quot;, GitTreeState:&amp;quot;clean&amp;quot;, BuildDate:&amp;quot;2018-02-07T12:22:21Z&amp;quot;, GoVersion:&amp;quot;go1.9.2&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;linux/amd64&amp;quot;} Server Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;9&amp;quot;, GitVersion:&amp;quot;v1.9.3&amp;quot;, GitCommit:&amp;quot;d2835416544f298c919e2ead3be3d0864b52323b&amp;quot;, GitTreeState:&amp;quot;clean&amp;quot;, BuildDate:&amp;quot;2018-02-07T11:55:20Z&amp;quot;, GoVersion:&amp;quot;go1.9.2&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;linux/amd64&amp;quot;}   namespace
+ 如果需要部署在非kube-system命令下,需要该所有yaml的namespace,例如:我所有的资源部署在logging这个namespace下。
+ 下载相关代码(主要是yaml文件)
+ 《elasticsearch、kibana》 https://github.com/kubernetes/kubernetes.git
+《fluent-bit》 https://github.com/fluent/fluent-bit-kubernetes-logging.git
+首先部署elasticsearch yaml目录:cluster/addons/fluentd-elasticsearch
+ 部署statefulset
+kubectl create -f es-statefulset.yaml  我部署的时候镜像版本是:k8s.gcr.io/elasticsearch:v6.2.4
+  初始化镜像: alpine:3.6
+ 部署configmap
+kubectl create -f fluentd-es-configmap.yaml  部署Service
+kubectl create -f es-service.yaml  查看service的信息并记下来,下面要用</description>
+    </item>
+    
+    <item>
+      <title>自研程序如何快速对接kubernetes</title>
+      <link>https://yulibaozi.com/posts/kubernetes/extend/2019-01-11-incluster-use-kubernetes/</link>
+      <pubDate>Wed, 21 Aug 2019 20:33:22 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/extend/2019-01-11-incluster-use-kubernetes/</guid>
+      <description>实践kubernetes版本:v1.11.3
+伟大之路 伟大的程序想要跑起来都是要经过磨难的，像我这个伟大的程序想在kubernetes集群内(Pod内)访问kube-apiserver接口,出现错误:
+Get Enpoints err:endpoints &amp;quot;kubernetes&amp;quot; is forbidden: User &amp;quot;system:serviceaccount:yulibaozi:default&amp;quot; cannot get endpoints in the namespace &amp;quot;default&amp;quot;  而我伟大的程序是这样:
+func main() { conf, err := rest.InClusterConfig() if err != nil { log.Fatalf(&amp;quot;InClusterConfig err:%v&amp;quot;, err) } client, err := kubernetes.NewForConfig(conf) if err != nil { log.Fatalf(&amp;quot;NewForConfig err:%v&amp;quot;, err) } for { ep, err := client.CoreV1().Endpoints(&amp;quot;default&amp;quot;).Get(&amp;quot;kubernetes&amp;quot;, metav1.GetOptions{}) if err != nil { log.Printf(&amp;quot;Get Enpoints err:%v&amp;quot;, err) } else { log.Printf(&amp;quot;%+v&amp;quot;, ep) } time.</description>
+    </item>
+    
+    <item>
+      <title>Deployment和StatefulSet的使用理念和区别</title>
+      <link>https://yulibaozi.com/posts/kubernetes/extend/2019-07-23-deployment-vs-statefulset/</link>
+      <pubDate>Tue, 23 Jul 2019 20:36:50 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/extend/2019-07-23-deployment-vs-statefulset/</guid>
+      <description>### 理论上的区别  StatefulSet作为Kubernetes中部署应用的控制器之一,它被专门用于部署那些有状态和有持久化需求的应用,同时,它也遵循一些指定的规则。另一方面,我们熟知的Deployment也是做相似的事情。除了Kubernetes 文档中非常明确的指出:&amp;ldquo;如果应用不需要稳定的标识或者有序的部署,删除和缩放,你应该使用无状态的副本控制器部署你的应用,这些无状态的副本控制器(例如:Deployment,ReplicaSet)或许更适合你应用的无状态需求&amp;rdquo;。
+If an application doesn’t require any stable identifiers or ordered deployment, deletion, or scaling, you should deploy your application with a controller that provides a set of stateless replicas. Controllers such as Deployment or Replica Set may be better suited to your stateless needs.
+上面已经说明了StatefulSet和stateless replicas之间的区别,接下来,我们仔细看看:
+   Deployment StatefulSet     可以扩展更多的副本集(ReplicaSet/RS)以支持更大的负载 有序,优雅的部署和扩展(缩放)   滚动更新是根据Deployment中的PodTemplateSpec配置完成的;当一个新的ReplicaSet(RS)被新建时，Deployment会以指定的速率将Pod从旧的RS升级到新的RS,直到更新完成 有序,自动滚动更新   回滚:可以回滚到上一个/更早的版本 没有回滚,只有删除和缩小副本数   有独立的网络服务 StatefulSets目前要求Headless Service负责Pod在网络中的唯一身份    从上面的表格可以非常有底气的假设两者之间最大的区别在于网络服务的要求和StatefulSet的持久化存的储示例文档。但是,眼睛看到的不一定就是全部。</description>
+    </item>
+    
+    <item>
+      <title>CronJob 原理和源码分析</title>
+      <link>https://yulibaozi.com/posts/kubernetes/extend/2019-04-23-cronjob/</link>
+      <pubDate>Sun, 21 Apr 2019 20:35:24 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/extend/2019-04-23-cronjob/</guid>
+      <description>CronJob是Kubernetes提供的定时任务功能，CronJob可以根据你指定的cron策略来完成任务。  我们在使用CronJob的时候，我们发现，当创建一个CronJob的时候，只会创建一个CronJob，当到指定时间时，会创建一个job和一个pod,随着时间的推移，我们会发现，越来越多的job和pod，甚至是满屏的job和pod，我们在调用API删除这个cronjob的时候，发现只会删除cronjob这个资源，而不会删除对应的已有的job和pod，然后，我们尝试删除job，发现删除job，会把对应的pod删除掉，为什么好多的操作不符合心理预期呢？心里冒着十万个为什么
+迷雾沼泽  cronjob是怎么定时创建job的呢？
+ 为什么删除的时候，只是删除了cronjob，而没有删除对应的job和pod呢？
+ cronjob、job和pod之间的关系是怎么样的呢？
+ job和pod的关系是怎么对应上的呢？
+  探索一(从命令行结果开始探索)  kubectl describe cronjob hello
+ 我们看到上图的Events，看到了cronjob-controller,且Message 里面创建了job，我们猜测是cronjob通过controller-manager下的cronjob-controller来实现对job的创建工作
+ kubectl describe job jobname
+ 我们看到这个job是被CronJob/hello创建，而并非我们上文猜测的cronjob-controller,但是想来应该存在某种关系的，然后看到下面的Events,我们看到通过job-controller创建了pod.
+ kubectl describe pod podname
+ 看到这个pod是由job/hello-1528459440创建,似乎和上文猜测的job-controller看上去并无直接关系。
+到这里，我们看似发现了许多的蛛丝马迹，但是细细想来，还是不清不楚，不明不白,是时候读源码了。
+探索二（源码探索） 注意:会删除一些无关代码
+源码位于:github.com/kubernetes/kubernetes/pkg/controller/cronjob/cronjob_controller.go  回答问题：cronjob和job是如何维护关系的呢？ // syncAll lists all the CronJobs and Jobs and reconciles them. func (jm *CronJobController) syncAll() { ...... //列出所有的job jl, err := jm.kubeClient.BatchV1().Jobs(metav1.NamespaceAll).List(metav1.ListOptions{}) if err != nil { utilruntime.</description>
     </item>
     
     <item>
@@ -46,6 +144,42 @@ sts和deployment类似，只不过deployment用于无状态的应用而sts应用
 svc是为外部提供服务的，master一个svc，slave一个svc。
   千里之行 创建secret  假设管理员给你的ceph信息如下:
 key = AQAqfzNaofxHLBAAS7qY64uE/ddqWLOMVDhkAA== rbdImagename = k8s_image01 user = admin（假设默认是admin,如果不是就问ceph管理员要）  执行命令把ceph的Key使用base64编码</description>
+    </item>
+    
+    <item>
+      <title>kubernetes中请求网络链路的分析与总结</title>
+      <link>https://yulibaozi.com/posts/kubernetes/knowledge/2018-07-22-proxy-network/</link>
+      <pubDate>Sun, 22 Jul 2018 20:54:11 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/knowledge/2018-07-22-proxy-network/</guid>
+      <description>k8s中请求网络链路的分析与总结  前要 这篇文章，你能明白那些问题？  从集群外部请求的时候，整个请求的走向是怎么样的？ 在service中port,targetPort和nodePort的区别是什么？ iptables是怎样工作的？ 谁来维护了数据的正确性，及时性和稳定性？  基础知识: port指当使用ClusterIP访问这个服务所使用的port targetPort 指当使用PodIP访问后端Pod使用的port nodePort 指当在外部(nodeport)访问这个服务使用的Port  正文 前段时间,请求发生了time out或者connection refused这类问题,从k8s的角度来说,我并不能提出有效的猜想更不能解决这个问题是催生这篇文章的关键所在。于是,我对自己提出了上面的那些问题，能够让我清楚的记住一个请求的走向。
+请求的走向是：
+外部(nodeport)/clusterIP &amp;ndash;&amp;gt; iptables &amp;ndash;&amp;gt; 到endpoints(pod的Ip地址)
+当一个请求到来时,首先会进入iptables,iptables来做转发,那么iptables怎么转发的呢？当一个service被创建的时候,会在iptables上创建一个转发规则(实际是kube-proxy来创建和维护这个规则的)
+下面以集群中某个服务为例：
+基本信息: PODIP 172.22.50.18 172.22.36.51 PORT: port: 8080, targetPort: 8080, nodePort&amp;quot;: 32080 CLUSTERIP: 172.50.71.49  iptables中的规则:
+root@node-2:~# iptables-save | grep yce/yce-svc:http -A KUBE-NODEPORTS -p tcp -m comment --comment &amp;quot;yce/yce-svc:http&amp;quot; -m tcp --dport 32080 -j KUBE-MARK-MASQ -A KUBE-NODEPORTS -p tcp -m comment --comment &amp;quot;yce/yce-svc:http&amp;quot; -m tcp --dport 32080 -j KUBE-SVC-33TZ5W3QVRYDY6UM -A KUBE-SEP-JIUUF7F4K5DSHT3L -s 172.</description>
+    </item>
+    
+    <item>
+      <title>Kubernetes 1.11新特性,欢呼！</title>
+      <link>https://yulibaozi.com/posts/kubernetes/knowledge/2018-06-26-kubernetes-up-to-1.11/</link>
+      <pubDate>Tue, 26 Jun 2018 20:52:40 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/knowledge/2018-06-26-kubernetes-up-to-1.11/</guid>
+      <description>kubernetes 1.11新特性 重要 文章同步微信公众号：容器时代(https://mp.weixin.qq.com/s/8bW-Et9WHVgQ8O2JwJarUw)
+前言 Kubernetes 社区已经在6月21号放出了Kubernetes 1.11的第一个rc版本，这意味着现在你可以尝试着去运用一些新的特性和功能, 并在正式版上线前为开发组提供珍贵的反馈信息。正式版计划将在2018年6月26日上线，其中包含了六个全新的alpha功能和十八个更加成熟稳定的功能。
+你可以从以下链接当中下载最新的Kubernetes1.11版本 https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG-1.11.md
+如果你希望将你的使用情况反馈给开发社区，可向Kubernetes 1.11 milestone提交一个新的issue(https://github.com/kubernetes/kubernetes/issues/new?milestone=v1.11)，并标记相应的SIG团队
+SIG-AUTH  Provide RunAsGroup feature for Containers in a Pod(Alpha):
+目前，我们可以控制容器的UID同时也可以补充组，但是，无法控制那些运行的容器的GID总是0（root）。这个功能能够以非root运行容器，并且帮助我们提高容器的安全级别。(https://github.com/kubernetes/features/issues/213)
+ TokenRequest API and Kubelet integration(Alpha):
+TokenRequest API 提供了对service account token基础的改进。这个功能将允许生成Secret APIs之外、针对特定对象的（例如external secretstores）、可以调整有效期的以及可以绑定于特定Pods 的tokens(https://github.com/kubernetes/features/issues/542)
+ Limit node access to API(beta):
+可以对节点上的API调用进行限制，限制节点的作用域，比如：只能自己节点上的Node API Objects，只能修改绑定在自己节点上的Pod Objects，只能获取自己节点上的secrets和configmaps 等。(https://github.com/kubernetes/features/issues/279)
+ ClusterRole Aggregation（Stable）:
+为了CustomResources and ExtensionAPIServers更容易支持 RBAC，我们可以让API extenders为其添加一些权限，比如修改，查看等。(https://github.com/kubernetes/features/issues/502)
+  SIG-API-MACHINERY  Custom Resource Definition Versioning(beta):  CRD因其提高了Kubernetes的扩展性而被广泛接纳，为CRD增加版本，这样CRD的作者可以定义不同的资源版本，同时添加一种版本间的转换机制。目前，每个CR只有一个版本，每当更新的时候，只能重新增加一个CRD，然后以手动的方式同步。 * 支持API级别的版本控制 * 支持不同版本之间的转换 * 支持修改版本库 * 所有版本支持Validation/OpenAPI 模式 (https://github.</description>
     </item>
     
   </channel>

@@ -23,6 +23,7 @@ enableEmoji = true  # Shorthand emojis in content files - https://gohugo.io/func
 
 [taxonomies]
   tag = "tags"
+  link = "links"
   # Categories are disabled by default.
 
 [params]
@@ -35,11 +36,11 @@ enableEmoji = true  # Shorthand emojis in content files - https://gohugo.io/func
   dateformNumTime = "2006-01-02 15:04 -0700"
 
   # Metadata mostly used in document's head
-  description = "煎鱼,博客,go,golang,源码分析,系列教程"
+  description = "yuliz,yulibaozi,yuli,博客,go,golang,kubernetes,云原生,Cloud native"
   # images = [""]
   themeColor = "#494f5c"
 
-  homeSubtitle = "Metrics, Tracing, Logging"
+  homeSubtitle = "Kubernetes, Prometheus, Istio"
   footerCopyright = ' &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a>'
   # bgImg = ""  # Homepage background-image URL
 
@@ -73,6 +74,11 @@ enableEmoji = true  # Shorthand emojis in content files - https://gohugo.io/func
   [[menu.main]]
     name = "Tags"
     url = "tags/"
+    weight = 10
+    
+  [[menu.main]]
+    name = "Links"
+    url = "links/"
     weight = 10
 
   [[menu.main]]

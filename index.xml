@@ -7,10 +7,38 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-hans</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Thu, 16 Apr 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 21 Apr 2020 20:47:34 +0800</lastBuildDate>
     
 	<atom:link href="https://yulibaozi.com/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Kubernetes高级调度- Taint和Toleration、Node Affinity分析</title>
+      <link>https://yulibaozi.com/posts/kubernetes/knowledge/2019-06-24-advanced-scheduling/</link>
+      <pubDate>Tue, 21 Apr 2020 20:47:34 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/knowledge/2019-06-24-advanced-scheduling/</guid>
+      <description>Kubernetes高级调度- Taint和Toleration、Node Affinity分析 节点即Node
+一、Taint和Toleration 污点的理论支撑 1.污点设置有哪些影响效果 使用效果(Effect):
+ PreferNoSchedule:调度器尽量避免把Pod调度到具有该污点效果的节点上,如果不能避免(如其他节点资源不足),Pod也能调度到这个污点节点上。 NoSchedule:不容忍该污点效果的Pod永不会被调度到该节点上，通过kubelet管理的Pod(static Pod)不受限制;之前没有设置污点的Pod如果已运行在此节点(有污点的节点)上，可以继续运行。 NoExecute: 调度器不会把Pod调度到具有该污点效果的节点上，同时会将节点上已存在的Pod驱逐出去。  污点设置的第一前提是: 节点上的污点key和Pod上的污点容忍key相匹配。
+2. 设置污点的效果实测 当Pod未设置污点容忍而节点设置了污点时  当节点的污点影响效果被设置为:PreferNoSchedule时,已存在于此节点上的Pod不会被驱逐；新增但未设置污点容忍的Pod仍然可以被调度到此节点上。 当节点的污点影响效果被设置为:NoSchedule时,已存在于此节点上的Pod不会被驱逐;同时,新增的Pod不会被调度此节点上. 当节点的污点影响效果被设置为:NoExecute时,已存在于此节点上的Pod会发生驱逐(驱逐时间由tolerationSeconds字段确定,小于等于0会立即驱逐);新增的Pod不会调度到此节点上。  以上所说的Pod未设置任何的污点容忍时
+当Node设置了污点且Pod设置了对应的污点容忍时    Pod容忍效果 Node污点效果 是否会调度到此Node上 原因     PreferNoSchedule PreferNoSchedule √ Node的污点效果和Pod的容忍效果相匹配   PreferNoSchedule NoSchedule x Node的污点效果高于Pod的容忍效果   PreferNoSchedule NoExecute x Node的污点效果高于Pod的容忍效果   NoSchedule PreferNoSchedule √ Node的污点效果低于Pod的容忍效果   NoSchedule NoSchedule √ Node的污点效果和Pod的容忍效果相匹配   NoSchedule NoExecute x Node的污点效果高于Pod设置的容忍效果   NoExecute PreferNoSchedule √ Node的污点效果低于Pod的容忍效果   NoExecute NoSchedule x Node的污点效果和Pod的容忍程度互斥   NoExecute NoExecute x Pod在Node上不断重建和杀掉。    污点容忍设置, Exists和Equal这两个操作符之间的区别是什么?</description>
+    </item>
+    
+    <item>
+      <title>[译]使用 Kubebuilder 开发 Operator</title>
+      <link>https://yulibaozi.com/posts/kubernetes/extend/2020-04-22-use-kubebuilder-to-operator/</link>
+      <pubDate>Tue, 21 Apr 2020 01:10:50 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/extend/2020-04-22-use-kubebuilder-to-operator/</guid>
+      <description>写给那些人 原文地址
+写给那些Kubernetes用户 Kubernetes用户将通过学习API的设计和实现背后的基本概念，更深入的理解Kubernetes。本书将教会读者怎样开发自己的Kubernetes APIs 和学习Kubernetes API核心的设计原则。
+包括:
+ Kubernetes API和resource的结构设计 API 版本语义 自托管/自愈 垃圾回收和终结器 声明式和命令式APIs 基于级别和基于边缘的APIs 资源和子资源  Kubernetes API 扩展开发 API 扩展开发者将学习到实现Kubernetes API背后的原理，概念和实现规范，以及用户快速开发的简单工具和库。 这本书涵盖了开发人员遇到的陷阱和思维上的误区。
+包括:
+ 如果将多个事件批处理为单次调用对比,(翻译疑问) 如何配置定期对比 即将有的 如何使用缓存和实时查找 垃圾收集和终结器 如何使用声明与Webhook验证 如何实现API版本控制  快速开始 安装 安装Kubebuilder:
+os=$(go env GOOS) arch=$(go env GOARCH) # download kubebuilder and extract it to tmp curl -sL https://go.kubebuilder.io/dl/2.0.0-alpha.2/${os}/${arch} | tar -xz -C /tmp/ # move to a long-term location and put it on your path # (you&#39;ll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else) sudo mv /tmp/kubebuilder_2.</description>
+    </item>
     
     <item>
       <title>Link</title>
@@ -23,6 +51,24 @@
     </item>
     
     <item>
+      <title>[Beku] 如何使用三行代码发布你的应用到Kubernetes</title>
+      <link>https://yulibaozi.com/posts/kubernetes/extend/2018-12-03-beku/</link>
+      <pubDate>Sat, 21 Mar 2020 20:15:22 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/extend/2018-12-03-beku/</guid>
+      <description>beku的概要 众所周知，Kubernetes主要分为两大部分:部署时和运行时,Beku的定位在部署时,无需任何额外的心智负担,快速编写Kubernetes资源对象然后发布到到Kubernetes集群，这对那些开发PaaS平台的公司来说显得尤其重要,尤其是在前后端人员接口对接时和资安全保障。beku就是这样, 一个Golang人性化Kubernetes资源对象创建库,极简，无额外心智负担。
+beku的初衷  部署应用时：
+ beku期望同僚们在发布应用的时候,
+ 不用担心某个字段应该放在yaml或者json的那个层级(比如:imagePullSecrets这个字段我应该填在Pod里面还是Containers里,还是Deployment里,可能你一会记得,过一段时间你又不记得了); 也不用顾虑这个字段名是否填写正确,字段所对应的值是否符合Kubernetes要求（比如:imagepullsecrets应该是imagePullSecrets还是imagePullSecret呢; 更不用忧虑重复填写某字段不一致导致发布失败(比如:我们在使用Deployment的时候，通常会填写Pod的Labels,然后填写Deployment的Selectors,如果你需要Service时，还需要填写Service的Selectors,这可能会因为某个很小的错误填写导致发布不符合预期,引发这样的错误其实是很没必要的)等一些这些没必要担心的问题。   Paas平台研发时:
+ beku期望同僚们在开发PaaS平台前后端对接时，后端开发者不用把Kubernetes资源对象的json和交给前端填写，由于在于Kubernetes资源对象的层级比较偏复杂，这需要时间成本沟通；在沟通层级的时候，还需要沟通相关的字段，这会分散前端开发者的精力和增加开发耗时；另一方面可能也会带来安全上面的问题，比如:某些存在不怀好意的人会尝试填写其他字段来试图攻击你的应用。如果使用beku，你可以很好的解决上面的问题，在解决和前端沟通成本和减少开发的时间成本时，安全也得到了保障，后端也增加了掌控能力,同时也达到了快速开发的目地,岂不美哉, 我们仍然举个示例来说明,假设我们在开发Deployment和Service的联合发布,前端可能只需要传入:
+ { &amp;quot;name&amp;quot;:&amp;quot;httpd&amp;quot;, &amp;quot;namespace&amp;quot;:&amp;quot;yulibaozi&amp;quot;, &amp;quot;serviceType&amp;quot;:&amp;quot;NodePort&amp;quot;, &amp;quot;port&amp;quot;:&amp;quot;8080&amp;quot;, &amp;quot;replics&amp;quot;:2 }  前端只需要传入这些必要的字段,然后调用beku就可以发布Deployment和Service两个Kubernetes资源对象到Kubernetes了,是不是很惊叹太过简单了，你可能还会忧虑高阶需求能否得到满足,beku当然能满足,比如环境变量，挂载ceph和NFS等，不过这些都是选填,你可以很轻松的找到对他们的支持。
+beku的特性  自动发布资源对象到Kubernetes 灵活的自定义开发 极简的JSON和YAML输入/输出 自动判断资源对象的必要字段 人性化的资源对象关联发布 严谨的QOS等级设置 准确的字段自动填充 写意的链式调用  使用示例 接下来,我们以一个示例来说明如何使用beku? 这次示例的的目标是Deployment和Service的关联发布?
+使用beku创建deployment资源:
+dp, err := beku.NewDeployment().SetNamespaceAndName(&amp;quot;yulibaozi&amp;quot;, &amp;quot;http&amp;quot;). SetPodLabels(map[string]string{&amp;quot;app&amp;quot;: &amp;quot;http&amp;quot;}).SetContainer(&amp;quot;http&amp;quot;, &amp;quot;wucong60/kube-node-demo1:v1&amp;quot;, 8081).Finish() if err != nil { panic(err) }  接下来使用已有的Deployment的创建Service:
+svc, err := beku.DeploymentToSvc(dp, beku.ServiceTypeNodePort, false) if err !</description>
+    </item>
+    
+    <item>
       <title>About</title>
       <link>https://yulibaozi.com/about/</link>
       <pubDate>Sun, 15 Mar 2020 00:00:00 +0000</pubDate>
@@ -31,6 +77,27 @@
       <description>你好，我是 yulibaozi，有任何建议或问题欢迎随时找我交流。
 联系方式：
  Github：https://github.com/yulibaozi 公众号：未来会有的 邮箱：yulibaozi@qq.com  </description>
+    </item>
+    
+    <item>
+      <title>收集kubernetes控制台日志及元数据(fluent-bit&#43;elasticsearch&#43;kibana搭建)</title>
+      <link>https://yulibaozi.com/posts/kubernetes/deploy/2019-12-21-fluent-bit&#43;elasticsearch&#43;kibana/</link>
+      <pubDate>Sat, 21 Dec 2019 20:29:20 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/deploy/2019-12-21-fluent-bit&#43;elasticsearch&#43;kibana/</guid>
+      <description>#### 前要   kubectl version
+ Client Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;9&amp;quot;, GitVersion:&amp;quot;v1.9.3&amp;quot;, GitCommit:&amp;quot;d2835416544f298c919e2ead3be3d0864b52323b&amp;quot;, GitTreeState:&amp;quot;clean&amp;quot;, BuildDate:&amp;quot;2018-02-07T12:22:21Z&amp;quot;, GoVersion:&amp;quot;go1.9.2&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;linux/amd64&amp;quot;} Server Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;9&amp;quot;, GitVersion:&amp;quot;v1.9.3&amp;quot;, GitCommit:&amp;quot;d2835416544f298c919e2ead3be3d0864b52323b&amp;quot;, GitTreeState:&amp;quot;clean&amp;quot;, BuildDate:&amp;quot;2018-02-07T11:55:20Z&amp;quot;, GoVersion:&amp;quot;go1.9.2&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;linux/amd64&amp;quot;}   namespace
+ 如果需要部署在非kube-system命令下,需要该所有yaml的namespace,例如:我所有的资源部署在logging这个namespace下。
+ 下载相关代码(主要是yaml文件)
+ 《elasticsearch、kibana》 https://github.com/kubernetes/kubernetes.git
+《fluent-bit》 https://github.com/fluent/fluent-bit-kubernetes-logging.git
+首先部署elasticsearch yaml目录:cluster/addons/fluentd-elasticsearch
+ 部署statefulset
+kubectl create -f es-statefulset.yaml  我部署的时候镜像版本是:k8s.gcr.io/elasticsearch:v6.2.4
+  初始化镜像: alpine:3.6
+ 部署configmap
+kubectl create -f fluentd-es-configmap.yaml  部署Service
+kubectl create -f es-service.yaml  查看service的信息并记下来,下面要用</description>
     </item>
     
     <item>
@@ -47,6 +114,18 @@ GC 带来的问题 硬要说会带来什么问题的话，也就数大家最关�
     </item>
     
     <item>
+      <title>自研程序如何快速对接kubernetes</title>
+      <link>https://yulibaozi.com/posts/kubernetes/extend/2019-01-11-incluster-use-kubernetes/</link>
+      <pubDate>Wed, 21 Aug 2019 20:33:22 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/extend/2019-01-11-incluster-use-kubernetes/</guid>
+      <description>实践kubernetes版本:v1.11.3
+伟大之路 伟大的程序想要跑起来都是要经过磨难的，像我这个伟大的程序想在kubernetes集群内(Pod内)访问kube-apiserver接口,出现错误:
+Get Enpoints err:endpoints &amp;quot;kubernetes&amp;quot; is forbidden: User &amp;quot;system:serviceaccount:yulibaozi:default&amp;quot; cannot get endpoints in the namespace &amp;quot;default&amp;quot;  而我伟大的程序是这样:
+func main() { conf, err := rest.InClusterConfig() if err != nil { log.Fatalf(&amp;quot;InClusterConfig err:%v&amp;quot;, err) } client, err := kubernetes.NewForConfig(conf) if err != nil { log.Fatalf(&amp;quot;NewForConfig err:%v&amp;quot;, err) } for { ep, err := client.CoreV1().Endpoints(&amp;quot;default&amp;quot;).Get(&amp;quot;kubernetes&amp;quot;, metav1.GetOptions{}) if err != nil { log.Printf(&amp;quot;Get Enpoints err:%v&amp;quot;, err) } else { log.Printf(&amp;quot;%+v&amp;quot;, ep) } time.</description>
+    </item>
+    
+    <item>
       <title>用 GODEBUG 看调度跟踪</title>
       <link>https://yulibaozi.com/posts/go/tools/2019-08-19-godebug-sched/</link>
       <pubDate>Mon, 19 Aug 2019 12:00:00 +0000</pubDate>
@@ -60,68 +139,15 @@ GC 带来的问题 硬要说会带来什么问题的话，也就数大家最关�
     </item>
     
     <item>
-      <title>Go 大杀器之跟踪剖析 trace</title>
-      <link>https://yulibaozi.com/posts/go/tools/2019-07-12-go-tool-trace/</link>
-      <pubDate>Fri, 12 Jul 2019 12:00:00 +0000</pubDate>
+      <title>Deployment和StatefulSet的使用理念和区别</title>
+      <link>https://yulibaozi.com/posts/kubernetes/extend/2019-07-23-deployment-vs-statefulset/</link>
+      <pubDate>Tue, 23 Jul 2019 20:36:50 +0800</pubDate>
       
-      <guid>https://yulibaozi.com/posts/go/tools/2019-07-12-go-tool-trace/</guid>
-      <description>在 Go 中有许许多多的分析工具，在之前我有写过一篇 《Golang 大杀器之性能剖析 PProf》 来介绍 PProf，如果有小伙伴感兴趣可以去我博客看看。
-但单单使用 PProf 有时候不一定足够完整，因为在真实的程序中还包含许多的隐藏动作，例如 Goroutine 在执行时会做哪些操作？执行/阻塞了多长时间？在什么时候阻止？在哪里被阻止的？谁又锁/解锁了它们？GC 是怎么影响到 Goroutine 的执行的？这些东西用 PProf 是很难分析出来的，但如果你又想知道上述的答案的话，你可以用本文的主角 go tool trace 来打开新世界的大门。目录如下：
-初步了解 import ( &amp;#34;os&amp;#34; &amp;#34;runtime/trace&amp;#34; ) func main() { trace.Start(os.Stderr) defer trace.Stop() ch := make(chan string) go func() { ch &amp;lt;- &amp;#34;EDDYCJY&amp;#34; }() &amp;lt;-ch } 生成跟踪文件：
-$ go run main.go 2&amp;gt; trace.out  启动可视化界面：
-$ go tool trace trace.out 2019/06/22 16:14:52 Parsing trace... 2019/06/22 16:14:52 Splitting trace... 2019/06/22 16:14:52 Opening browser.</description>
-    </item>
-    
-    <item>
-      <title>[译]使用 Kubebuilder 开发 Operator</title>
-      <link>https://yulibaozi.com/posts/kubernetes/extend/2019-06-11-use-kubebuilder-to-operator/</link>
-      <pubDate>Tue, 11 Jun 2019 01:10:50 +0800</pubDate>
-      
-      <guid>https://yulibaozi.com/posts/kubernetes/extend/2019-06-11-use-kubebuilder-to-operator/</guid>
-      <description>写给那些人 原文地址
-写给那些Kubernetes用户 Kubernetes用户将通过学习API的设计和实现背后的基本概念，更深入的理解Kubernetes。本书将教会读者怎样开发自己的Kubernetes APIs 和学习Kubernetes API核心的设计原则。
-包括:
- Kubernetes API和resource的结构设计 API 版本语义 自托管/自愈 垃圾回收和终结器 声明式和命令式APIs 基于级别和基于边缘的APIs 资源和子资源  Kubernetes API 扩展开发 API 扩展开发者将学习到实现Kubernetes API背后的原理，概念和实现规范，以及用户快速开发的简单工具和库。 这本书涵盖了开发人员遇到的陷阱和思维上的误区。
-包括:
- 如果将多个事件批处理为单次调用对比,(翻译疑问) 如何配置定期对比 即将有的 如何使用缓存和实时查找 垃圾收集和终结器 如何使用声明与Webhook验证 如何实现API版本控制  快速开始 安装 安装Kubebuilder:
-os=$(go env GOOS) arch=$(go env GOARCH) # download kubebuilder and extract it to tmp curl -sL https://go.kubebuilder.io/dl/2.0.0-alpha.2/${os}/${arch} | tar -xz -C /tmp/ # move to a long-term location and put it on your path # (you&#39;ll need to set the KUBEBUILDER_ASSETS env var if you put it somewhere else) sudo mv /tmp/kubebuilder_2.</description>
-    </item>
-    
-    <item>
-      <title>在 Kubernetes 使用 ceph 快速部署mysql主从复制集群</title>
-      <link>https://yulibaozi.com/posts/kubernetes/deploy/2018-09-06-k8s-ceph-mysql-master-slave/</link>
-      <pubDate>Sun, 16 Sep 2018 01:03:46 +0800</pubDate>
-      
-      <guid>https://yulibaozi.com/posts/kubernetes/deploy/2018-09-06-k8s-ceph-mysql-master-slave/</guid>
-      <description>血与泪的感慨 我的天空星星都亮了，一扫之前的阴霾，喜上眉梢，多日的折磨成了幻影，程序员就是这样，痛并快乐着。接下来，开始我们伟大的分享之路，分享如何在kubernetes中搭建mysql主从集群,不踩坑的快速搭建master主从集群,让你们早点回家，多陪陪女友，愿码友们不终日与十姊妹为伍。
-千里之行始于足下  集群版本信息
-[root@kube03 ~]# kubectl version Client Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;9&amp;quot;, GitVersion:&amp;quot;v1.9.6&amp;quot;, BuildDate:&amp;quot;2018-03-21T15:21:50Z&amp;quot;, GoVersion:&amp;quot;go1.9.3&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;linux/amd64&amp;quot;} Server Version: version.Info{Major:&amp;quot;1&amp;quot;, Minor:&amp;quot;9&amp;quot;, GitVersion:&amp;quot;v1.9.6&amp;quot;, BuildDate:&amp;quot;2018-03-21T15:13:31Z&amp;quot;, GoVersion:&amp;quot;go1.9.3&amp;quot;, Compiler:&amp;quot;gc&amp;quot;, Platform:&amp;quot;linux/amd64&amp;quot;}  需要ceph的相关配置:key,rbdImage名字(需要找ceph管理员)
- 需要基础镜像
-镜像仓库: docker.io/yulibaozi master: yulibaozi/mysql-master:201807261706 sha256:65ec774cd3a5e71bae1864dffbb1b37b34a2832cce1b8eb6c87f5b1e24b54267 slave: yulibaozi/mysql-slave:201807261706 sha256:712359cbe130bf282876ea7df85fb7f67d8843ab64e54f96a73fee72cef67d87  需要定义k8s相关的资源(svc,sts,secret)
-  相关资源的解释  为什么需要secret？
-secret是来存储ceph的配置信息中的key的,一定要记得在存入secret之前进行base64编码。如果管理员提供给你了一个key，2个rbdImage，那么只需要一个secret，如果给了你两个key,那么需要两个secret
- 为什么需要sts？
-sts和deployment类似，只不过deployment用于无状态的应用而sts应用于有状态的应用，master和slave各一个sts
- 为什么需要svc？
-svc是为外部提供服务的，master一个svc，slave一个svc。
-  千里之行 创建secret  假设管理员给你的ceph信息如下:
-key = AQAqfzNaofxHLBAAS7qY64uE/ddqWLOMVDhkAA== rbdImagename = k8s_image01 user = admin（假设默认是admin,如果不是就问ceph管理员要）  执行命令把ceph的Key使用base64编码</description>
-    </item>
-    
-    <item>
-      <title>Go 大杀器之性能剖析 PProf</title>
-      <link>https://yulibaozi.com/posts/go/tools/2018-09-15-go-tool-pprof/</link>
-      <pubDate>Sat, 15 Sep 2018 12:00:00 +0000</pubDate>
-      
-      <guid>https://yulibaozi.com/posts/go/tools/2018-09-15-go-tool-pprof/</guid>
-      <description>前言 写了几吨代码，实现了几百个接口。功能测试也通过了，终于成功的部署上线了
-结果，性能不佳，什么鬼？😭
-想做性能分析 PProf 想要进行性能优化，首先瞩目在 Go 自身提供的工具链来作为分析依据，本文将带你学习、使用 Go 后花园，涉及如下：
- runtime/pprof：采集程序（非 Server）的运行数据进行分析 net/http/pprof：采集 HTTP Server 的运行时数据进行分析  是什么 pprof 是用于可视化和分析性能分析数据的工具
-pprof 以 profile.proto 读取分析样本的集合，并生成报告以可视化并帮助分析数据（支持文本和图形报告）
-profile.proto 是一个 Protocol Buffer v3 的描述文件，它描述了一组 callstack 和 symbolization 信息， 作用是表示统计分析的一组采样的调用栈，是很常见的 stacktrace 配置文件格式
-支持什么使用模式  Report generation：报告生成 Interactive terminal use：交互式终端使用 Web interface：Web 界面  可以做什么  CPU Profiling：CPU 分析，按照一定的频率采集所监听的应用程序 CPU（含寄存器）的使用情况，可确定应用程序在主动消耗 CPU 周期时花费时间的位置 Memory Profiling：内存分析，在应用程序进行堆分配时记录堆栈跟踪，用于监视当前和历史内存使用情况，以及检查内存泄漏 Block Profiling：阻塞分析，记录 goroutine 阻塞等待同步（包括定时器通道）的位置 Mutex Profiling：互斥锁分析，报告互斥锁的竞争情况  一个简单的例子 我们将编写一个简单且有点问题的例子，用于基本的程序初步分析
-编写 demo 文件 （1）demo.</description>
+      <guid>https://yulibaozi.com/posts/kubernetes/extend/2019-07-23-deployment-vs-statefulset/</guid>
+      <description>### 理论上的区别  StatefulSet作为Kubernetes中部署应用的控制器之一,它被专门用于部署那些有状态和有持久化需求的应用,同时,它也遵循一些指定的规则。另一方面,我们熟知的Deployment也是做相似的事情。除了Kubernetes 文档中非常明确的指出:&amp;ldquo;如果应用不需要稳定的标识或者有序的部署,删除和缩放,你应该使用无状态的副本控制器部署你的应用,这些无状态的副本控制器(例如:Deployment,ReplicaSet)或许更适合你应用的无状态需求&amp;rdquo;。
+If an application doesn’t require any stable identifiers or ordered deployment, deletion, or scaling, you should deploy your application with a controller that provides a set of stateless replicas. Controllers such as Deployment or Replica Set may be better suited to your stateless needs.
+上面已经说明了StatefulSet和stateless replicas之间的区别,接下来,我们仔细看看:
+   Deployment StatefulSet     可以扩展更多的副本集(ReplicaSet/RS)以支持更大的负载 有序,优雅的部署和扩展(缩放)   滚动更新是根据Deployment中的PodTemplateSpec配置完成的;当一个新的ReplicaSet(RS)被新建时，Deployment会以指定的速率将Pod从旧的RS升级到新的RS,直到更新完成 有序,自动滚动更新   回滚:可以回滚到上一个/更早的版本 没有回滚,只有删除和缩小副本数   有独立的网络服务 StatefulSets目前要求Headless Service负责Pod在网络中的唯一身份    从上面的表格可以非常有底气的假设两者之间最大的区别在于网络服务的要求和StatefulSet的持久化存的储示例文档。但是,眼睛看到的不一定就是全部。</description>
     </item>
     
   </channel>
