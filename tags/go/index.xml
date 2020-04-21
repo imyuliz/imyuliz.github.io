@@ -122,6 +122,19 @@ go-torch -u http://127.0.0.1:8003 -t 30  3.自动生成了火焰图,然后去$PA
     </item>
     
     <item>
+      <title>Golang Channel源码分析</title>
+      <link>https://yulibaozi.com/posts/go/knowledge/2018-04-12-go-and-channel/</link>
+      <pubDate>Thu, 12 Apr 2018 22:22:05 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/go/knowledge/2018-04-12-go-and-channel/</guid>
+      <description>Channel的数据结构及解释 代码地址:runtime/chan.go
+基本结构
+type hchan struct { qcount uint // 在队列中的数据总个数 dataqsiz uint // 当前channel的容量 buf unsafe.Pointer //指向存放数据的环形数组 elemsize uint16 // Channel中数据类型的大小 closed uint32 //这个Channel是否被关闭 elemtype *_type // 元素的数据类型 sendx uint // send index recvx uint // receive index recvq waitq // 存放阻塞在&amp;lt;- ch动作的go程队列 sendq waitq // 存放阻塞在ch &amp;lt;-动作的go程队列 lock mutex // }  waitq :内部实现是一个队列
+type waitq struct { first *sudog last *sudog }  sudog
+type sudog struct { // The following fields are protected by the hchan.</description>
+    </item>
+    
+    <item>
       <title>Golang的websocket开发与实践</title>
       <link>https://yulibaozi.com/posts/go/knowledge/2018-03-26-go-and-websocket/</link>
       <pubDate>Mon, 26 Mar 2018 22:16:12 +0800</pubDate>
@@ -141,17 +154,6 @@ go-torch -u http://127.0.0.1:8003 -t 30  3.自动生成了火焰图,然后去$PA
  聊天室的消息广播是怎么回事?
  其实,这个东西非常简单,不要想得那么复杂。 1. 如果是个演示项目的话: 其实是循环向每个客户端发送这条消息,也就是代码里面的for,看完你将哑然失笑。 2. 如果你想专业一点的话,你可以使用消息队列,把用户发送的这条消息写入到消息队列(比如nats等)中,然后所有订阅此topic的客户端都将收到这条消息。
 HTML5中Wesocket的使用有哪些?  onopen() 与服务端建立链接 onclose() 关闭与服务端的链接 onerror() 突发错误。 onmessage() 接收来自服务端的消息。 onsend() 向服务端发送消息。  展示聊天室代码和详细注释: yulibaozi/chatroom</description>
-    </item>
-    
-    <item>
-      <title>Golang使用jwt做用户身份验证</title>
-      <link>https://yulibaozi.com/posts/go/knowledge/2018-02-24-go-and-jwt/</link>
-      <pubDate>Sat, 24 Feb 2018 22:18:08 +0800</pubDate>
-      
-      <guid>https://yulibaozi.com/posts/go/knowledge/2018-02-24-go-and-jwt/</guid>
-      <description>前要：在看本文前，请先看：什么是 JWT &amp;ndash; JSON WEB TOKEN 其中 StandardClaims的解释如下：
-type StandardClaims struct { // 接收jwt的一方 Audience string `json:&amp;quot;aud,omitempty&amp;quot;` // jwt的过期时间，这个过期时间必须要大于签发时间 ExpiresAt int64 `json:&amp;quot;exp,omitempty&amp;quot;` // jwt的唯一身份标识，主要用来作为一次性token,从而回避重放攻击。 Id string `json:&amp;quot;jti,omitempty&amp;quot;` // jwt的签发时间 IssuedAt int64 `json:&amp;quot;iat,omitempty&amp;quot;` //jwt签发者 Issuer string `json:&amp;quot;iss,omitempty&amp;quot;` // 定义在什么时间之前，该jwt都是不可用的. NotBefore int64 `json:&amp;quot;nbf,omitempty&amp;quot;` // jwt所面向的用户 Subject string `json:&amp;quot;sub,omitempty&amp;quot;` }  如果你要自己复制代码：请不要复制StandardClaims或者注释掉StandardClaims，以下才是完整代码：
-一、使用jwt的代码： // 创建自己的Claims type JwtClaims struct { *jwt.StandardClaims //用户编号 Uid int64 Username string } var ( //盐 secret []byte = []byte(&amp;quot;yulibaozi.</description>
     </item>
     
   </channel>
