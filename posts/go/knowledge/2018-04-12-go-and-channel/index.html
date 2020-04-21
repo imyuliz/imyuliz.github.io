@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="Golang Channel源码分析">
+<meta itemprop="description" content="Channel的数据结构及解释 代码地址:runtime/chan.go
+基本结构
+type hchan struct { qcount uint // 在队列中的数据总个数 dataqsiz uint // 当前channel的容量 buf unsafe.Pointer //指向存放数据的环形数组 elemsize uint16 // Channel中数据类型的大小 closed uint32 //这个Channel是否被关闭 elemtype *_type // 元素的数据类型 sendx uint // send index recvx uint // receive index recvq waitq // 存放阻塞在&lt;- ch动作的go程队列 sendq waitq // 存放阻塞在ch &lt;-动作的go程队列 lock mutex // }  waitq :内部实现是一个队列
+type waitq struct { first *sudog last *sudog }  sudog
+type sudog struct { // The following fields are protected by the hchan.">
+
+
+<meta itemprop="datePublished" content="2018-04-12T22:22:05&#43;08:00" />
+<meta itemprop="dateModified" content="2018-04-12T22:22:05&#43;08:00" />
+<meta itemprop="wordCount" content="826">
+
+
+
+<meta itemprop="keywords" content="go," />
+<meta property="og:title" content="Golang Channel源码分析" />
+<meta property="og:description" content="Channel的数据结构及解释 代码地址:runtime/chan.go
+基本结构
+type hchan struct { qcount uint // 在队列中的数据总个数 dataqsiz uint // 当前channel的容量 buf unsafe.Pointer //指向存放数据的环形数组 elemsize uint16 // Channel中数据类型的大小 closed uint32 //这个Channel是否被关闭 elemtype *_type // 元素的数据类型 sendx uint // send index recvx uint // receive index recvq waitq // 存放阻塞在&lt;- ch动作的go程队列 sendq waitq // 存放阻塞在ch &lt;-动作的go程队列 lock mutex // }  waitq :内部实现是一个队列
+type waitq struct { first *sudog last *sudog }  sudog
+type sudog struct { // The following fields are protected by the hchan." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/posts/go/knowledge/2018-04-12-go-and-channel/" />
+<meta property="article:published_time" content="2018-04-12T22:22:05&#43;08:00"/>
+<meta property="article:modified_time" content="2018-04-12T22:22:05&#43;08:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Golang Channel源码分析"/>
+<meta name="twitter:description" content="Channel的数据结构及解释 代码地址:runtime/chan.go
+基本结构
+type hchan struct { qcount uint // 在队列中的数据总个数 dataqsiz uint // 当前channel的容量 buf unsafe.Pointer //指向存放数据的环形数组 elemsize uint16 // Channel中数据类型的大小 closed uint32 //这个Channel是否被关闭 elemtype *_type // 元素的数据类型 sendx uint // send index recvx uint // receive index recvq waitq // 存放阻塞在&lt;- ch动作的go程队列 sendq waitq // 存放阻塞在ch &lt;-动作的go程队列 lock mutex // }  waitq :内部实现是一个队列
+type waitq struct { first *sudog last *sudog }  sudog
+type sudog struct { // The following fields are protected by the hchan."/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Golang Channel源码分析</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/link/">Links</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/link/">Links</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner animated fadeIn faster">
+		<article class="thin">
+			<header class="post-header">
+				<div class="post-meta"><span>Apr 12, 2018</span></div>
+				<h1>Golang Channel源码分析</h1>
+			</header>
+			<div class="content">
+				
+
+<h3 id="channel的数据结构及解释">Channel的数据结构及解释<a href="#channel的数据结构及解释" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>代码地址:runtime/chan.go</p>
+
+<p>基本结构</p>
+
+<pre><code>type hchan struct {
+	qcount   uint          // 在队列中的数据总个数
+	dataqsiz uint          // 当前channel的容量
+	buf      unsafe.Pointer  //指向存放数据的环形数组
+	elemsize uint16  // Channel中数据类型的大小
+	closed   uint32 //这个Channel是否被关闭
+	elemtype *_type // 元素的数据类型
+	sendx    uint   // send index
+	recvx    uint   // receive index
+	recvq    waitq  // 存放阻塞在&lt;- ch动作的go程队列
+	sendq    waitq  // 存放阻塞在ch &lt;-动作的go程队列
+	lock mutex //
+}
+
+</code></pre>
+
+<p>waitq :内部实现是一个队列</p>
+
+<pre><code>type waitq struct {
+	first *sudog
+	last  *sudog
+}
+</code></pre>
+
+<p>sudog</p>
+
+<pre><code>type sudog struct {
+	// The following fields are protected by the hchan.lock of the
+	// channel this sudog is blocking on. shrinkstack depends on
+	// this for sudogs involved in channel ops.
+
+	g *g
+
+	// isSelect indicates g is participating in a select, so
+	// g.selectDone must be CAS'd to win the wake-up race.
+	isSelect bool
+	next     *sudog
+	prev     *sudog
+	elem     unsafe.Pointer // data element (may point to stack)
+
+	// The following fields are never accessed concurrently.
+	// For channels, waitlink is only accessed by g.
+	// For semaphores, all fields (including the ones above)
+	// are only accessed when holding a semaRoot lock.
+
+	acquiretime int64
+	releasetime int64
+	ticket      uint32
+	parent      *sudog // semaRoot binary tree
+	waitlink    *sudog // g.waiting list or semaRoot
+	waittail    *sudog // semaRoot
+	c           *hchan // channel
+}
+</code></pre>
+
+<h3 id="创建channel做了什么">创建Channel做了什么?<a href="#创建channel做了什么" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<h4 id="源码">源码<a href="#源码" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<pre><code>func makechan64(t *chantype, size int64) *hchan {
+	if int64(int(size)) != size { // ①
+		panic(plainError(&quot;makechan: size out of range&quot;))
+	}
+
+	return makechan(t, int(size))
+}
+
+func makechan(t *chantype, size int) *hchan {
+	elem := t.elem
+
+	// compiler checks this but be safe.
+	if elem.size &gt;= 1&lt;&lt;16 { // ②
+		throw(&quot;makechan: invalid channel element type&quot;)
+	}
+	if hchanSize%maxAlign != 0 || elem.align &gt; maxAlign { // ③
+		throw(&quot;makechan: bad alignment&quot;)
+	}
+
+	if size &lt; 0 || uintptr(size) &gt; maxSliceCap(elem.size) || uintptr(size)*elem.size &gt; _MaxMem-hchanSize { //④
+		panic(plainError(&quot;makechan: size out of range&quot;))
+	}
+
+	// Hchan does not contain pointers interesting for GC when elements stored in buf do not contain pointers.
+	// buf points into the same allocation, elemtype is persistent.
+	// SudoG's are referenced from their owning thread so they can't be collected.
+	// TODO(dvyukov,rlh): Rethink when collector can move allocated objects.
+	var c *hchan
+	switch {
+	case size == 0 || elem.size == 0: //⑤
+		// Queue or element size is zero.
+		c = (*hchan)(mallocgc(hchanSize, nil, true))
+		// Race detector uses this location for synchronization.
+		c.buf = unsafe.Pointer(c)
+	case elem.kind&amp;kindNoPointers != 0: //⑥
+		// Elements do not contain pointers.
+		// Allocate hchan and buf in one call.
+		c = (*hchan)(mallocgc(hchanSize+uintptr(size)*elem.size, nil, true))
+		c.buf = add(unsafe.Pointer(c), hchanSize)
+	default: //⑦
+		// Elements contain pointers.
+		c = new(hchan)
+		c.buf = mallocgc(uintptr(size)*elem.size, elem, true)
+	}
+
+	c.elemsize = uint16(elem.size)
+	c.elemtype = elem
+	c.dataqsiz = uint(size)
+
+	if debugChan {
+		print(&quot;makechan: chan=&quot;, c, &quot;; elemsize=&quot;, elem.size, &quot;; elemalg=&quot;, elem.alg, &quot;; dataqsiz=&quot;, size, &quot;\n&quot;)
+	}
+	return c
+}
+</code></pre>
+
+<h4 id="理解">理解<a href="#理解" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
+
+<p>①:判断size是否超出上下边界</p>
+
+<p>②:判断元素类型大小是否安全</p>
+
+<p>③:判断对齐限制</p>
+
+<p>④:判断size是否过小(小于0),是否过大(大于系统为堆arena分配的最大值-1)</p>
+
+<p>⑤:第一个switch:如果是一个非缓冲通道,不分配空间</p>
+
+<p>⑥:当类型不包含在指针的时候,那么分配在连续的内存空间上</p>
+
+<p>⑦:否则就分配一个指定大小的对象</p>
+
+<p>最后返回这个*chan</p>
+
+<blockquote>
+<p><strong>值得注意的是:如何分配对象的?</strong></p>
+</blockquote>
+
+<pre><code>// Allocate an object of size bytes.
+// Small objects are allocated from the per-P cache's free lists.
+// Large objects (&gt; 32 kB) are allocated straight from the heap.
+func mallocgc(size uintptr, typ *_type, needzero bool) unsafe.Pointer {
+</code></pre>
+
+<p>简单的说就是:
+1. 当是一个小对象(&lt;=32KB)的时候就从 per-P的空闲列表上分配
+2. 如果是个大对象(&gt;32KB)的时候就在堆上直接分配。</p>
+
+<h3 id="我们在操作-ch-时做了什么-写入">我们在操作 ch&lt;-时做了什么(写入)？<a href="#我们在操作-ch-时做了什么-写入" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<blockquote>
+<p>源码:</p>
+</blockquote>
+
+<pre><code>func chansend(c *hchan, ep unsafe.Pointer, block bool, callerpc uintptr) bool {
+	if c == nil {
+		if !block {
+			return false
+		}
+		gopark(nil, nil, &quot;chan send (nil chan)&quot;, traceEvGoStop, 2)
+		throw(&quot;unreachable&quot;)
+	}
+
+	if debugChan {
+		print(&quot;chansend: chan=&quot;, c, &quot;\n&quot;)
+	}
+
+	if !block &amp;&amp; c.closed == 0 &amp;&amp; ((c.dataqsiz == 0 &amp;&amp; c.recvq.first == nil) ||
+		(c.dataqsiz &gt; 0 &amp;&amp; c.qcount == c.dataqsiz)) {
+		return false
+	}
+
+	var t0 int64
+	if blockprofilerate &gt; 0 {
+		t0 = cputicks()
+	}
+
+	lock(&amp;c.lock)
+
+	if c.closed != 0 {
+		unlock(&amp;c.lock)
+		panic(plainError(&quot;send on closed channel&quot;))
+	}
+.....
+</code></pre>
+
+<blockquote>
+<p>理解</p>
+</blockquote>
+
+<ol>
+<li><p>判断了是否是nil channel</p></li>
+
+<li><p>是否是否缓存通道但是数据已经满,</p></li>
+
+<li><p>是否是非缓冲通道但是头结点为nil;</p></li>
+
+<li><p>当channel为nil的情况时，gopark会将当前goroutine休眠，然后通过unlockf来唤醒，这时传入的unlockf是nil，也就是向nil channel发送数据的goroutine会一直休眠，Golang中会一直检测运行情况，遇到这样的情况就会报出throw (&ldquo;all goroutines are asleep - deadlock!&rdquo;) 的异常。</p></li>
+
+<li><p>再判断当前的channel是否关闭了，如果是已经关闭了的，则直接panic：panic(plainError(&ldquo;send on closed channel&rdquo;))。</p></li>
+</ol>
+
+<p>正式写的时候分为带缓冲和不带缓冲的channel，二者主要区别在于什么时候阻塞读写，总的来说：</p>
+
+<pre><code>当goroutine阻塞在channel上。如果hchan.buf为空，从当前channel的等待队列中取出等待的goroutine，然后调用send方法.
+
+如果hchan.buf还有可用空间，将数据放到buffer里面；
+
+如果hchan.buf已满，则阻塞当前channel。
+</code></pre>
+
+<h3 id="我们在操作-ch-时做了什么-读取">我们在操作 &lt;-ch 时做了什么(读取)？<a href="#我们在操作-ch-时做了什么-读取" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>读取和写入基本一致,区别是写入是对recvq队列操作,读取是对send队列操作。</p>
+
+<h3 id="关闭通道时">关闭通道时<a href="#关闭通道时" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>源码</p>
+
+<pre><code>func closechan(c *hchan) {
+	if c == nil {
+		panic(plainError(&quot;close of nil channel&quot;))
+	}
+
+	lock(&amp;c.lock)
+	if c.closed != 0 {
+		unlock(&amp;c.lock)
+		panic(plainError(&quot;close of closed channel&quot;))
+	}
+
+    (取消掉冗余代码)...
+
+	c.closed = 1
+
+	var glist *g
+
+	// release all readers
+	for {
+		sg := c.recvq.dequeue()
+		if sg == nil {
+			break
+		}
+		if sg.elem != nil {
+			typedmemclr(c.elemtype, sg.elem)
+			sg.elem = nil
+		}
+		if sg.releasetime != 0 {
+			sg.releasetime = cputicks()
+		}
+		gp := sg.g
+		gp.param = nil
+		if raceenabled {
+			raceacquireg(gp, unsafe.Pointer(c))
+		}
+		gp.schedlink.set(glist)
+		glist = gp
+	}
+
+	// release all writers (they will panic)
+	for {
+		sg := c.sendq.dequeue()
+		if sg == nil {
+			break
+		}
+		sg.elem = nil
+		if sg.releasetime != 0 {
+			sg.releasetime = cputicks()
+		}
+		gp := sg.g
+		gp.param = nil
+		if raceenabled {
+			raceacquireg(gp, unsafe.Pointer(c))
+		}
+		gp.schedlink.set(glist)
+		glist = gp
+	}
+	unlock(&amp;c.lock)
+
+	// Ready all Gs now that we've dropped the channel lock.
+	for glist != nil {
+		gp := glist
+		glist = glist.schedlink.ptr()
+		gp.schedlink = 0
+		goready(gp, 3)
+	}
+}
+</code></pre>
+
+<p>理解</p>
+
+<pre><code>如果通道已经被关闭再次关闭会panic
+
+清空阻塞在recvq队列中的goroutine;
+
+清空阻塞在sendq队列中的gorountine;
+</code></pre>
+
+<p>实现方式是:以for循环的方式遍历这上述两种队列,然后把所有的gorountine放在glist里面，然后调用gready唤醒这里面的gorountine。</p>
+
+<h3 id="总结">总结<a href="#总结" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<p>channel其实是一个加锁的队列.使用锁保护好hchan中的数据同步,这个锁比较轻量级。其中 recvq 是读操作阻塞在 channel 的 goroutine 列表，sendq 是写操作阻塞在 channel 的 goroutine 列表。列表的实现是 sudog，其实就是一个对 g 的结构的封装。</p>
+
+<blockquote>
+<p>关于锁:</p>
+</blockquote>
+
+<p>锁的实现是:先自选,超时使用型号量。因为锁的内部实现是自旋锁,如果超时就使用信号量,自旋锁之所以轻量级是因为他在短时间空转并不会让出时间片,所以不会引起上下文切换。
+参考及推荐链接:</p>
+
+<p><a href="http://legendtkl.com/2017/08/06/golang-channel-implement/">Go Channel 源码剖析</a></p>
+
+<p><a href="http://www.opscoder.info/golang_channel.html">深入Golang之channel</a></p>
+
+<p>Golang版本</p>
+
+<pre><code>➜  ~ go version
+go version go1.10 darwin/amd64
+</code></pre>
+
+			</div>
+			<hr class="post-end">
+			<footer class="post-info">
+				<p>
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/go">go</a></span>
+				</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>826 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2018-04-12 22:22 &#43;0800</p>
+			</footer>
+		</article>
+		<div class="post-nav thin">
+			<a class="next-post" href="https://yulibaozi.com/posts/go/knowledge/2018-04-12-go-pprof/">
+				<span class="post-nav-label"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-left"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>&nbsp;Newer</span><br><span>Go性能测试手册</span>
+			</a>
+			<a class="prev-post" href="https://yulibaozi.com/posts/go/knowledge/2018-03-26-go-and-websocket/">
+				<span class="post-nav-label">Older&nbsp;<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-arrow-right"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></span><br><span>Golang的websocket开发与实践</span>
+			</a>
+		</div>
+		<div id="comments" class="thin">
+						<script src="https://utteranc.es/client.js"
+							repo="yulibaozi/blog"
+							issue-term="pathname"
+							theme="github-light"
+							crossorigin="anonymous"
+							async>
+			</script>
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>
