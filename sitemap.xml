@@ -57,34 +57,13 @@
   </url>
   
   <url>
-    <loc>https://yulibaozi.com/tags/go/</loc>
-    <lastmod>2019-09-02T12:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://yulibaozi.com/posts/go/tools/2019-09-02-godebug-gc/</loc>
-    <lastmod>2019-09-02T12:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://yulibaozi.com/posts/kubernetes/extend/2019-01-11-incluster-use-kubernetes/</loc>
     <lastmod>2019-08-21T20:33:22+08:00</lastmod>
   </url>
   
   <url>
-    <loc>https://yulibaozi.com/posts/go/tools/2019-08-19-godebug-sched/</loc>
-    <lastmod>2019-08-19T12:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://yulibaozi.com/posts/kubernetes/extend/2019-07-23-deployment-vs-statefulset/</loc>
     <lastmod>2019-07-23T20:36:50+08:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://yulibaozi.com/posts/go/tools/2019-07-12-go-tool-trace/</loc>
-    <lastmod>2019-07-12T12:00:00+00:00</lastmod>
   </url>
   
   <url>
@@ -98,13 +77,14 @@
   </url>
   
   <url>
-    <loc>https://yulibaozi.com/posts/kubernetes/deploy/2018-09-06-k8s-ceph-mysql-master-slave/</loc>
-    <lastmod>2018-09-16T01:03:46+08:00</lastmod>
+    <loc>https://yulibaozi.com/tags/go/</loc>
+    <lastmod>2018-09-24T22:19:50+08:00</lastmod>
+    <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://yulibaozi.com/posts/go/tools/2018-09-15-go-tool-pprof/</loc>
-    <lastmod>2018-09-15T12:00:00+00:00</lastmod>
+    <loc>https://yulibaozi.com/posts/kubernetes/deploy/2018-09-06-k8s-ceph-mysql-master-slave/</loc>
+    <lastmod>2018-09-16T01:03:46+08:00</lastmod>
   </url>
   
   <url>
