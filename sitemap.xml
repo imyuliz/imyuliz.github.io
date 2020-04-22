@@ -52,6 +52,11 @@
   </url>
   
   <url>
+    <loc>https://yulibaozi.com/opensource/</loc>
+    <lastmod>2020-03-15T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://yulibaozi.com/posts/kubernetes/deploy/2019-12-21-fluent-bit&#43;elasticsearch&#43;kibana/</loc>
     <lastmod>2019-12-21T20:29:20+08:00</lastmod>
   </url>
@@ -241,6 +246,11 @@
   
   <url>
     <loc>https://yulibaozi.com/links/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/opensources/</loc>
     <priority>0</priority>
   </url>
   

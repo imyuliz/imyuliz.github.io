@@ -80,6 +80,17 @@ svc, err := beku.DeploymentToSvc(dp, beku.ServiceTypeNodePort, false) if err !</
     </item>
     
     <item>
+      <title>Open Source Project</title>
+      <link>https://yulibaozi.com/opensource/</link>
+      <pubDate>Sun, 15 Mar 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://yulibaozi.com/opensource/</guid>
+      <description> Beku Golang人性化Kubernetes资源对象创建库。极简，无额外心智负担。
+特性  自动发布资源对象到Kubernetes 灵活的自定义开发 极简的JSON和YAML输入/输出 自动判断资源对象的必要字段 人性化的资源对象关联发布 严谨的QOS等级设置 准确的字段自动填充 写意的链式调用  kubectl-switch kubectl-switch是一个kubernetes命令行工具插件,它做的事情非常简单,即:你可以在一台计算机上可以操作多个kubernetes集群.
+特性  kubectl 命令插件化支持 远程集群管控 多集群管控自由切换 保持kubeconfig独立干净 运维利器  </description>
+    </item>
+    
+    <item>
       <title>收集kubernetes控制台日志及元数据(fluent-bit&#43;elasticsearch&#43;kibana搭建)</title>
       <link>https://yulibaozi.com/posts/kubernetes/deploy/2019-12-21-fluent-bit&#43;elasticsearch&#43;kibana/</link>
       <pubDate>Sat, 21 Dec 2019 20:29:20 +0800</pubDate>
@@ -144,24 +155,6 @@ If an application doesn’t require any stable identifiers or ordered deployment
 到这里，我们看似发现了许多的蛛丝马迹，但是细细想来，还是不清不楚，不明不白,是时候读源码了。
 探索二（源码探索） 注意:会删除一些无关代码
 源码位于:github.com/kubernetes/kubernetes/pkg/controller/cronjob/cronjob_controller.go  回答问题：cronjob和job是如何维护关系的呢？ // syncAll lists all the CronJobs and Jobs and reconciles them. func (jm *CronJobController) syncAll() { ...... //列出所有的job jl, err := jm.kubeClient.BatchV1().Jobs(metav1.NamespaceAll).List(metav1.ListOptions{}) if err != nil { utilruntime.</description>
-    </item>
-    
-    <item>
-      <title>Golang json 的进阶用法</title>
-      <link>https://yulibaozi.com/posts/go/knowledge/2018-09-24-go-and-json/</link>
-      <pubDate>Mon, 24 Sep 2018 22:19:50 +0800</pubDate>
-      
-      <guid>https://yulibaozi.com/posts/go/knowledge/2018-09-24-go-and-json/</guid>
-      <description>Golang json 的进阶用法 痛点  你是否遇到过json中某个字段填入某种类型都适合而陷入两难境地? (例如：定义了一个port字段，你却不知道是填入8080,还是** &amp;ldquo;8080&amp;rdquo; **的尴尬局面) 你是否遇到过json反解析报错是因为填入字段的类型不匹配导致的？例如：
-json: cannot unmarshal number into Go struct field Host.port of type string  你是否有json某字段兼容2种或者多种的数据结构的需求?
- 你是否想让程序更优雅，更具有适配性，而不在被这些小细节头痛？
-  如果你有或者你想，获取你可以看看这篇文章。
-重现问题 我们给了用户一个json如下：
-{ &amp;quot;name&amp;quot;:&amp;quot;yulibaozi&amp;quot;, &amp;quot;port&amp;quot;:8080 }  但是，业务方却误填了&amp;rdquo;8080&amp;rdquo;,结果我们程序反解析报错，导致业务失败。
-json: cannot unmarshal number into Go struct field Host2.port of type string  或许你认为这是业务方的问题，但我认为我们可以更优雅的解决这个问题。
-如何解决问题 我们先定义了一个结构体
-type Host struct { Name string `json:&amp;quot;name&amp;quot;` Port Port `json:&amp;quot;port&amp;quot;` }  心细的你会发现，Port既不是int也不是string类型，而是Port类型，而Port类型是：
-type Type int const ( Int Type = iota String ) type Port struct { Type Type IntVal int StrVal string }  在Port结构体中，我们发现了Type类型， 而Type类型包括了int,string两种类型。接下来就非常重要了，我们需要实现</description>
     </item>
     
   </channel>
