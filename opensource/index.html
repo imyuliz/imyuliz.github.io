@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-hans">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<meta name="theme-color" content="#494f5c">
+	<meta name="msapplication-TileColor" content="#494f5c">
+
+<meta itemprop="name" content="Open Source Project">
+<meta itemprop="description" content=" Beku Golang人性化Kubernetes资源对象创建库。极简，无额外心智负担。
+特性  自动发布资源对象到Kubernetes 灵活的自定义开发 极简的JSON和YAML输入/输出 自动判断资源对象的必要字段 人性化的资源对象关联发布 严谨的QOS等级设置 准确的字段自动填充 写意的链式调用  kubectl-switch kubectl-switch是一个kubernetes命令行工具插件,它做的事情非常简单,即:你可以在一台计算机上可以操作多个kubernetes集群.
+特性  kubectl 命令插件化支持 远程集群管控 多集群管控自由切换 保持kubeconfig独立干净 运维利器  ">
+
+
+<meta itemprop="datePublished" content="2020-03-15T00:00:00&#43;00:00" />
+<meta itemprop="dateModified" content="2020-03-15T00:00:00&#43;00:00" />
+<meta itemprop="wordCount" content="20">
+
+
+
+<meta itemprop="keywords" content="" />
+<meta property="og:title" content="Open Source Project" />
+<meta property="og:description" content=" Beku Golang人性化Kubernetes资源对象创建库。极简，无额外心智负担。
+特性  自动发布资源对象到Kubernetes 灵活的自定义开发 极简的JSON和YAML输入/输出 自动判断资源对象的必要字段 人性化的资源对象关联发布 严谨的QOS等级设置 准确的字段自动填充 写意的链式调用  kubectl-switch kubectl-switch是一个kubernetes命令行工具插件,它做的事情非常简单,即:你可以在一台计算机上可以操作多个kubernetes集群.
+特性  kubectl 命令插件化支持 远程集群管控 多集群管控自由切换 保持kubeconfig独立干净 运维利器  " />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://yulibaozi.com/opensource/" />
+<meta property="article:published_time" content="2020-03-15T00:00:00&#43;00:00"/>
+<meta property="article:modified_time" content="2020-03-15T00:00:00&#43;00:00"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Open Source Project"/>
+<meta name="twitter:description" content=" Beku Golang人性化Kubernetes资源对象创建库。极简，无额外心智负担。
+特性  自动发布资源对象到Kubernetes 灵活的自定义开发 极简的JSON和YAML输入/输出 自动判断资源对象的必要字段 人性化的资源对象关联发布 严谨的QOS等级设置 准确的字段自动填充 写意的链式调用  kubectl-switch kubectl-switch是一个kubernetes命令行工具插件,它做的事情非常简单,即:你可以在一台计算机上可以操作多个kubernetes集群.
+特性  kubectl 命令插件化支持 远程集群管控 多集群管控自由切换 保持kubeconfig独立干净 运维利器  "/>
+
+	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+	<link rel="manifest" href="/site.webmanifest">
+	<link rel="mask-icon" href="/safari-pinned-tab.svg" color="">
+	<link rel="shortcut icon" href="/favicon.ico">
+
+	<title>Open Source Project</title>
+	<link rel="stylesheet" href="https://yulibaozi.com/css/style.min.f2a045eb7f51332133e15e6ab816df1a2983a3824432b3f3831a93971a8f06b0.css">
+	
+</head>
+
+<body id="page">
+	
+	<header id="site-header" class="animated slideInUp faster">
+		<div class="hdr-wrapper section-inner">
+			<div class="hdr-left">
+				<div class="site-branding">
+					<a href="https://yulibaozi.com">yulibaozi</a>
+				</div>
+				<nav class="site-nav hide-in-mobile">
+					<a href="https://yulibaozi.com/posts/">Posts</a>
+					<a href="https://yulibaozi.com/tags/">Tags</a>
+					<a href="https://yulibaozi.com/opensource/">Opensources</a>
+					<a href="https://yulibaozi.com/link/">Links</a>
+					<a href="https://yulibaozi.com/about/">About</a>
+				</nav>
+			</div>
+			<div class="hdr-right hdr-icons">
+				<span class="hdr-social hide-in-mobile"><a href="https://github.com/yulibaozi" target="_blank" rel="noopener me" title="Github"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg></a></span><button id="menu-btn" class="hdr-btn" title="Menu"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-menu"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg></button>
+			</div>
+		</div>
+	</header>
+	<div id="mobile-menu" class="animated fast">
+		<ul>
+			<li><a href="https://yulibaozi.com/posts/">Posts</a></li>
+			<li><a href="https://yulibaozi.com/tags/">Tags</a></li>
+			<li><a href="https://yulibaozi.com/opensource/">Opensources</a></li>
+			<li><a href="https://yulibaozi.com/link/">Links</a></li>
+			<li><a href="https://yulibaozi.com/about/">About</a></li>
+		</ul>
+	</div>
+
+
+	<main class="site-main section-inner thin animated fadeIn faster">
+		<h1>Open Source Project</h1>
+		<div class="content">
+			
+
+<h2 id="beku-https-github-com-yulibaozi-beku"><a href="https://github.com/yulibaozi/beku">Beku</a><a href="#beku-https-github-com-yulibaozi-beku" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<p>Golang人性化Kubernetes资源对象创建库。极简，无额外心智负担。</p>
+
+<h3 id="特性">特性<a href="#特性" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ul>
+<li>自动发布资源对象到Kubernetes</li>
+<li>灵活的自定义开发</li>
+<li>极简的JSON和YAML输入/输出</li>
+<li>自动判断资源对象的必要字段</li>
+<li>人性化的资源对象关联发布</li>
+<li>严谨的QOS等级设置</li>
+<li>准确的字段自动填充</li>
+<li>写意的链式调用</li>
+</ul>
+
+<h2 id="kubectl-switch-https-github-com-yulibaozi-kubectl-switch"><a href="https://github.com/yulibaozi/kubectl-switch">kubectl-switch</a><a href="#kubectl-switch-https-github-com-yulibaozi-kubectl-switch" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
+
+<p>kubectl-switch是一个kubernetes命令行工具插件,它做的事情非常简单,即:你可以在一台计算机上可以操作多个kubernetes集群.</p>
+
+<h3 id="特性-1">特性<a href="#特性-1" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h3>
+
+<ul>
+<li><code>kubectl</code> 命令插件化支持</li>
+<li>远程集群管控</li>
+<li>多集群管控自由切换</li>
+<li>保持<code>kubeconfig</code>独立干净</li>
+<li>运维利器</li>
+</ul>
+
+		</div>
+	</main>
+
+	<footer id="site-footer" class="section-inner thin animated fadeIn faster">
+		<p>&copy; 2018 - 2020 <a href="https://yulibaozi.com">yulibaozi</a> &#183; <a href="http://www.beian.miit.gov.cn/">蜀ICP备16012985号</a></p>
+		<p>
+			Made with <a href="https://gohugo.io/" target="_blank" rel="noopener">Hugo</a> &#183; Theme <a href="https://github.com/Track3/hermit" target="_blank" rel="noopener">Hermit</a> &#183; <a href="https://yulibaozi.com/post/index.xml" target="_blank" title="rss"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-rss"><path d="M4 11a9 9 0 0 1 9 9"></path><path d="M4 4a16 16 0 0 1 16 16"></path><circle cx="5" cy="19" r="1"></circle></svg></a>
+		</p>
+	</footer>
+
+
+	<script src="https://yulibaozi.com/js/main.min.784417f5847151f848c339cf0acb13a06cbb648b1483435a28ed4556c4ead69b.js"></script>
+
+</body>
+
+</html>
