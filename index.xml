@@ -85,9 +85,9 @@ svc, err := beku.DeploymentToSvc(dp, beku.ServiceTypeNodePort, false) if err !</
       <pubDate>Sun, 15 Mar 2020 00:00:00 +0000</pubDate>
       
       <guid>https://yulibaozi.com/opensource/</guid>
-      <description> Beku Golang人性化Kubernetes资源对象创建库。极简，无额外心智负担。
+      <description> beku Golang人性化Kubernetes资源对象创建库。极简，无额外心智负担。
 特性  自动发布资源对象到Kubernetes 灵活的自定义开发 极简的JSON和YAML输入/输出 自动判断资源对象的必要字段 人性化的资源对象关联发布 严谨的QOS等级设置 准确的字段自动填充 写意的链式调用  kubectl-switch kubectl-switch是一个kubernetes命令行工具插件,它做的事情非常简单,即:你可以在一台计算机上可以操作多个kubernetes集群.
-特性  kubectl 命令插件化支持 远程集群管控 多集群管控自由切换 保持kubeconfig独立干净 运维利器  </description>
+特性  kubectl 命令插件化支持 多集群管控自由切换 远程集群管控 保持kubeconfig独立干净 运维利器 生产可用  </description>
     </item>
     
     <item>
