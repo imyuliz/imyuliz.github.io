@@ -126,7 +126,7 @@ func main() { conf, err := rest.InClusterConfig() if err != nil { log.Fatalf(&qu
 <h4 id="幡然醒悟">幡然醒悟<a href="#幡然醒悟" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h4>
 
 <p>看吧，伟大的程序想要运行起来总是饱经风霜，kube-apiserver访问控制导致的权限不足的问题自然而然的就呈现出来。这个时候，不！要！慌！咱们需要理清kubernetes的RBAC访问控制规则和使用关系:
-<img src="http://note.youdao.com/yws/res/7795/8D32B4094BB74677AFDE731726DA0812" alt="image" /></p>
+<img src="http://arts.yulibaozi.com/image.png" alt="image" /></p>
 
 <p>如上图所示，大体分成两部分，左边椭圆是角色，右边椭圆是用户和用户组，统称为使用者。中间的两条连接线作为绑定关系。为什么上图会画成这样，是因为RBAC本质就是角色赋权，然后使用者绑定角色，进而让使用者具有相应的权限，上图的大体分析到此。</p>
 
