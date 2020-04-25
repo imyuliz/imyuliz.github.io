@@ -3,32 +3,37 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://yulibaozi.com/posts/kubernetes/knowledge/2019-06-24-advanced-scheduling/</loc>
-    <lastmod>2020-04-21T20:47:34+08:00</lastmod>
+    <loc>https://yulibaozi.com/posts/kubernetes/knowledge/2020-04-25-dotnet-configuration-auto-reload/</loc>
+    <lastmod>2020-04-25T20:04:44+08:00</lastmod>
   </url>
   
   <url>
     <loc>https://yulibaozi.com/posts/</loc>
-    <lastmod>2020-04-21T20:47:34+08:00</lastmod>
+    <lastmod>2020-04-25T20:04:44+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://yulibaozi.com/tags/</loc>
-    <lastmod>2020-04-21T20:47:34+08:00</lastmod>
+    <lastmod>2020-04-25T20:04:44+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://yulibaozi.com/tags/kubernetes/</loc>
-    <lastmod>2020-04-21T20:47:34+08:00</lastmod>
+    <lastmod>2020-04-25T20:04:44+08:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://yulibaozi.com/</loc>
-    <lastmod>2020-04-21T20:47:34+08:00</lastmod>
+    <lastmod>2020-04-25T20:04:44+08:00</lastmod>
     <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://yulibaozi.com/posts/kubernetes/knowledge/2019-06-24-advanced-scheduling/</loc>
+    <lastmod>2020-04-21T20:47:34+08:00</lastmod>
   </url>
   
   <url>

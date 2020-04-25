@@ -7,10 +7,22 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>zh-hans</language>
     <copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright>
-    <lastBuildDate>Tue, 21 Apr 2020 20:47:34 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 25 Apr 2020 20:04:44 +0800</lastBuildDate>
     
 	<atom:link href="https://yulibaozi.com/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>.Net 配置文件在Kubernetes中无法自动加载</title>
+      <link>https://yulibaozi.com/posts/kubernetes/knowledge/2020-04-25-dotnet-configuration-auto-reload/</link>
+      <pubDate>Sat, 25 Apr 2020 20:04:44 +0800</pubDate>
+      
+      <guid>https://yulibaozi.com/posts/kubernetes/knowledge/2020-04-25-dotnet-configuration-auto-reload/</guid>
+      <description>问题描述 在使用 kubernetes 部署应用时, 我使用 kubernetes 的 configmap 来管理配置文件: appsettings.json , 修改configmap 的配置文件后, 我来到了容器里, 通过 cat /app/config/appsetting.json 命令查看容器是否已经加载了最新的配置文件, 很幸运的是, 通过命令行查看容器配置发现已经处于最新状态(修改configmap后10-15s 生效), 我尝试请求应用的API, 发现API 在执行过程中使用的配置是老旧的内容, 而不是最新的内容。在本地执行应用时并未出现配置无法热更新的问题。
+# 相关版本 kubernetes 版本: 1.14.2 dotNet core: 3.1  问题猜想 通过命令行排查发现最新的 configmap 配置内容已经在容器的指定目录上更新到最新，但是应用仍然使用老旧的配置内容, 这意味着问题发生在: configmap-&amp;gt;容器-&amp;gt;应用, 容器和应用之间, 容器指定目录下的配置更新并没有触发dotnet 热加载机制, 那究竟是为什么没有触发配置热加载,需要深挖根本原因, 直觉猜想是: 查看 .netcore 标准库的配置热加载的实现检查触发条件, 很有可能是触发的条件不满足导致应用配置无法重新加载。
+问题排查 猜想方向是热更新的触发条件不满足, 我们熟知使用configmap挂载文件是使用symlink来挂载, 而非常用的物理文件系统, 在修改完configmap, 容器重新加载配置后,这一过程并不会改变文件的修改时间等信息(从容器的角度看)。对此，我们做了一个实验,通过对比configmap修改前和修改后来观察配置(appsettings.json)在容器的属性变化(注: 均在容器加载最新配置后对比), 使用 stat 命令来佐证了这个细节点。
+ BeforeAfter     root@app-785bc59df6-gdmnf:/app/Config# stat appsettings.json File: Config/appsettings.</description>
+    </item>
     
     <item>
       <title>Kubernetes高级调度- Taint和Toleration、Node Affinity分析</title>
@@ -133,28 +145,6 @@ func main() { conf, err := rest.InClusterConfig() if err != nil { log.Fatalf(&am
 If an application doesn’t require any stable identifiers or ordered deployment, deletion, or scaling, you should deploy your application with a controller that provides a set of stateless replicas. Controllers such as Deployment or Replica Set may be better suited to your stateless needs.
 上面已经说明了StatefulSet和stateless replicas之间的区别,接下来,我们仔细看看:
    Deployment StatefulSet     可以扩展更多的副本集(ReplicaSet/RS)以支持更大的负载 有序,优雅的部署和扩展(缩放)   滚动更新是根据Deployment中的PodTemplateSpec配置完成的;当一个新的ReplicaSet(RS)被新建时，Deployment会以指定的速率将Pod从旧的RS升级到新的RS,直到更新完成 有序,自动滚动更新   回滚:可以回滚到上一个/更早的版本 没有回滚,只有删除和缩小副本数   有独立的网络服务 StatefulSets目前要求Headless Service负责Pod在网络中的唯一身份    从上面的表格可以非常有底气的假设两者之间最大的区别在于网络服务的要求和StatefulSet的持久化存的储示例文档。但是,眼睛看到的不一定就是全部。</description>
-    </item>
-    
-    <item>
-      <title>CronJob 原理和源码分析</title>
-      <link>https://yulibaozi.com/posts/kubernetes/extend/2019-04-23-cronjob/</link>
-      <pubDate>Sun, 21 Apr 2019 20:35:24 +0800</pubDate>
-      
-      <guid>https://yulibaozi.com/posts/kubernetes/extend/2019-04-23-cronjob/</guid>
-      <description>CronJob是Kubernetes提供的定时任务功能，CronJob可以根据你指定的cron策略来完成任务。  我们在使用CronJob的时候，我们发现，当创建一个CronJob的时候，只会创建一个CronJob，当到指定时间时，会创建一个job和一个pod,随着时间的推移，我们会发现，越来越多的job和pod，甚至是满屏的job和pod，我们在调用API删除这个cronjob的时候，发现只会删除cronjob这个资源，而不会删除对应的已有的job和pod，然后，我们尝试删除job，发现删除job，会把对应的pod删除掉，为什么好多的操作不符合心理预期呢？心里冒着十万个为什么
-迷雾沼泽  cronjob是怎么定时创建job的呢？
- 为什么删除的时候，只是删除了cronjob，而没有删除对应的job和pod呢？
- cronjob、job和pod之间的关系是怎么样的呢？
- job和pod的关系是怎么对应上的呢？
-  探索一(从命令行结果开始探索)  kubectl describe cronjob hello
- 我们看到上图的Events，看到了cronjob-controller,且Message 里面创建了job，我们猜测是cronjob通过controller-manager下的cronjob-controller来实现对job的创建工作
- kubectl describe job jobname
- 我们看到这个job是被CronJob/hello创建，而并非我们上文猜测的cronjob-controller,但是想来应该存在某种关系的，然后看到下面的Events,我们看到通过job-controller创建了pod.
- kubectl describe pod podname
- 看到这个pod是由job/hello-1528459440创建,似乎和上文猜测的job-controller看上去并无直接关系。
-到这里，我们看似发现了许多的蛛丝马迹，但是细细想来，还是不清不楚，不明不白,是时候读源码了。
-探索二（源码探索） 注意:会删除一些无关代码
-源码位于:github.com/kubernetes/kubernetes/pkg/controller/cronjob/cronjob_controller.go  回答问题：cronjob和job是如何维护关系的呢？ // syncAll lists all the CronJobs and Jobs and reconciles them. func (jm *CronJobController) syncAll() { ...... //列出所有的job jl, err := jm.kubeClient.BatchV1().Jobs(metav1.NamespaceAll).List(metav1.ListOptions{}) if err != nil { utilruntime.</description>
     </item>
     
   </channel>
