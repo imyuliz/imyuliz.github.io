@@ -10,23 +10,23 @@
 
 <meta itemprop="name" content=".Net 配置文件在Kubernetes中无法自动加载">
 <meta itemprop="description" content="问题描述 在使用 kubernetes 部署应用时, 我使用 kubernetes 的 configmap 来管理配置文件: appsettings.json , 修改configmap 的配置文件后, 我来到了容器里, 通过 cat /app/config/appsetting.json 命令查看容器是否已经加载了最新的配置文件, 很幸运的是, 通过命令行查看容器配置发现已经处于最新状态(修改configmap后10-15s 生效), 我尝试请求应用的API, 发现API 在执行过程中使用的配置是老旧的内容, 而不是最新的内容。在本地执行应用时并未出现配置无法热更新的问题。
-# 相关版本 kubernetes 版本: 1.14.2 dotNet core: 3.1  问题猜想 通过命令行排查发现最新的 configmap 配置内容已经在容器的指定目录上更新到最新，但是应用仍然使用老旧的配置内容, 这意味着问题发生在: configmap-&gt;容器-&gt;应用, 容器和应用之间, 容器指定目录下的配置更新并没有触发dotnet 热加载机制, 那究竟是为什么没有触发配置热加载,需要深挖根本原因, 直觉猜想是: 查看 .netcore 标准库的配置热加载的实现检查触发条件, 很有可能是触发的条件不满足导致应用配置无法重新加载。
-问题排查 猜想方向是热更新的触发条件不满足, 我们熟知使用configmap挂载文件是使用symlink来挂载, 而非常用的物理文件系统, 在修改完configmap, 容器重新加载配置后,这一过程并不会改变文件的修改时间等信息(从容器的角度看)。对此，我们做了一个实验,通过对比configmap修改前和修改后来观察配置(appsettings.json)在容器的属性变化(注: 均在容器加载最新配置后对比), 使用 stat 命令来佐证了这个细节点。
- BeforeAfter     root@app-785bc59df6-gdmnf:/app/Config# stat appsettings.json File: Config/appsettings.">
+# 相关版本 kubernetes 版本: 1.14.2 .Net core: 3.1  问题猜想 通过命令行排查发现最新的 configmap 配置内容已经在容器的指定目录上更新到最新，但是应用仍然使用老旧的配置内容, 这意味着问题发生在: configmap-&gt;容器-&gt;应用, 容器和应用之间, 容器指定目录下的配置更新并没有触发 .Net 热加载机制, 那究竟是为什么没有触发配置热加载,需要深挖根本原因, 直觉猜想是: 查看 .Net Core 标准库的配置热加载的实现检查触发条件, 很有可能是触发的条件不满足导致应用配置无法重新加载。
+问题排查 猜想方向是热更新的触发条件不满足, 我们熟知使用 configmap 挂载文件是使用symlink来挂载, 而非常用的物理文件系统, 在修改完 configmap , 容器重新加载配置后,这一过程并不会改变文件的修改时间等信息(从容器的角度看)。对此，我们做了一个实验,通过对比configmap修改前和修改后来观察配置( appsettings.json )在容器的属性变化(注: 均在容器加载最新配置后对比), 使用 stat 命令来佐证了这个细节点。
+ BeforeAfter     root@app-785bc59df6-gdmnf:/app/Config# stat appsettings.">
 
 
 <meta itemprop="datePublished" content="2020-04-25T20:04:44&#43;08:00" />
 <meta itemprop="dateModified" content="2020-04-25T20:04:44&#43;08:00" />
-<meta itemprop="wordCount" content="259">
+<meta itemprop="wordCount" content="263">
 
 
 
 <meta itemprop="keywords" content="kubernetes," />
 <meta property="og:title" content=".Net 配置文件在Kubernetes中无法自动加载" />
 <meta property="og:description" content="问题描述 在使用 kubernetes 部署应用时, 我使用 kubernetes 的 configmap 来管理配置文件: appsettings.json , 修改configmap 的配置文件后, 我来到了容器里, 通过 cat /app/config/appsetting.json 命令查看容器是否已经加载了最新的配置文件, 很幸运的是, 通过命令行查看容器配置发现已经处于最新状态(修改configmap后10-15s 生效), 我尝试请求应用的API, 发现API 在执行过程中使用的配置是老旧的内容, 而不是最新的内容。在本地执行应用时并未出现配置无法热更新的问题。
-# 相关版本 kubernetes 版本: 1.14.2 dotNet core: 3.1  问题猜想 通过命令行排查发现最新的 configmap 配置内容已经在容器的指定目录上更新到最新，但是应用仍然使用老旧的配置内容, 这意味着问题发生在: configmap-&gt;容器-&gt;应用, 容器和应用之间, 容器指定目录下的配置更新并没有触发dotnet 热加载机制, 那究竟是为什么没有触发配置热加载,需要深挖根本原因, 直觉猜想是: 查看 .netcore 标准库的配置热加载的实现检查触发条件, 很有可能是触发的条件不满足导致应用配置无法重新加载。
-问题排查 猜想方向是热更新的触发条件不满足, 我们熟知使用configmap挂载文件是使用symlink来挂载, 而非常用的物理文件系统, 在修改完configmap, 容器重新加载配置后,这一过程并不会改变文件的修改时间等信息(从容器的角度看)。对此，我们做了一个实验,通过对比configmap修改前和修改后来观察配置(appsettings.json)在容器的属性变化(注: 均在容器加载最新配置后对比), 使用 stat 命令来佐证了这个细节点。
- BeforeAfter     root@app-785bc59df6-gdmnf:/app/Config# stat appsettings.json File: Config/appsettings." />
+# 相关版本 kubernetes 版本: 1.14.2 .Net core: 3.1  问题猜想 通过命令行排查发现最新的 configmap 配置内容已经在容器的指定目录上更新到最新，但是应用仍然使用老旧的配置内容, 这意味着问题发生在: configmap-&gt;容器-&gt;应用, 容器和应用之间, 容器指定目录下的配置更新并没有触发 .Net 热加载机制, 那究竟是为什么没有触发配置热加载,需要深挖根本原因, 直觉猜想是: 查看 .Net Core 标准库的配置热加载的实现检查触发条件, 很有可能是触发的条件不满足导致应用配置无法重新加载。
+问题排查 猜想方向是热更新的触发条件不满足, 我们熟知使用 configmap 挂载文件是使用symlink来挂载, 而非常用的物理文件系统, 在修改完 configmap , 容器重新加载配置后,这一过程并不会改变文件的修改时间等信息(从容器的角度看)。对此，我们做了一个实验,通过对比configmap修改前和修改后来观察配置( appsettings.json )在容器的属性变化(注: 均在容器加载最新配置后对比), 使用 stat 命令来佐证了这个细节点。
+ BeforeAfter     root@app-785bc59df6-gdmnf:/app/Config# stat appsettings." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://yulibaozi.com/posts/kubernetes/knowledge/2020-04-25-dotnet-configuration-auto-reload/" />
 <meta property="article:published_time" content="2020-04-25T20:04:44&#43;08:00"/>
@@ -34,9 +34,9 @@
 <meta name="twitter:card" content="summary"/>
 <meta name="twitter:title" content=".Net 配置文件在Kubernetes中无法自动加载"/>
 <meta name="twitter:description" content="问题描述 在使用 kubernetes 部署应用时, 我使用 kubernetes 的 configmap 来管理配置文件: appsettings.json , 修改configmap 的配置文件后, 我来到了容器里, 通过 cat /app/config/appsetting.json 命令查看容器是否已经加载了最新的配置文件, 很幸运的是, 通过命令行查看容器配置发现已经处于最新状态(修改configmap后10-15s 生效), 我尝试请求应用的API, 发现API 在执行过程中使用的配置是老旧的内容, 而不是最新的内容。在本地执行应用时并未出现配置无法热更新的问题。
-# 相关版本 kubernetes 版本: 1.14.2 dotNet core: 3.1  问题猜想 通过命令行排查发现最新的 configmap 配置内容已经在容器的指定目录上更新到最新，但是应用仍然使用老旧的配置内容, 这意味着问题发生在: configmap-&gt;容器-&gt;应用, 容器和应用之间, 容器指定目录下的配置更新并没有触发dotnet 热加载机制, 那究竟是为什么没有触发配置热加载,需要深挖根本原因, 直觉猜想是: 查看 .netcore 标准库的配置热加载的实现检查触发条件, 很有可能是触发的条件不满足导致应用配置无法重新加载。
-问题排查 猜想方向是热更新的触发条件不满足, 我们熟知使用configmap挂载文件是使用symlink来挂载, 而非常用的物理文件系统, 在修改完configmap, 容器重新加载配置后,这一过程并不会改变文件的修改时间等信息(从容器的角度看)。对此，我们做了一个实验,通过对比configmap修改前和修改后来观察配置(appsettings.json)在容器的属性变化(注: 均在容器加载最新配置后对比), 使用 stat 命令来佐证了这个细节点。
- BeforeAfter     root@app-785bc59df6-gdmnf:/app/Config# stat appsettings.json File: Config/appsettings."/>
+# 相关版本 kubernetes 版本: 1.14.2 .Net core: 3.1  问题猜想 通过命令行排查发现最新的 configmap 配置内容已经在容器的指定目录上更新到最新，但是应用仍然使用老旧的配置内容, 这意味着问题发生在: configmap-&gt;容器-&gt;应用, 容器和应用之间, 容器指定目录下的配置更新并没有触发 .Net 热加载机制, 那究竟是为什么没有触发配置热加载,需要深挖根本原因, 直觉猜想是: 查看 .Net Core 标准库的配置热加载的实现检查触发条件, 很有可能是触发的条件不满足导致应用配置无法重新加载。
+问题排查 猜想方向是热更新的触发条件不满足, 我们熟知使用 configmap 挂载文件是使用symlink来挂载, 而非常用的物理文件系统, 在修改完 configmap , 容器重新加载配置后,这一过程并不会改变文件的修改时间等信息(从容器的角度看)。对此，我们做了一个实验,通过对比configmap修改前和修改后来观察配置( appsettings.json )在容器的属性变化(注: 均在容器加载最新配置后对比), 使用 stat 命令来佐证了这个细节点。
+ BeforeAfter     root@app-785bc59df6-gdmnf:/app/Config# stat appsettings."/>
 
 	<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
 	<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -98,16 +98,16 @@
 
 <pre><code># 相关版本
 kubernetes 版本: 1.14.2
-dotNet core: 3.1
+.Net core: 3.1
 </code></pre>
 
 <h2 id="问题猜想">问题猜想<a href="#问题猜想" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 
-<p>通过命令行排查发现最新的 <code>configmap</code> 配置内容已经在容器的指定目录上更新到最新，但是应用仍然使用老旧的配置内容, 这意味着问题发生在: configmap-&gt;<strong>容器-&gt;应用</strong>, 容器和应用之间, 容器指定目录下的配置更新并没有触发dotnet 热加载机制,  那究竟是为什么没有触发配置热加载,需要深挖根本原因, 直觉猜想是: 查看 .netcore 标准库的配置热加载的实现检查触发条件, 很有可能是触发的条件不满足导致应用配置无法重新加载。</p>
+<p>通过命令行排查发现最新的 <code>configmap</code> 配置内容已经在容器的指定目录上更新到最新，但是应用仍然使用老旧的配置内容, 这意味着问题发生在: configmap-&gt;<strong>容器-&gt;应用</strong>, 容器和应用之间, 容器指定目录下的配置更新并没有触发 <code>.Net</code> 热加载机制,  那究竟是为什么没有触发配置热加载,需要深挖根本原因, 直觉猜想是: 查看 <code>.Net Core</code> 标准库的配置热加载的实现检查触发条件, 很有可能是触发的条件不满足导致应用配置无法重新加载。</p>
 
 <h2 id="问题排查">问题排查<a href="#问题排查" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 
-<p>猜想方向是热更新的触发条件不满足, 我们熟知使用configmap挂载文件是使用<a href="https://en.wikipedia.org/wiki/Symbolic_link">symlink</a>来挂载, 而非常用的物理文件系统, 在修改完configmap, 容器重新加载配置后,这一过程并不会改变文件的修改时间等信息(从容器的角度看)。对此，我们做了一个实验,通过对比configmap修改前和修改后来观察配置(appsettings.json)在容器的属性变化(注: 均在容器加载最新配置后对比), 使用 stat  命令来佐证了这个细节点。</p>
+<p>猜想方向是热更新的触发条件不满足, 我们熟知使用 <code>configmap</code> 挂载文件是使用<a href="https://en.wikipedia.org/wiki/Symbolic_link">symlink</a>来挂载, 而非常用的物理文件系统, 在修改完 <code>configmap</code> , 容器重新加载配置后,这一过程并不会改变文件的修改时间等信息(从容器的角度看)。对此，我们做了一个实验,通过对比configmap修改前和修改后来观察配置( <code>appsettings.json</code> )在容器的属性变化(注: 均在容器加载最新配置后对比), 使用 <code>stat</code>  命令来佐证了这个细节点。</p>
 
 <table>
 <thead><tr><th>Before</th><th>After</th></tr></thead>
@@ -145,7 +145,7 @@ Birth: -
 </td></tr>
 </tbody></table>
 
-<p>通过标准库源码发现, .Net core 配置热更新机制似乎是基于文件的最后修改日期来触发的, 根据上面的前后对比显而易见,  configmap的修改并没有让容器里的指定的文件的最后修改日期改变，也就未触发 .Net 应用配置的热加载。</p>
+<p>通过标准库源码发现, <code>.Net core</code> 配置热更新机制似乎是基于文件的最后修改日期来触发的, 根据上面的前后对比显而易见,  <code>configmap</code> 的修改并没有让容器里的指定的文件的最后修改日期改变，也就未触发 <code>.Net</code> 应用配置的热加载。</p>
 
 <h2 id="解决办法">解决办法<a href="#解决办法" class="anchor" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7h3a5 5 0 0 1 5 5 5 5 0 0 1-5 5h-3m-6 0H6a5 5 0 0 1-5-5 5 5 0 0 1 5-5h3"></path><line x1="8" y1="12" x2="16" y2="12"></line></svg></a></h2>
 
@@ -181,9 +181,12 @@ config.AddJsonFile(ConfigMapFileProvider.FromRelativePath("Config"),
 </td></tr>
 </tbody></table>
 
-<p>修改完项目的代码后, 重新构建镜像, 更新部署在 kubernetes 上的应用, 然后再次测试, 到此为止, 会出现两种状态:
-1. 一种是你热加载配置完全可用, 非常值得祝贺, 你已经成功修复了这个bug;
-2. 一种是你的热加载配置功能还存在bug, 比如: 上一次请求, 配置仍然使用的老旧配置内容, 下一次请求却使用了最新的配置内容,这个时候, 我们需要继续向下排查: ASP .NET Core 引入了<code>Options</code>模式，使用类来表示相关的设置组,用强类型的类来表达配置项(白话大概表述为: 代码里面有个对象对应配置里的某个字段, 配置里对应的字段更改会触发代码里对象的属性变化), 示例如下:</p>
+<p>修改完项目的代码后, 重新构建镜像, 更新部署在 <code>kubernetes</code> 上的应用, 然后再次测试, 到此为止, 会出现两种状态:</p>
+
+<ol>
+<li>一种是你热加载配置完全可用, 非常值得祝贺, 你已经成功修复了这个bug;</li>
+<li>一种是你的热加载配置功能还存在 bug, 比如: 上一次请求, 配置仍然使用的老旧配置内容, 下一次请求却使用了最新的配置内容,这个时候, 我们需要继续向下排查: <code>.NET Core</code> 引入了<code>Options</code>模式，使用类来表示相关的设置组,用强类型的类来表达配置项(白话大概表述为: 代码里面有个对象对应配置里的某个字段, 配置里对应的字段更改会触发代码里对象的属性变化), 示例如下:</li>
+</ol>
 
 <table>
 <thead><tr><th>配置示例</th><th>代码示例</th></tr></thead>
@@ -212,10 +215,13 @@ services.Configure<JwtIssuerOptions>(Configuration.GetSection("JwtIssuerOptions"
 </td></tr>
 </tbody></table>
 
-<p>而 Options 模式分为三种:
-1. <code>IOptions</code>: Singleton(单例)，值一旦生成, 除非通过代码的方式更改，否则它的值不会更新
-2. <code>IOptionsMonitor</code>: Singleton(单例), 通过IOptionsChangeTokenSource&lt;&gt; 能够和配置文件一起更新，也能通过代码的方式更改值
-3. <code>IOptionsSnapshot</code>: Scoped，配置文件更新的下一次访问，它的值会更新，但是它不能跨范围通过代码的方式更改值，只能在当前范围（请求）内有效。</p>
+<p>而 Options 模式分为三种:</p>
+
+<ol>
+<li><code>IOptions</code>: Singleton(单例)，值一旦生成, 除非通过代码的方式更改，否则它的值不会更新</li>
+<li><code>IOptionsMonitor</code>: Singleton(单例), 通过IOptionsChangeTokenSource&lt;&gt; 能够和配置文件一起更新，也能通过代码的方式更改值</li>
+<li><code>IOptionsSnapshot</code>: Scoped，配置文件更新的下一次访问，它的值会更新，但是它不能跨范围通过代码的方式更改值，只能在当前范围（请求）内有效。</li>
+</ol>
 
 <p>在知道这三种模式的意义后，我们已经完全找到了问题的根因, 把 <code>Options</code> 模式设置为:<code>IOptionsMonitor</code>就能解决完全解决配置热加载的问题。</p>
 
@@ -237,7 +243,7 @@ services.Configure<JwtIssuerOptions>(Configuration.GetSection("JwtIssuerOptions"
 				<p>
 					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-tag meta-icon"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7" y2="7"></line></svg><span class="tag"><a href="https://yulibaozi.com/tags/kubernetes">kubernetes</a></span>
 				</p>
-				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>259 Words</p>
+				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>263 Words</p>
 				<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>2020-04-25 20:04 &#43;0800</p>
 			</footer>
 		</article>
