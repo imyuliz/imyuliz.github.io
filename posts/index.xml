@@ -152,10 +152,13 @@ services.Configure<JwtIssuerOptions>(Configuration.GetSection("JwtIssuerOptions"
 <h2 id="相关链接">相关链接</h2>
 
 <ol>
-<li><a href="https://github.com/fbeltrao/ConfigMapFileProvider">配置监听ConfigMapFileProvider</a></li>
-<li><a href="https://github.com/dotnet/extensions/issues/1175">相似的Issue:1175</a></li>
-<li><a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options?view=aspnetcore-3.1">官方Options 描述</a></li>
-<li><a href="https://www.cnblogs.com/wenhx/p/ioptions-ioptionsmonitor-and-ioptionssnapshot.html">IOptions、IOptionsMonitor以及IOptionsSnapshot 测试</a></li>
+<li><p><a href="https://github.com/fbeltrao/ConfigMapFileProvider">配置监听ConfigMapFileProvider</a></p></li>
+
+<li><p><a href="https://github.com/dotnet/extensions/issues/1175">相似的Issue: 1175</a></p></li>
+
+<li><p><a href="https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/options?view=aspnetcore-3.1">官方Options 描述</a></p></li>
+
+<li><p><a href="https://www.cnblogs.com/wenhx/p/ioptions-ioptionsmonitor-and-ioptionssnapshot.html">IOptions、IOptionsMonitor以及IOptionsSnapshot 测试</a></p></li>
 </ol>
 ]]></content>
 		</item>
