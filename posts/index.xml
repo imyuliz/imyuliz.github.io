@@ -10,15 +10,13 @@
 		<atom:link href="https://yulibaozi.com/posts/index.xml" rel="self" type="application/rss+xml" />
 		
 		<item>
-			<title>.Net 配置文件在Kubernetes中无法自动加载</title>
+			<title>.Net Core 配置文件在Kubernetes中无法热加载</title>
 			<link>https://yulibaozi.com/posts/kubernetes/knowledge/2020-04-25-dotnet-configuration-auto-reload/</link>
 			<pubDate>Sat, 25 Apr 2020 20:04:44 +0800</pubDate>
 			
 			<guid>https://yulibaozi.com/posts/kubernetes/knowledge/2020-04-25-dotnet-configuration-auto-reload/</guid>
 			<description>问题描述 在使用 kubernetes 部署应用时, 我使用 kubernetes 的 configmap 来管理配置文件: appsettings.json , 修改configmap 的配置文件后, 我来到了容器里, 通过 cat /app/config/appsetting.json 命令查看容器是否已经加载了最新的配置文件, 很幸运的是, 通过命令行查看容器配置发现已经处于最新状态(修改configmap后10-15s 生效), 我尝试请求应用的API, 发现API 在执行过程中使用的配置是老旧的内容, 而不是最新的内容。在本地执行应用时并未出现配置无法热更新的问题。
-# 相关版本 kubernetes 版本: 1.14.2 .Net core: 3.1  问题猜想 通过命令行排查发现最新的 configmap 配置内容已经在容器的指定目录上更新到最新，但是应用仍然使用老旧的配置内容, 这意味着问题发生在: configmap-&amp;gt;容器-&amp;gt;应用, 容器和应用之间, 容器指定目录下的配置更新并没有触发 .Net 热加载机制, 那究竟是为什么没有触发配置热加载,需要深挖根本原因, 直觉猜想是: 查看 .Net Core 标准库的配置热加载的实现检查触发条件, 很有可能是触发的条件不满足导致应用配置无法重新加载。
-问题排查 猜想方向是热更新的触发条件不满足, 我们熟知使用 configmap 挂载文件是使用symlink来挂载, 而非常用的物理文件系统, 在修改完 configmap , 容器重新加载配置后,这一过程并不会改变文件的修改时间等信息(从容器的角度看)。对此，我们做了一个实验,通过对比configmap修改前和修改后来观察配置( appsettings.json )在容器的属性变化(注: 均在容器加载最新配置后对比), 使用 stat 命令来佐证了这个细节点。
- BeforeAfter     root@app-785bc59df6-gdmnf:/app/Config# stat appsettings.</description>
+# 相关版本 kubernetes 版本: 1.14.2 # 要求版本大于等于 3.1 .Net core: 3.1 # 容器 os-release (并非 windows) NAME=&amp;quot;Debian GNU/Linux&amp;quot; VERSION_ID=&amp;quot;10&amp;quot; VERSION=&amp;quot;10 (buster)&amp;quot; VERSION_CODENAME=buster ID=debian HOME_URL=&amp;quot;https://www.debian.org/&amp;quot; SUPPORT_URL=&amp;quot;https://www.debian.org/support&amp;quot; BUG_REPORT_URL=&amp;quot;https://bugs.debian.org/&amp;quot; # 基础镜像: mcr.microsoft.com/dotnet/core/sdk:3.1-buster mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim  问题猜想 通过命令行排查发现最新的 configmap 配置内容已经在容器的指定目录上更新到最新，但是应用仍然使用老旧的配置内容, 这意味着问题发生在: configmap-&amp;gt;容器-&amp;gt;应用, 容器和应用之间, 容器指定目录下的配置更新并没有触发 .Net 热加载机制, 那究竟是为什么没有触发配置热加载,需要深挖根本原因, 直觉猜想是: 查看 .</description>
 			<content type="html"><![CDATA[
 
 <h2 id="问题描述">问题描述</h2>
@@ -28,7 +26,24 @@
 
 <pre><code># 相关版本
 kubernetes 版本: 1.14.2
+# 要求版本大于等于 3.1
 .Net core: 3.1
+
+# 容器 os-release (并非 windows)
+
+NAME=&quot;Debian GNU/Linux&quot;
+VERSION_ID=&quot;10&quot;
+VERSION=&quot;10 (buster)&quot;
+VERSION_CODENAME=buster
+ID=debian
+HOME_URL=&quot;https://www.debian.org/&quot;
+SUPPORT_URL=&quot;https://www.debian.org/support&quot;
+BUG_REPORT_URL=&quot;https://bugs.debian.org/&quot;
+
+# 基础镜像:
+mcr.microsoft.com/dotnet/core/sdk:3.1-buster
+mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim
+
 </code></pre>
 
 <h2 id="问题猜想">问题猜想</h2>
