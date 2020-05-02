@@ -33,7 +33,7 @@ kubernetes 版本: 1.14.2
 
 NAME=&quot;Debian GNU/Linux&quot;
 VERSION_ID=&quot;10&quot;
-VERSION=&quot;10 (buster)&quot;
+VERSION=&quot;10 (buster)&quot; 
 VERSION_CODENAME=buster
 ID=debian
 HOME_URL=&quot;https://www.debian.org/&quot;
